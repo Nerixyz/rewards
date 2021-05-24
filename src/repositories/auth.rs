@@ -92,6 +92,7 @@ struct TwitchAuthUrlResponse {
 
 #[get("/twitch-auth-url")]
 fn create_twitch_url() -> HttpResponse {
+    // TODO: redirect
     let params = TwitchOAuthParams {
         client_id: TWITCH_CLIENT_ID.to_string(),
         redirect_uri: format!("{}/api/v1/auth/twitch-callback", SERVER_URL),

@@ -14,6 +14,42 @@ This may be managed in the issues.
 * [ ] EventSub
 * [ ] IRC
 * [ ] Verify index.html
+* [ ] Use migrations  
+* [ ] Document setup
+
+<details>
+<summary>Example config ('user_token')</summary>
+
+```json5
+{
+    "type": "UserToken",
+    "data": {
+        "access_token": "MY_ACCESS_TOKEN",
+        "refresh_token": "MY_REFRESH_TOKEN",
+      // this is just new Date(timestamp).toISOString() okayge
+        "created_at": "2021-05-24T15:04:47.000Z",
+        "expires_at": "2021-05-24T19:25:51.000Z"
+    }
+  // scopes: Scope::ChatEdit,
+  //         Scope::ChatRead,
+  //         Scope::ChannelModerate,
+  //         Scope::ModeratorManageAutoMod,
+  //         Scope::ModerationRead,
+  //         Scope::UserManageBlockedUsers,
+  //         Scope::UserReadBlockedUsers,
+  //         Scope::UserEditFollows,
+  //         Scope::UserReadFollows,
+  //         Scope::ChannelReadRedemptions,
+  //         Scope::ChannelManageRedemptions,
+  //         Scope::WhispersEdit,
+  //         Scope::WhispersRead,
+  //         Scope::ChannelEditCommercial,
+  //         Scope::ChannelManageBroadcast,
+}
+```
+</details>
+
+* [ ] Check TODOs throughout the code
 
 ### P2
 * [ ] IRC Bot
