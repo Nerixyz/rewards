@@ -1,0 +1,13 @@
+<template>
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="24" height="24" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z" />
+  </svg>
+</template>
+
+<script lang='ts'>
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  name: 'WarnIcon',
+});
+</script>
