@@ -33,6 +33,19 @@ impl User {
         Ok(users)
     }
 
+    pub async fn get_all_names(pool: &PgPool) -> Result<Vec<String>, SqlError> {
+            let names = sqlx::query_scalar!(
+            // language=PostgreSQL
+            r#"
+                SELECT name
+                FROM users
+            "#)
+                .fetch_all(pool)
+                .await?;
+
+            Ok(names)
+    }
+
     pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL

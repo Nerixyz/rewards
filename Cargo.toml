@@ -7,10 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# todo: sort this
 actix = "0.11.1"
 actix-web = { version = "4.0.0-beta.6"}
 actix-files = {git="https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.6"}
-twitch-irc="2.2.0"
+twitch-irc = { version = "2.2.0", features = ["refreshing-token"] }
 tokio = { version = "1" , features = ["rt"]}
 dotenv_codegen = "0.15"
 jsonwebtoken = "7.2.0"
@@ -30,3 +31,5 @@ futures = "0.3"
 sha2 = "0.9.5"
 hmac = "0.11.0"
 humantime = "2.1.0"
+anyhow = "1.0.40"
+async-trait = "0.1.50"
