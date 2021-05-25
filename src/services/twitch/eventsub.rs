@@ -1,43 +1,44 @@
 use crate::constants::{EVENTSUB_BASE64_SECRET, SERVER_URL};
-use crate::services::twitch::errors::to_response_error;
-use actix_web::{error, Error};
-use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
-use twitch_api2::eventsub::{Transport, TransportMethod};
-use twitch_api2::helix::eventsub::{
-    CreateEventSubSubscription, CreateEventSubSubscriptionBody, CreateEventSubSubscriptionRequest,
-    DeleteEventSubSubscription, DeleteEventSubSubscriptionRequest,
+use crate::services::twitch::{HelixResult, RHelixClient};
+use twitch_api2::{
+    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport, TransportMethod},
+    helix::{
+        eventsub::{
+            CreateEventSubSubscription, CreateEventSubSubscriptionBody,
+            CreateEventSubSubscriptionRequest, DeleteEventSubSubscription,
+            DeleteEventSubSubscriptionRequest,
+        },
+        points::{
+            CustomRewardRedemptionStatus, UpdateRedemptionStatusBody,
+            UpdateRedemptionStatusInformation, UpdateRedemptionStatusRequest,
+        },
+        Response,
+    },
+    twitch_oauth2::{AppAccessToken, UserToken},
 };
-use twitch_api2::helix::points::{
-    CustomRewardRedemptionStatus, UpdateRedemptionStatusBody, UpdateRedemptionStatusInformation,
-    UpdateRedemptionStatusRequest,
-};
-use twitch_api2::helix::Response;
-use twitch_api2::twitch_oauth2::{AppAccessToken, UserToken};
-use twitch_api2::HelixClient;
 
-pub async fn delete_subscription(token: &AppAccessToken, id: String) -> Result<(), Error> {
-    let response: DeleteEventSubSubscription = HelixClient::<'_, reqwest::Client>::default()
+pub async fn delete_subscription(token: &AppAccessToken, id: String) -> HelixResult<()> {
+    let response: DeleteEventSubSubscription = RHelixClient::default()
         .req_delete(
             DeleteEventSubSubscriptionRequest::builder().id(id).build(),
             token,
         )
-        .await
-        .map_err(to_response_error)?;
+        .await?;
 
     match response {
         DeleteEventSubSubscription::Success => Ok(()),
-        _ => Err(error::ErrorInternalServerError("")),
+        _ => Err("".into()),
     }
 }
 
 pub async fn subscribe_to_rewards(
     token: &AppAccessToken,
     id: &str,
-) -> Result<CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>, Error> {
+) -> HelixResult<CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>> {
     let response: Response<
         CreateEventSubSubscriptionRequest<ChannelPointsCustomRewardRedemptionAddV1>,
         CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>,
-    > = HelixClient::<'_, reqwest::Client>::default()
+    > = RHelixClient::default()
         .req_post(
             CreateEventSubSubscriptionRequest::builder().build(),
             CreateEventSubSubscriptionBody::builder()
@@ -56,8 +57,7 @@ pub async fn subscribe_to_rewards(
                 .build(),
             token,
         )
-        .await
-        .map_err(to_response_error)?;
+        .await?;
 
     Ok(response.data)
 }
@@ -68,9 +68,9 @@ pub async fn update_reward_redemption(
     redemption_id: &str,
     status: CustomRewardRedemptionStatus,
     token: &UserToken,
-) -> Result<(), Error> {
+) -> HelixResult<()> {
     let response: Response<UpdateRedemptionStatusRequest, UpdateRedemptionStatusInformation> =
-        HelixClient::<'_, reqwest::Client>::default()
+        RHelixClient::default()
             .req_patch(
                 UpdateRedemptionStatusRequest::builder()
                     .broadcaster_id(broadcaster_id)
@@ -80,11 +80,10 @@ pub async fn update_reward_redemption(
                 UpdateRedemptionStatusBody::builder().status(status).build(),
                 token,
             )
-            .await
-            .map_err(to_response_error)?;
+            .await?;
 
     match response.data {
         UpdateRedemptionStatusInformation::Success(_) => Ok(()),
-        _ => Err(error::ErrorInternalServerError("")),
+        _ => Err("".into()),
     }
 }

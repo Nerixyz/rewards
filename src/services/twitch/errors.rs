@@ -1,4 +1,4 @@
-use actix_web::{error, http::StatusCode, Error};
+use actix_web::{error, http::StatusCode};
 use derive_more::Error;
 use serde::Serialize;
 use std::fmt::{Display, Formatter};
@@ -8,7 +8,7 @@ use twitch_api2::helix::{
 };
 
 #[derive(Serialize, Error, Debug)]
-struct ErrorResponse {
+pub struct ErrorResponse {
     status: Option<u16>,
     message: String,
 }
@@ -45,87 +45,99 @@ impl error::ResponseError for ErrorResponse {
     }
 }
 
-pub fn to_response_error(e: ClientRequestError<reqwest::Error>) -> Error {
-    // TODO: logging?
-    // most of these errors are rare or even unreachable but this provides an error in any case
-    match e {
-        ClientRequestError::RequestError(e) => match e {
-            reqwest::Error { .. } => ErrorResponse::new("ReqwestError".to_string()),
-        },
-        ClientRequestError::NoPage => ErrorResponse::new("NoPage".to_string()),
-        ClientRequestError::CreateRequestError(e) => match e {
-            CreateRequestError::HttpError(e) => ErrorResponse::new(format!("{}", e)),
-            CreateRequestError::SerializeError(_) => {
-                ErrorResponse::new("SerializeError".to_string())
-            }
-            CreateRequestError::InvalidUri(_) => ErrorResponse::new("InvlaidUri".to_string()),
-            CreateRequestError::Custom(e) => ErrorResponse::new(e.to_string()),
-        },
-        ClientRequestError::HelixRequestGetError(e) => match e {
-            HelixRequestGetError::Error {
-                status, message, ..
-            } => ErrorResponse::with_status(message, status),
-            HelixRequestGetError::Utf8Error(_, _, _) => {
-                ErrorResponse::new("UTF8-Error".to_string())
-            }
-            HelixRequestGetError::DeserializeError(_, _, _, _) => {
-                ErrorResponse::new("DeserializeError".to_string())
-            }
-            HelixRequestGetError::InvalidResponse { status, reason, .. } => {
-                ErrorResponse::with_status(reason.to_string(), status)
-            }
-            HelixRequestGetError::InvalidUri(_) => {
-                ErrorResponse::new("DeserializeError".to_string())
-            }
-        },
-        ClientRequestError::HelixRequestPutError(e) => match e {
-            HelixRequestPutError::Error {
-                status, message, ..
-            } => ErrorResponse::with_status(message, status),
-            HelixRequestPutError::Utf8Error(_, _, _) => {
-                ErrorResponse::new("UTF8-Error".to_string())
-            }
-            HelixRequestPutError::DeserializeError(_, _, _, _) => {
-                ErrorResponse::new("DeserializeError".to_string())
-            }
-        },
-        ClientRequestError::HelixRequestPostError(e) => match e {
-            HelixRequestPostError::Error {
-                status, message, ..
-            } => ErrorResponse::with_status(message, status),
-            HelixRequestPostError::Utf8Error(_, _, _) => {
-                ErrorResponse::new("UTF8-Error".to_string())
-            }
-            HelixRequestPostError::DeserializeError(_, _, _, _) => {
-                ErrorResponse::new("DeserializeError".to_string())
-            }
-            HelixRequestPostError::InvalidResponse { status, reason, .. } => {
-                ErrorResponse::with_status(reason.to_string(), status)
-            }
-        },
-        ClientRequestError::HelixRequestPatchError(e) => match e {
-            HelixRequestPatchError::Error {
-                status, message, ..
-            } => ErrorResponse::with_status(message, status),
-            HelixRequestPatchError::Utf8Error(_, _, _) => {
-                ErrorResponse::new("UTF8-Error".to_string())
-            }
-            HelixRequestPatchError::DeserializeError(_, _, _, _) => {
-                ErrorResponse::new("DeserializeError".to_string())
-            }
-            HelixRequestPatchError::InvalidResponse { status, reason, .. } => {
-                ErrorResponse::with_status(reason.to_string(), status)
-            }
-        },
-        ClientRequestError::HelixRequestDeleteError(e) => match e {
-            HelixRequestDeleteError::Error {
-                status, message, ..
-            } => ErrorResponse::with_status(message, status),
-            HelixRequestDeleteError::Utf8Error(_, _, _) => {
-                ErrorResponse::new("UTF8-Error".to_string())
-            }
-        },
-        ClientRequestError::Custom(e) => ErrorResponse::new(e.to_string()),
+impl From<ClientRequestError<reqwest::Error>> for ErrorResponse {
+    fn from(e: ClientRequestError<reqwest::Error>) -> Self {
+        // TODO: logging?
+        match e {
+            ClientRequestError::RequestError(e) => match e {
+                reqwest::Error { .. } => ErrorResponse::new("ReqwestError".to_string()),
+            },
+            ClientRequestError::NoPage => ErrorResponse::new("NoPage".to_string()),
+            ClientRequestError::CreateRequestError(e) => match e {
+                CreateRequestError::HttpError(e) => ErrorResponse::new(format!("{}", e)),
+                CreateRequestError::SerializeError(_) => {
+                    ErrorResponse::new("SerializeError".to_string())
+                }
+                CreateRequestError::InvalidUri(_) => ErrorResponse::new("InvlaidUri".to_string()),
+                CreateRequestError::Custom(e) => ErrorResponse::new(e.to_string()),
+            },
+            ClientRequestError::HelixRequestGetError(e) => match e {
+                HelixRequestGetError::Error {
+                    status, message, ..
+                } => ErrorResponse::with_status(message, status),
+                HelixRequestGetError::Utf8Error(_, _, _) => {
+                    ErrorResponse::new("UTF8-Error".to_string())
+                }
+                HelixRequestGetError::DeserializeError(_, _, _, _) => {
+                    ErrorResponse::new("DeserializeError".to_string())
+                }
+                HelixRequestGetError::InvalidResponse { status, reason, .. } => {
+                    ErrorResponse::with_status(reason.to_string(), status)
+                }
+                HelixRequestGetError::InvalidUri(_) => {
+                    ErrorResponse::new("DeserializeError".to_string())
+                }
+            },
+            ClientRequestError::HelixRequestPutError(e) => match e {
+                HelixRequestPutError::Error {
+                    status, message, ..
+                } => ErrorResponse::with_status(message, status),
+                HelixRequestPutError::Utf8Error(_, _, _) => {
+                    ErrorResponse::new("UTF8-Error".to_string())
+                }
+                HelixRequestPutError::DeserializeError(_, _, _, _) => {
+                    ErrorResponse::new("DeserializeError".to_string())
+                }
+            },
+            ClientRequestError::HelixRequestPostError(e) => match e {
+                HelixRequestPostError::Error {
+                    status, message, ..
+                } => ErrorResponse::with_status(message, status),
+                HelixRequestPostError::Utf8Error(_, _, _) => {
+                    ErrorResponse::new("UTF8-Error".to_string())
+                }
+                HelixRequestPostError::DeserializeError(_, _, _, _) => {
+                    ErrorResponse::new("DeserializeError".to_string())
+                }
+                HelixRequestPostError::InvalidResponse { status, reason, .. } => {
+                    ErrorResponse::with_status(reason.to_string(), status)
+                }
+            },
+            ClientRequestError::HelixRequestPatchError(e) => match e {
+                HelixRequestPatchError::Error {
+                    status, message, ..
+                } => ErrorResponse::with_status(message, status),
+                HelixRequestPatchError::Utf8Error(_, _, _) => {
+                    ErrorResponse::new("UTF8-Error".to_string())
+                }
+                HelixRequestPatchError::DeserializeError(_, _, _, _) => {
+                    ErrorResponse::new("DeserializeError".to_string())
+                }
+                HelixRequestPatchError::InvalidResponse { status, reason, .. } => {
+                    ErrorResponse::with_status(reason.to_string(), status)
+                }
+            },
+            ClientRequestError::HelixRequestDeleteError(e) => match e {
+                HelixRequestDeleteError::Error {
+                    status, message, ..
+                } => ErrorResponse::with_status(message, status),
+                HelixRequestDeleteError::Utf8Error(_, _, _) => {
+                    ErrorResponse::new("UTF8-Error".to_string())
+                }
+            },
+            ClientRequestError::Custom(e) => ErrorResponse::new(e.to_string()),
+        }
     }
-    .into()
+}
+
+impl From<String> for ErrorResponse {
+    fn from(e: String) -> Self {
+        Self::new(e)
+    }
+}
+
+impl From<&str> for ErrorResponse {
+    fn from(e: &str) -> Self {
+        Self::new(e.to_string())
+    }
 }
