@@ -60,18 +60,6 @@ async fn main() -> std::io::Result<()> {
             .data(pool.clone())
             .data(irc_actor.clone())
             .app_data(app_access_token.clone())
-            .wrap(
-                actix_web::middleware::DefaultHeaders::new()
-                    .header("Access-Control-Allow-Origin", "*")
-                    .header(
-                        "Access-Control-Allow-Methods",
-                        "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                    )
-                    .header(
-                        "Access-Control-Allow-Headers",
-                        "Authorization, Content-Type",
-                    ),
-            )
             .service(web::scope("/api/v1").configure(init_repositories))
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(
