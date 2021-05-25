@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Error, put, get, patch, delete};
+use actix_web::{web, HttpResponse, Error, error, put, get, patch, delete};
 use crate::services::jwt::JwtClaims;
 use sqlx::PgPool;
 use crate::models::reward::{RewardData, Reward};
@@ -6,6 +6,7 @@ use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCus
 use crate::services::twitch::requests::{create_reward, get_rewards_for_id, update_reward, delete_reward, get_reward_for_broadcaster_by_id};
 use serde::{Deserialize, Serialize};
 use crate::services::sql::get_user_or_editor;
+use crate::services::rewards::verify_reward;
 
 #[derive(Deserialize)]
 struct CreateRewardBody {
@@ -31,6 +32,8 @@ async fn create(claims: JwtClaims, pool: web::Data<PgPool>, body: web::Json<Crea
 
     let body = body.into_inner();
 
+    verify_reward(&body.data).map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
     let db_reward = Reward::from_response(&reward, body.data);
     db_reward.create(&pool).await?;
@@ -47,6 +50,8 @@ async fn update(claims: JwtClaims, pool: web::Data<PgPool>, body: web::Json<Upda
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool).await?.into();
 
     let body = body.into_inner();
+
+    verify_reward(&body.data).map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;
     let db_reward = Reward::from_response(&reward, body.data);

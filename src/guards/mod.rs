@@ -1,1 +1,1 @@
-mod eventsub;
+pub mod eventsub;

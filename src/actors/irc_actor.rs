@@ -3,14 +3,14 @@ use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToke
 use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::message::ServerMessage;
 use tokio::task::JoinHandle;
-use actix::{Addr, Actor, Context, AsyncContext, Handler};
+use actix::{Addr, Actor, Context, AsyncContext, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
 use crate::actors::db_actor::DbActor;
 use std::fmt::{Debug, Formatter};
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::constants::{TWITCH_CLIENT_USER_LOGIN, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use tokio::task;
-use crate::actors::messages::irc_messages::{ChatMessage, JoinMessage, JoinAllMessage};
+use crate::actors::messages::irc_messages::{ChatMessage, JoinMessage, JoinAllMessage, TimeoutMessage, SubOnlyMessage, EmoteOnlyMessage};
 use async_trait::async_trait;
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
@@ -30,7 +30,6 @@ impl TokenStorage for PgTokenStorage {
     type UpdateError = AnyError;
 
     async fn load_token(&mut self) -> Result<UserAccessToken, Self::LoadError> {
-        println!("load");
         self.0.send(GetToken {}).await?.map_err(|e| AnyError::new(e))
     }
 
@@ -116,5 +115,50 @@ impl Handler<ChatMessage> for IrcActor {
     // do nothing for now
     fn handle(&mut self, _msg: ChatMessage, _ctx: &mut Self::Context) -> Self::Result {
         // println!("{:?}", msg.0);
+    }
+}
+
+impl Handler<TimeoutMessage> for IrcActor {
+    type Result = ResponseFuture<Result<(), AnyError>>;
+
+    fn handle(&mut self, msg: TimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
+        let client = self.client.clone();
+        Box::pin(async move {
+            Ok(client.privmsg(msg.broadcaster, format!("/timeout {} {}", msg.user, msg.duration.as_secs())).await?)
+        })
+    }
+}
+// TODO: merge
+impl Handler<SubOnlyMessage> for IrcActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: SubOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
+        let client = self.client.clone();
+        task::spawn(async move {
+            if let Err(e) = client.privmsg(msg.broadcaster.clone(), "/subscribers".to_string()).await {
+                println!("Could not enter subonly: {:?}", e);
+            }
+            tokio::time::sleep(msg.duration).await;
+            if let Err(e) = client.privmsg(msg.broadcaster, "/subscribersoff".to_string()).await {
+                println!("Could not leave subonly: {:?}", e);
+            }
+        });
+    }
+}
+
+impl Handler<EmoteOnlyMessage> for IrcActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: EmoteOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
+        let client = self.client.clone();
+        task::spawn(async move {
+            if let Err(e) = client.privmsg(msg.broadcaster.clone(), "/emoteonly".to_string()).await {
+                println!("Could not enter emoteonly: {:?}", e);
+            }
+            tokio::time::sleep(msg.duration).await;
+            if let Err(e) = client.privmsg(msg.broadcaster, "/emoteonlyoff".to_string()).await {
+                println!("Could not leave emoteonly: {:?}", e);
+            }
+        });
     }
 }

@@ -40,7 +40,7 @@ impl Editor {
         let user = sqlx::query_as!(User,
             // language=PostgreSQL
             r#"
-                SELECT u.name, u.id, u.refresh_token, u.access_token, u.scopes
+                SELECT u.name, u.id, u.refresh_token, u.access_token, u.scopes, u.eventsub_id
                 FROM editors
                     LEFT JOIN users u on u.id = editors.broadcaster_id
                 WHERE broadcaster_id = $2 and editor_id = $1

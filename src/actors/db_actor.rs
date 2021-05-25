@@ -38,7 +38,7 @@ impl Handler<SaveToken> for DbActor {
     fn handle(&mut self, msg: SaveToken, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
         Box::pin(async move {
-            ConfigEntry::update_token(&pool, &msg.0).await
+            ConfigEntry::update_user_token(&pool, msg.0).await
         })
     }
 }

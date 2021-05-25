@@ -11,7 +11,8 @@ pub struct User {
     pub access_token: String,
     pub refresh_token: String,
     pub scopes: String,
-    pub name: String
+    pub name: String,
+    pub eventsub_id: Option<String>,
 }
 
 impl User {
@@ -44,6 +45,15 @@ impl User {
                 .await?;
 
             Ok(names)
+    }
+
+    pub async fn get_all_non_subscribers(pool: &PgPool) -> Result<Vec<String>, SqlError> {
+        // language=PostgreSQL
+        let ids = sqlx::query_scalar!("SELECT id FROM users WHERE eventsub_id IS null")
+            .fetch_all(pool)
+            .await?;
+
+        Ok(ids)
     }
 
     pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
@@ -88,6 +98,30 @@ impl User {
             .await?;
 
         tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn set_eventsub_id(user_id: &str, eventsub_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+        // language=PostgreSQL
+        let _ = sqlx::query!(r#"
+            UPDATE users
+            SET eventsub_id = $2
+            WHERE id = $1
+            "#, user_id, eventsub_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn clear_eventsub_id(eventsub_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+        // language=PostgreSQL
+        let _ = sqlx::query!(r#"
+            UPDATE users
+            SET eventsub_id = null
+            WHERE eventsub_id = $1
+            "#, eventsub_id)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 }

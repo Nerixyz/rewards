@@ -15,7 +15,9 @@ pub struct Reward {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum RewardData {
-    Timeout(String)
+    Timeout(String),
+    SubOnly(String),
+    EmoteOnly(String)
 }
 
 impl Responder for Reward {
