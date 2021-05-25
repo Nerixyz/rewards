@@ -1,4 +1,4 @@
-import { InternalCustomReward, Reward, TwitchReward, TwitchUser } from './types';
+import { InputReward, InternalCustomReward, Reward, TwitchReward, TwitchUser } from './types';
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
@@ -43,11 +43,11 @@ class HttpClient extends BaseClient {
     return [...map.values()] as Reward[];
   }
 
-  addReward(broadcasterId: string, reward: Reward) {
+  addReward(broadcasterId: string, reward: InputReward) {
     return this.put<Reward>(reward, 'rewards', broadcasterId);
   }
 
-  updateReward(broadcasterId: string, reward: Reward, id: string) {
+  updateReward(broadcasterId: string, reward: InputReward, id: string) {
     return this.patch<Reward>(reward, 'rewards', broadcasterId, id);
   }
 
