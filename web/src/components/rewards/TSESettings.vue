@@ -7,16 +7,19 @@ import { defineComponent } from 'vue';
 import TextField from '../core/TextField.vue';
 
 export default defineComponent({
-  name: 'TimeoutSettings',
+  name: 'TSESettings',
   components: { TextField },
   props: {
-    modelValue: String
+    modelValue: {
+      type: String,
+      required: true
+    },
   },
   emits: ['update:modelValue'],
   computed: {
     duration: {
-      get() {
-        return this.modelValue;
+      get(): string {
+        return this.modelValue ?? '';
       },
       set(v: string) {
         this.$emit('update:modelValue', v);

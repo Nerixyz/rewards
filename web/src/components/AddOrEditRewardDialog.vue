@@ -1,7 +1,10 @@
 <template>
-  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open">
+  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed='onDialogClosed'>
     <div v-if='loading'>
-      Loading...
+      <span>Loading...</span>
+      <DialogButtons>
+        <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
+      </DialogButtons>
     </div>
     <div v-else-if='error'>
       docNotl an error occurred!
@@ -22,7 +25,7 @@
         <div class='flex-grow w-full'>
           <CDropdown v-model='rewardState.action.type' :options='RewardTypes' class='z-30 pb-5'/>
 
-          <TimeoutSettings v-if='rewardState.action.type === "Timeout"' v-model='rewardState.action.data'/>
+          <TSESettings v-if='["Timeout", "SubOnly", "EmoteOnly"].includes(rewardState.action.type)' v-model='rewardState.action.data'/>
         </div>
       </div>
       <DialogButtons>
@@ -34,7 +37,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive, toRefs, watch } from 'vue';
+import { computed, defineComponent, PropType, reactive, ref, toRefs, watch } from 'vue';
 import CDialog from './core/CDialog.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
@@ -46,23 +49,31 @@ import useVuelidate from '@vuelidate/core';
 import { required , numeric,  } from '@vuelidate/validators';
 import { assignDefaultToModel, assignToVRewardModel, toInputReward, VRewardModel } from '../api/model-conversion';
 import CDropdown from './core/CDropdown.vue';
-import TimeoutSettings from './rewards/TimeoutSettings.vue';
 import { defaultNewReward, RewardTypes } from '../api/rewards-data';
 import { Reward } from '../api/types';
+import TSESettings from './rewards/TSESettings.vue';
+import TickIcon from './icons/TickIcon.vue';
 
-export default defineComponent<{open: boolean,
-  broadcasterId: string,
-  rewardData?: Reward}>({
+export default defineComponent({
   name: 'AddOrEditRewardDialog',
-  components: { TimeoutSettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
+  components: { TickIcon, TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
   props: {
-    open: Boolean,
-    broadcasterId: String,
-    rewardData: Object,
+    open: {
+      type: Boolean,
+      required: false,
+    },
+    broadcasterId: {
+      type: String,
+      required: true,
+    },
+    rewardData: {
+      type: Object as PropType<Reward | undefined>,
+      required: true,
+    },
   },
   emits: ['update:open', 'close', 'added', 'updated'],
   setup(props, { emit }) {
-    const { broadcasterId, rewardData } = toRefs(props);
+    const { broadcasterId, rewardData, open } = toRefs(props);
     const api = useApi();
 
     const { loading, error } = asyncRefs(false);
@@ -73,11 +84,14 @@ export default defineComponent<{open: boolean,
 
     const closeAll = () => {
       emit('update:open', false);
-      clearAsyncRefs();
     };
 
+    const onDialogClosed = () => {
+      clearAsyncRefs();
+    }
+
     const rewardState = reactive<VRewardModel>(defaultNewReward());
-    watch(rewardData, (newData: Reward) => {
+    watch(rewardData, (newData?: Reward) => {
       if(!newData) {
         assignDefaultToModel(rewardState);
       } else {
@@ -100,20 +114,20 @@ export default defineComponent<{open: boolean,
       tryAsync(async () => {
         let response;
         if(isAdding.value) {
-          response = await api.addReward(broadcasterId.value, toInputReward(rewardState));
+          response = await api.addReward(broadcasterId.value ?? '', toInputReward(rewardState));
         } else {
-          response = await api.updateReward(broadcasterId.value, toInputReward(rewardState), (rewardData.value as Reward).twitch.id);
+          response = await api.updateReward(broadcasterId.value ?? '', toInputReward(rewardState), rewardData.value?.twitch?.id ?? '');
         }
 
         // not really needed but not bad anyways
-        assignToVRewardModel(response, response);
+        assignToVRewardModel(response, rewardState);
 
         emit(isAdding.value ? 'added' : 'updated', response);
         closeAll();
       }, loading, error);
     }
 
-    return { loading, error, closeAll, v$, rewardState, RewardTypes, onSubmit, isAdding };
+    return { loading, error, closeAll, v$, rewardState, RewardTypes, onSubmit, isAdding, onDialogClosed, open };
   },
 });
 </script>
