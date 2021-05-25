@@ -6,7 +6,8 @@ create table if not exists users
     access_token  varchar(30) not null,
     refresh_token text        not null,
     scopes        text        not null,
-    name          varchar(25) not null
+    name          varchar(25) not null,
+    eventsub_id   varchar(36)
 );
 
 comment on column users.id is 'The twitch user-id';
