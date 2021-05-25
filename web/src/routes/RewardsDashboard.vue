@@ -96,7 +96,7 @@ export default defineComponent({
     // core stuff to ensure we have a user id
 
     const rewards = ref<Reward[]>([]);
-    const broadcasterId = ref<undefined | string>(undefined);
+    const broadcasterId = ref<string>( ((route.params.id as string | undefined) || store.user.value?.id) ?? '');
     const thisUserId = ref<undefined | string>(undefined);
 
     const { loading, error } = asyncRefs();
@@ -106,7 +106,7 @@ export default defineComponent({
           const id = (route.params.id as string | undefined) || store.user.value?.id;
 
           thisUserId.value = store.user.value?.id;
-          broadcasterId.value = id;
+          broadcasterId.value = id ?? '';
 
           rewards.value = await api.getRewards(id ?? '');
         },
@@ -124,6 +124,8 @@ export default defineComponent({
     } else {
       updateBroadcaster();
     }
+
+    const coreExports = {rewards, broadcasterId, thisUserId, loading, error};
 
     // Add/Edit Dialog
 
@@ -162,7 +164,7 @@ export default defineComponent({
 
     const deleteReward = (reward: Reward) => {
       tryAsync(async () => {
-        await api.deleteReward(broadcasterId.value, reward);
+        await api.deleteReward(broadcasterId.value ?? '', reward);
         deleteDialogOpen.value = false;
 
         rewards.value = rewards.value.filter(r => r.twitch.id !== reward.twitch.id);
@@ -177,17 +179,16 @@ export default defineComponent({
     };
     const clearDeleteDialog = () => {
       deleteLoading.value = false;
-      deleteError.value = false;
+      deleteError.value = null;
       currentRewardToDelete.value = null;
     };
     const closeDeleteDialog = () => {
       deleteDialogOpen.value = false;
-      clearDeleteDialog();
     };
 
-    const deleteExports = {deleteDialogOpen, deleteError, deleteLoading, closeDeleteDialog, deleteCurrentReward, openDeleteDialogForReward};
+    const deleteExports = {deleteDialogOpen, deleteError, deleteLoading, closeDeleteDialog, deleteCurrentReward, openDeleteDialogForReward, clearDeleteDialog};
 
-    return { rewards, broadcasterId, thisUserId, loading, error, ...addExports, ...deleteExports };
+    return { ...coreExports, ...addExports, ...deleteExports };
   },
 });
 </script>
