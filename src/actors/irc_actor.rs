@@ -1,17 +1,19 @@
-use twitch_irc::{TwitchIRCClient, TCPTransport, ClientConfig};
-use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
-use tokio::sync::mpsc::UnboundedReceiver;
-use twitch_irc::message::ServerMessage;
-use tokio::task::JoinHandle;
-use actix::{Addr, Actor, Context, AsyncContext, Handler, ResponseFuture};
-use anyhow::Error as AnyError;
 use crate::actors::db_actor::DbActor;
-use std::fmt::{Debug, Formatter};
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::constants::{TWITCH_CLIENT_USER_LOGIN, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use tokio::task;
-use crate::actors::messages::irc_messages::{ChatMessage, JoinMessage, JoinAllMessage, TimeoutMessage, SubOnlyMessage, EmoteOnlyMessage};
+use crate::actors::messages::irc_messages::{
+    ChatMessage, EmoteOnlyMessage, JoinAllMessage, JoinMessage, SubOnlyMessage, TimeoutMessage,
+};
+use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture};
+use anyhow::Error as AnyError;
 use async_trait::async_trait;
+use std::fmt::{Debug, Formatter};
+use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::task;
+use tokio::task::JoinHandle;
+use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
+use twitch_irc::message::ServerMessage;
+use twitch_irc::{ClientConfig, TCPTransport, TwitchIRCClient};
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
 type IrcClient = TwitchIRCClient<TCPTransport, IrcCredentials>;
@@ -30,16 +32,22 @@ impl TokenStorage for PgTokenStorage {
     type UpdateError = AnyError;
 
     async fn load_token(&mut self) -> Result<UserAccessToken, Self::LoadError> {
-        self.0.send(GetToken {}).await?.map_err(|e| AnyError::new(e))
+        self.0
+            .send(GetToken {})
+            .await?
+            .map_err(|e| AnyError::new(e))
     }
 
     async fn update_token(&mut self, token: &UserAccessToken) -> Result<(), Self::UpdateError> {
-        self.0.send(SaveToken(UserAccessToken {
-            refresh_token: token.refresh_token.clone(),
-            access_token: token.access_token.clone(),
-            created_at: token.created_at.clone(),
-            expires_at: token.expires_at.clone()
-        })).await?.map_err(|e| AnyError::new(e))
+        self.0
+            .send(SaveToken(UserAccessToken {
+                refresh_token: token.refresh_token.clone(),
+                access_token: token.access_token.clone(),
+                created_at: token.created_at.clone(),
+                expires_at: token.expires_at.clone(),
+            }))
+            .await?
+            .map_err(|e| AnyError::new(e))
     }
 }
 
@@ -51,22 +59,19 @@ pub struct IrcActor {
 
 impl IrcActor {
     pub fn new(db: Addr<DbActor>) -> Self {
-        let config =
-            ClientConfig::new_simple(
-                IrcCredentials::new(
-                    TWITCH_CLIENT_USER_LOGIN.to_string(),
-                    TWITCH_CLIENT_ID.to_string(),
-                    TWITCH_CLIENT_SECRET.to_string(),
-                    PgTokenStorage(db.clone()))
-            );
-
+        let config = ClientConfig::new_simple(IrcCredentials::new(
+            TWITCH_CLIENT_USER_LOGIN.to_string(),
+            TWITCH_CLIENT_ID.to_string(),
+            TWITCH_CLIENT_SECRET.to_string(),
+            PgTokenStorage(db.clone()),
+        ));
 
         let (incoming, client) = IrcClient::new(config);
 
         Self {
             listener: None,
             incoming: Some(incoming),
-            client
+            client,
         }
     }
 }
@@ -124,7 +129,12 @@ impl Handler<TimeoutMessage> for IrcActor {
     fn handle(&mut self, msg: TimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         Box::pin(async move {
-            Ok(client.privmsg(msg.broadcaster, format!("/timeout {} {}", msg.user, msg.duration.as_secs())).await?)
+            Ok(client
+                .privmsg(
+                    msg.broadcaster,
+                    format!("/timeout {} {}", msg.user, msg.duration.as_secs()),
+                )
+                .await?)
         })
     }
 }
@@ -135,11 +145,17 @@ impl Handler<SubOnlyMessage> for IrcActor {
     fn handle(&mut self, msg: SubOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         task::spawn(async move {
-            if let Err(e) = client.privmsg(msg.broadcaster.clone(), "/subscribers".to_string()).await {
+            if let Err(e) = client
+                .privmsg(msg.broadcaster.clone(), "/subscribers".to_string())
+                .await
+            {
                 println!("Could not enter subonly: {:?}", e);
             }
             tokio::time::sleep(msg.duration).await;
-            if let Err(e) = client.privmsg(msg.broadcaster, "/subscribersoff".to_string()).await {
+            if let Err(e) = client
+                .privmsg(msg.broadcaster, "/subscribersoff".to_string())
+                .await
+            {
                 println!("Could not leave subonly: {:?}", e);
             }
         });
@@ -152,11 +168,17 @@ impl Handler<EmoteOnlyMessage> for IrcActor {
     fn handle(&mut self, msg: EmoteOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         task::spawn(async move {
-            if let Err(e) = client.privmsg(msg.broadcaster.clone(), "/emoteonly".to_string()).await {
+            if let Err(e) = client
+                .privmsg(msg.broadcaster.clone(), "/emoteonly".to_string())
+                .await
+            {
                 println!("Could not enter emoteonly: {:?}", e);
             }
             tokio::time::sleep(msg.duration).await;
-            if let Err(e) = client.privmsg(msg.broadcaster, "/emoteonlyoff".to_string()).await {
+            if let Err(e) = client
+                .privmsg(msg.broadcaster, "/emoteonlyoff".to_string())
+                .await
+            {
                 println!("Could not leave emoteonly: {:?}", e);
             }
         });

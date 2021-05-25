@@ -1,21 +1,21 @@
-use sqlx::PgPool;
+use crate::models::user::User;
 use actix::{Actor, Context};
 use actix_web::rt::{self, task::JoinHandle};
-use crate::models::user::User;
-use twitch_api2::twitch_oauth2::{UserToken, TwitchToken};
-use twitch_api2::twitch_oauth2::client::reqwest_http_client;
+use sqlx::PgPool;
 use std::time::Duration;
+use twitch_api2::twitch_oauth2::client::reqwest_http_client;
+use twitch_api2::twitch_oauth2::{TwitchToken, UserToken};
 
 pub struct TokenRefresher {
     pool: PgPool,
-    join_handle: Option<JoinHandle<()>>
+    join_handle: Option<JoinHandle<()>>,
 }
 
 impl TokenRefresher {
     pub fn new(pool: PgPool) -> Self {
         Self {
             pool,
-            join_handle: None
+            join_handle: None,
         }
     }
 }
@@ -32,12 +32,16 @@ impl Actor for TokenRefresher {
                 for user in users {
                     let mut token: UserToken = user.into();
                     if let Ok(_) = token.refresh_token(reqwest_http_client).await {
-                        let res = User::update_refresh(&token.user_id,
-                                             token.access_token.secret(),
-                                             &token.refresh_token
-                                                    .map(|t| t.secret().clone())
-                                                    .unwrap_or(String::new()),
-                                             &pool).await;
+                        let res = User::update_refresh(
+                            &token.user_id,
+                            token.access_token.secret(),
+                            &token
+                                .refresh_token
+                                .map(|t| t.secret().clone())
+                                .unwrap_or(String::new()),
+                            &pool,
+                        )
+                        .await;
                         if let Err(e) = res {
                             println!("{:?}", e);
                         }

@@ -1,22 +1,24 @@
-use actix_web::{web, HttpResponse, error, BaseHttpResponse, get, Error, delete};
-use crate::constants::{TWITCH_CLIENT_ID, SERVER_URL, TWITCH_CLIENT_SECRET};
-use twitch_api2::twitch_oauth2::{Scope, ClientId, ClientSecret, RedirectUrl, CsrfToken, TwitchToken, UserToken, AppAccessToken};
-use itertools::Itertools;
-use actix_web::body::Body;
-use actix_web::http::{StatusCode, header};
-use sqlx::PgPool;
-use twitch_api2::twitch_oauth2::tokens::UserTokenBuilder;
-use twitch_api2::twitch_oauth2::client::reqwest_http_client;
-use crate::models::user::User;
-use crate::services::jwt::{encode_jwt, JwtClaims};
-use actix_web::cookie::CookieBuilder;
-use time::{OffsetDateTime, Duration};
-use serde::{Deserialize, Serialize};
 use crate::actors::irc_actor::IrcActor;
-use actix::Addr;
 use crate::actors::messages::irc_messages::JoinMessage;
-use crate::services::eventsub::{unregister_eventsub_for_id, register_eventsub_for_id};
+use crate::constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::models::user::User;
+use crate::services::eventsub::{register_eventsub_for_id, unregister_eventsub_for_id};
+use crate::services::jwt::{encode_jwt, JwtClaims};
+use actix::Addr;
+use actix_web::body::Body;
+use actix_web::cookie::CookieBuilder;
+use actix_web::http::{header, StatusCode};
+use actix_web::{delete, error, get, web, BaseHttpResponse, Error, HttpResponse};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use time::{Duration, OffsetDateTime};
 use tokio::sync::Mutex;
+use twitch_api2::twitch_oauth2::client::reqwest_http_client;
+use twitch_api2::twitch_oauth2::tokens::UserTokenBuilder;
+use twitch_api2::twitch_oauth2::{
+    AppAccessToken, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TwitchToken, UserToken,
+};
 
 #[derive(Debug, derive_more::Display, derive_more::Error)]
 #[display(fmt = "Error during oauth authorization")]
@@ -43,14 +45,19 @@ struct TwitchCallbackQuery {
 }
 
 #[get("/twitch-callback")]
-async fn twitch_callback(pool: web::Data<PgPool>, irc: web::Data<Addr<IrcActor>>, app_access_token: web::Data<Mutex<AppAccessToken>>, query: web::Query<TwitchCallbackQuery>) -> Result<HttpResponse, Error> {
+async fn twitch_callback(
+    pool: web::Data<PgPool>,
+    irc: web::Data<Addr<IrcActor>>,
+    app_access_token: web::Data<Mutex<AppAccessToken>>,
+    query: web::Query<TwitchCallbackQuery>,
+) -> Result<HttpResponse, Error> {
     let mut builder = UserTokenBuilder::new(
         ClientId::new(TWITCH_CLIENT_ID.to_string()),
         ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
         RedirectUrl::new(format!("{}/api/v1/auth/twitch-callback", SERVER_URL))
             .expect("Invalid redirect-url"),
     )
-        .expect("Invalid url");
+    .expect("Invalid url");
 
     builder.set_csrf(CsrfToken::new("".to_string()));
 
@@ -67,7 +74,7 @@ async fn twitch_callback(pool: web::Data<PgPool>, irc: web::Data<Addr<IrcActor>>
         access_token: user_token.access_token.secret().clone(),
         scopes: query.scope.clone(),
         name: user_token.login.clone(),
-        eventsub_id: None
+        eventsub_id: None,
     };
 
     user.create(&pool).await.map_err(|_| OAuthError)?;
@@ -114,9 +121,9 @@ fn create_twitch_url() -> HttpResponse {
             Scope::ChannelManageRedemptions,
             Scope::ChannelReadRedemptions,
         ]
-            .iter()
-            .map(ToString::to_string)
-            .join(" "),
+        .iter()
+        .map(ToString::to_string)
+        .join(" "),
     };
     let url = format!(
         "https://id.twitch.tv/oauth2/authorize?{}",
@@ -127,7 +134,11 @@ fn create_twitch_url() -> HttpResponse {
 }
 
 #[delete("")]
-async fn revoke(claims: JwtClaims, app_access_token: web::Data<Mutex<AppAccessToken>>, pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
+async fn revoke(
+    claims: JwtClaims,
+    app_access_token: web::Data<Mutex<AppAccessToken>>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, Error> {
     let user = claims.get_user(&pool).await?;
     let eventsub_id = user.eventsub_id.clone();
     let token: UserToken = user.into();
@@ -150,7 +161,6 @@ async fn revoke(claims: JwtClaims, app_access_token: web::Data<Mutex<AppAccessTo
 
     Ok(HttpResponse::Ok().finish())
 }
-
 
 pub fn init_auth_routes(config: &mut web::ServiceConfig) {
     config

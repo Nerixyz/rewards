@@ -9,24 +9,24 @@ edition = "2018"
 [dependencies]
 # todo: sort this
 actix = "0.11.1"
-actix-web = { version = "4.0.0-beta.6"}
-actix-files = {git="https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.6"}
+actix-web = { version = "4.0.0-beta.6" }
+actix-files = { git = "https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.6" }
 twitch-irc = { version = "2.2.0", features = ["refreshing-token"] }
-tokio = { version = "1" , features = ["rt"]}
+tokio = { version = "1", features = ["rt"] }
 dotenv_codegen = "0.15"
 jsonwebtoken = "7.2.0"
-serde = {version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 futures-util = "0.3.15"
 cookie = "0.15"
 time = "0.2.26"
-twitch_api2 = { git="https://github.com/Nerixyz/twitch_api2.git", rev= "bcc14e2", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client"] }
+twitch_api2 = { git = "https://github.com/Nerixyz/twitch_api2.git", rev = "bcc14e2", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client"] }
 reqwest = "0.11.3"
 derive_more = "0.99.14"
-serde_qs="0.8.3"
+serde_qs = "0.8.3"
 itertools = "0.10.0"
-deadpool-postgres="0.7.0"
-sqlx = { version = "0.5.2", features=["postgres", "runtime-actix-native-tls", "macros", "json"] }
+deadpool-postgres = "0.7.0"
+sqlx = { version = "0.5.2", features = ["postgres", "runtime-actix-native-tls", "macros", "json"] }
 futures = "0.3"
 sha2 = "0.9.5"
 hmac = "0.11.0"

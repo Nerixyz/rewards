@@ -1,3 +1,3 @@
 pub mod errors;
-pub mod requests;
 pub mod eventsub;
+pub mod requests;

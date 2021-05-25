@@ -1,8 +1,8 @@
-use actix_web::{web, HttpResponse, Error, get, put, delete};
-use crate::services::jwt::JwtClaims;
 use crate::models::editor::Editor;
-use sqlx::PgPool;
+use crate::services::jwt::JwtClaims;
 use crate::services::twitch::requests::get_users;
+use actix_web::{delete, get, put, web, Error, HttpResponse};
+use sqlx::PgPool;
 
 #[get("")]
 async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
@@ -11,33 +11,44 @@ async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<Ht
 
     if editors.is_empty() {
         let data: Vec<String> = vec![];
-        return Ok(HttpResponse::Ok().json(&data))
+        return Ok(HttpResponse::Ok().json(&data));
     }
 
     Ok(HttpResponse::Ok().json(get_users(editors, &token).await?))
 }
 
 #[get("/broadcasters")]
-async fn get_broadcasters(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
+async fn get_broadcasters(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, Error> {
     let token = claims.get_user(&pool).await?.into();
     let broadcasters = Editor::get_broadcasters(claims.user_id(), &pool).await?;
 
     if broadcasters.is_empty() {
         let data: Vec<String> = vec![];
-        return Ok(HttpResponse::Ok().json(&data))
+        return Ok(HttpResponse::Ok().json(&data));
     }
 
     Ok(HttpResponse::Ok().json(get_users(broadcasters, &token).await?))
 }
 
 #[put("/{editor_name}")]
-async fn add_editor(claims: JwtClaims, pool: web::Data<PgPool>, editor: web::Path<String>) -> Result<HttpResponse, Error> {
+async fn add_editor(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    editor: web::Path<String>,
+) -> Result<HttpResponse, Error> {
     Editor::add_editor(claims.user_id(), &editor, &pool).await?;
     Ok(HttpResponse::Ok().finish())
 }
 
 #[delete("/{editor_name}")]
-async fn delete_editor(claims: JwtClaims, pool: web::Data<PgPool>, editor: web::Path<String>) -> Result<HttpResponse, Error> {
+async fn delete_editor(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    editor: web::Path<String>,
+) -> Result<HttpResponse, Error> {
     Editor::delete_editor(claims.user_id(), &editor, &pool).await?;
     Ok(HttpResponse::Ok().finish())
 }

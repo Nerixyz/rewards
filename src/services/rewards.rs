@@ -1,14 +1,14 @@
-use twitch_api2::eventsub::NotificationPayload;
-use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
+use crate::actors::irc_actor::IrcActor;
+use crate::actors::messages::irc_messages::{EmoteOnlyMessage, SubOnlyMessage, TimeoutMessage};
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
-use sqlx::PgPool;
 use actix::Addr;
-use crate::actors::irc_actor::IrcActor;
 use anyhow::Error as AnyError;
 use regex::Regex;
+use sqlx::PgPool;
 use std::sync::Arc;
-use crate::actors::messages::irc_messages::{TimeoutMessage, SubOnlyMessage, EmoteOnlyMessage};
+use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
+use twitch_api2::eventsub::NotificationPayload;
 
 /// This doesn't update the reward-redemption on twitch!
 pub async fn execute_reward(
@@ -26,22 +26,25 @@ pub async fn execute_reward(
             irc.send(TimeoutMessage {
                 user,
                 duration,
-                broadcaster: broadcaster.name
-            }).await??;
-        },
+                broadcaster: broadcaster.name,
+            })
+            .await??;
+        }
         RewardData::EmoteOnly(duration) => {
             let duration = humantime::parse_duration(&duration)?;
             irc.send(EmoteOnlyMessage {
                 duration,
-                broadcaster: broadcaster.name
-            }).await?;
-        },
+                broadcaster: broadcaster.name,
+            })
+            .await?;
+        }
         RewardData::SubOnly(duration) => {
             let duration = humantime::parse_duration(&duration)?;
             irc.send(SubOnlyMessage {
                 duration,
-                broadcaster: broadcaster.name
-            }).await?;
+                broadcaster: broadcaster.name,
+            })
+            .await?;
         }
     }
     Ok(())

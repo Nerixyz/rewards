@@ -1,4 +1,4 @@
-use actix_web::{error, Error, http::StatusCode};
+use actix_web::{error, http::StatusCode, Error};
 use derive_more::Error;
 use serde::Serialize;
 use std::fmt::{Display, Formatter};
@@ -127,5 +127,5 @@ pub fn to_response_error(e: ClientRequestError<reqwest::Error>) -> Error {
         },
         ClientRequestError::Custom(e) => ErrorResponse::new(e.to_string()),
     }
-        .into()
+    .into()
 }

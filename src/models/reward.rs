@@ -1,8 +1,8 @@
-use sqlx::{FromRow, PgPool};
+use crate::services::sql::SqlError;
+use actix_web::{HttpRequest, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
-use actix_web::{Responder, HttpRequest, HttpResponse};
-use crate::services::sql::SqlError;
+use sqlx::{FromRow, PgPool};
 use twitch_api2::helix::points::CreateCustomRewardResponse;
 
 #[derive(Serialize, Deserialize, FromRow)]
@@ -17,7 +17,7 @@ pub struct Reward {
 pub enum RewardData {
     Timeout(String),
     SubOnly(String),
-    EmoteOnly(String)
+    EmoteOnly(String),
 }
 
 impl Responder for Reward {
@@ -31,32 +31,40 @@ impl Reward {
         Self {
             user_id: res.broadcaster_id.clone(),
             data: Json(data),
-            id: res.id.clone()
+            id: res.id.clone(),
         }
     }
 
     pub async fn get_by_id(id: &str, pool: &PgPool) -> Result<Reward, SqlError> {
         // language=PostgreSQL
-        let reward: Self = sqlx::query_as!(Reward, r#"
+        let reward: Self = sqlx::query_as!(
+            Reward,
+            r#"
             SELECT id, user_id, data as "data: Json<RewardData>"
             FROM rewards
             WHERE id = $1
-            "#, id)
-            .fetch_one(pool)
-            .await?;
+            "#,
+            id
+        )
+        .fetch_one(pool)
+        .await?;
 
         Ok(reward)
     }
 
     pub async fn get_all_for_user(user_id: &str, pool: &PgPool) -> Result<Vec<Reward>, SqlError> {
         // language=PostgreSQL
-        let rewards: Vec<Self> = sqlx::query_as!(Reward, r#"
+        let rewards: Vec<Self> = sqlx::query_as!(
+            Reward,
+            r#"
             SELECT id, user_id, data as "data: Json<RewardData>"
             FROM rewards
             WHERE user_id = $1
-            "#, user_id)
-            .fetch_all(pool)
-            .await?;
+            "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
 
         Ok(rewards)
     }
@@ -64,9 +72,14 @@ impl Reward {
     pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
-        let _ = sqlx::query!("INSERT INTO rewards (id, user_id, data) VALUES ($1, $2, $3)", self.id, self.user_id, Json(self.data.clone()) as _)
-            .execute(&mut tx)
-            .await?;
+        let _ = sqlx::query!(
+            "INSERT INTO rewards (id, user_id, data) VALUES ($1, $2, $3)",
+            self.id,
+            self.user_id,
+            Json(self.data.clone()) as _
+        )
+        .execute(&mut tx)
+        .await?;
 
         tx.commit().await?;
         Ok(())
@@ -75,9 +88,13 @@ impl Reward {
     pub async fn update(&self, pool: &PgPool) -> Result<(), SqlError> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
-        let _ = sqlx::query!("UPDATE rewards SET data=$2 WHERE id=$1", self.id, Json(self.data.clone()) as _)
-            .execute(&mut tx)
-            .await?;
+        let _ = sqlx::query!(
+            "UPDATE rewards SET data=$2 WHERE id=$1",
+            self.id,
+            Json(self.data.clone()) as _
+        )
+        .execute(&mut tx)
+        .await?;
 
         tx.commit().await?;
         Ok(())

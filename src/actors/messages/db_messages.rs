@@ -1,6 +1,6 @@
-use twitch_irc::login::UserAccessToken;
-use actix::{Message};
 use crate::services::sql::SqlError;
+use actix::Message;
+use twitch_irc::login::UserAccessToken;
 
 #[derive(Message)]
 #[rtype(result = "Result<(), SqlError>")]

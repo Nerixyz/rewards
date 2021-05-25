@@ -1,19 +1,17 @@
-use sqlx::PgPool;
-use actix::{Actor, Context, Handler, ResponseFuture};
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use twitch_irc::login::UserAccessToken;
-use crate::services::sql::SqlError;
 use crate::models::config::ConfigEntry;
+use crate::services::sql::SqlError;
+use actix::{Actor, Context, Handler, ResponseFuture};
+use sqlx::PgPool;
+use twitch_irc::login::UserAccessToken;
 
 pub struct DbActor {
-    pool: PgPool
+    pool: PgPool,
 }
 
 impl DbActor {
     pub fn new(pool: PgPool) -> Self {
-        Self {
-            pool
-        }
+        Self { pool }
     }
 }
 
@@ -26,9 +24,7 @@ impl Handler<GetToken> for DbActor {
 
     fn handle(&mut self, _msg: GetToken, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
-        Box::pin(async move {
-            ConfigEntry::get_user_token(&pool).await
-        })
+        Box::pin(async move { ConfigEntry::get_user_token(&pool).await })
     }
 }
 
@@ -37,8 +33,6 @@ impl Handler<SaveToken> for DbActor {
 
     fn handle(&mut self, msg: SaveToken, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
-        Box::pin(async move {
-            ConfigEntry::update_user_token(&pool, msg.0).await
-        })
+        Box::pin(async move { ConfigEntry::update_user_token(&pool, msg.0).await })
     }
 }
