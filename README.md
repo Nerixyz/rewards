@@ -50,6 +50,7 @@ This may be managed in the issues.
 </details>
 
 * [ ] Check TODOs throughout the code
+* [ ] Get rid of cloning everywhere
 
 ### P2
 * [ ] IRC Bot
