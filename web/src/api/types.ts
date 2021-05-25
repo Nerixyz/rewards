@@ -86,6 +86,8 @@ export type RewardData<K extends keyof RewardDataMap = keyof RewardDataMap> = { 
 
 export interface RewardDataMap {
   Timeout: string;
+  SubOnly: string;
+  EmoteOnly: string;
 }
 
 export interface InternalCustomReward {
