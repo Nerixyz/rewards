@@ -1,5 +1,5 @@
 <template>
-  <Listbox v-model='modelValue'>
+  <Listbox :model-value='modelValue' @update:model-value='onUpdate'>
     <div class='relative m-1 min-w-10rem w-full outline-none'>
     <ListboxButton class='relative w-full py-1 pl-3 pr-5 text-left bg-transparent border-2 border-red rounded-md shadow-md outline-none focus:outline-none'>
       <span class='block truncate'>{{modelValue}}</span>
@@ -15,7 +15,7 @@
         leave-to-class="opacity-0 scale-75"
       >
       <ListboxOptions class='absolute origin-top w-full mt-1 text-base bg-gray-500 rounded-md shadow-lg max-h-60'>
-        <ListboxOption v-for='option of options' :key='option.value' :value='option' v-slot="{ active, selected }">
+        <ListboxOption v-for='option of options' :key='option.value' :value='option.value' v-slot="{ active, selected }">
           <li :class="[active ? 'text-red bg-grey-500' : 'bg-grey-400', 'cursor-pointer select-none relative py-1 pl-5 pr-4']">
             <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">{{option.display}}</span>
           </li>
@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, toRefs, watch } from 'vue';
+import { defineComponent, PropType, Ref, toRefs, watch } from 'vue';
 import ChevronDown from '../icons/ChevronDown.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 
@@ -36,25 +36,24 @@ export interface CDropdownOption {
   value: string;
 }
 
-export default defineComponent<{ selected: string; options: CDropdownOption[] }>({
+export default defineComponent({
   name: 'CDropdown',
   components: { ChevronDown, Listbox, ListboxOptions, ListboxOption, ListboxButton },
   props: {
-    modelValue: String,
-    options: Array,
+    modelValue: {
+      type: String,
+      required: true,
+    },
+    options: {
+      type: Array as PropType<CDropdownOption[]>,
+      required: true,
+    },
   },
   emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const {modelValue} = toRefs(props);
-
-    const onUpdate = (v: string) => {
-      emit('update:modelValue', v);
-    };
-    watch(modelValue, onUpdate);
-
-    return { onUpdate, modelValue };
-  },
+  methods: {
+    onUpdate(value: string) {
+      this.$emit('update:modelValue', value);
+    }
+  }
 });
 </script>
-
-<style scoped></style>

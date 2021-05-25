@@ -38,8 +38,14 @@ import { defineComponent } from 'vue';
 export default defineComponent({
   name: 'CButton',
   props: {
-    disabled: Boolean,
-    href: String,
+    disabled: {
+      type: Boolean,
+      required: false,
+    },
+    href: {
+      type: String,
+      required: false,
+    },
   },
 });
 </script>

@@ -51,18 +51,33 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, toRefs } from 'vue';
+import { defineComponent } from 'vue';
 import { TransitionRoot } from '@headlessui/vue';
 import WarnIcon from '../icons/WarnIcon.vue';
 
 export default defineComponent({
   name: 'TextField',
   props: {
-    placeholder: String,
-    modelValue: String,
-    disabled: Boolean,
-    label: String,
-    warn: Boolean,
+    placeholder: {
+      type: String,
+      required: false,
+    },
+    modelValue: {
+      type: String,
+      required: false,
+    },
+    disabled: {
+      type: Boolean,
+      required: false,
+    },
+    label: {
+      type: String,
+      required: true,
+    },
+    warn: {
+      type: Boolean,
+      required: false,
+    },
   },
   components: { WarnIcon, TransitionRoot },
   emits: ['update:modelValue'],
@@ -76,5 +91,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped></style>

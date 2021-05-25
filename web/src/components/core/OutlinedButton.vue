@@ -36,7 +36,10 @@ import { defineComponent } from 'vue';
 export default defineComponent({
   name: 'OutlinedButton',
   props: {
-    disabled: Boolean,
+    disabled: {
+      type: Boolean,
+      required: false,
+    },
   },
 });
 </script>

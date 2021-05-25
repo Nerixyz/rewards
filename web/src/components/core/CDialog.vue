@@ -28,7 +28,7 @@
             leave="duration-200 ease-hyper-in"
             leave-from="opacity-100 scale-100"
             leave-to="opacity-0 scale-75"
-            @after-leave='onClose'
+            @after-leave='onDialogClose'
           >
             <div
               class="
@@ -71,16 +71,25 @@ import { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverl
 export default defineComponent({
   name: 'CDialog',
   props: {
-    open: Boolean,
-    title: String,
-    subtitle: String,
+    open: {
+      type: Boolean,
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    subtitle: {
+      type: String,
+      required: false,
+    },
   },
-  emits: ['update:open', 'closed'],
+  emits: ['update:open', 'dialogClosed'],
   components: { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverlay, DialogTitle },
   methods: {
-    onClose() {
-      this.$emit('closed');
+    onDialogClose() {
+      this.$emit('dialogClosed', true);
     }
-  }
+  },
 });
 </script>
