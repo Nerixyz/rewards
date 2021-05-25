@@ -60,6 +60,10 @@ This may be managed in the issues.
 * [ ] Reduce cloning, consider editing the twitch library
 * [ ] Get rid of uses of `actix_web::Error` where it's not useful
 
+### P3
+
+* [ ] Use Vuetify once it's out
+
 ## Possible Rewards
 
 ### P1
@@ -80,3 +84,28 @@ All endpoints are on `/api/v1`. All endpoints (except `/auth/twich-auth-url` and
 
 Authentication is done through the `Authorization` header 
 that has to be set to `Bearer { cookie(auth_token) }`.
+
+# Web Interface
+
+## Editors and Broadcasters
+
+A broadcaster can add multiple editors who then can manage the rewards.
+This is done in the `Editors`-tab. 
+
+**Important:** A broadcaster can **only** add editors that have registered on this app (like on BTTV).
+
+The editors can access the rewards through the `Broadcasters` tab.
+
+## Rewards
+
+You can edit the rewards in the `Rewards` tab.
+
+In the dialog there are two sides. 
+
+On the left side you can edit Twitch specific parameters like the reward title or the cooldown.
+The cooldown can be specified like this: `1h`, `3.5d`, `3m` or `123` (seconds).
+
+On the right side you can edit the specific action done when this reward is redeemed.
+
+Some rewards expose a `Duration` configuration.
+Here, you can specify the duration like this: `1hour 3min 4ms`. For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_duration.html).
