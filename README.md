@@ -10,9 +10,9 @@ This may be managed in the issues.
 
 ### P1
 
-* [ ] WebInterface
-* [ ] EventSub
-* [ ] IRC
+* [x] WebInterface
+* [x] EventSub
+* [x] IRC
 * [ ] Verify index.html
 * [ ] Use migrations  
 * [ ] Document setup
@@ -62,9 +62,9 @@ This may be managed in the issues.
 ## Possible Rewards
 
 ### P1
-* [ ] Timeout user (for x-seconds)
-* [ ] Enable SubMode (for x-seconds)
-* [ ] Enable EmoteOnly (for x-seconds)
+* [x] Timeout user (for x-seconds)
+* [x] Enable SubMode (for x-seconds)
+* [x] Enable EmoteOnly (for x-seconds)
   
 ### P2
 * [ ] Change FFZ Emote (requires the bot to be an **editor**)
