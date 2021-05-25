@@ -56,7 +56,7 @@ pub async fn update_reward(
 }
 
 pub async fn delete_reward(user_id: &str, id: String, token: &UserToken) -> HelixResult<()> {
-    let response: DeleteCustomReward = RHelixClient::default()
+    RHelixClient::default()
         .req_delete(
             DeleteCustomRewardRequest::builder()
                 .broadcaster_id(user_id)
@@ -66,10 +66,7 @@ pub async fn delete_reward(user_id: &str, id: String, token: &UserToken) -> Heli
         )
         .await?;
 
-    match response {
-        DeleteCustomReward::Success => Ok(()),
-        _ => Err("".into()),
-    }
+    Ok(())
 }
 
 pub async fn get_rewards_for_id(

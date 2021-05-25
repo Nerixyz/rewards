@@ -18,17 +18,14 @@ use twitch_api2::{
 };
 
 pub async fn delete_subscription(token: &AppAccessToken, id: String) -> HelixResult<()> {
-    let response: DeleteEventSubSubscription = RHelixClient::default()
+    RHelixClient::default()
         .req_delete(
             DeleteEventSubSubscriptionRequest::builder().id(id).build(),
             token,
         )
         .await?;
 
-    match response {
-        DeleteEventSubSubscription::Success => Ok(()),
-        _ => Err("".into()),
-    }
+    Ok(())
 }
 
 pub async fn subscribe_to_rewards(

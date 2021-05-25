@@ -20,7 +20,7 @@ serde_json = "1.0"
 futures-util = "0.3.15"
 cookie = "0.15"
 time = "0.2.26"
-twitch_api2 = { git = "https://github.com/Nerixyz/twitch_api2.git", rev = "bcc14e2", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client"] }
+twitch_api2 = { git = "https://github.com/Nerixyz/twitch_api2.git", rev = "ad79e36", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client"] }
 reqwest = "0.11.3"
 derive_more = "0.99.14"
 serde_qs = "0.8.3"
