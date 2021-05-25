@@ -1,6 +1,6 @@
 import { InputReward, Reward, RewardData } from './types';
 import { parseDuration } from '../utilities';
-import { defaultNewReward } from './rewards-data';
+import { defaultNewReward, StaticRewardData } from './rewards-data';
 
 export interface VRewardModel {
   title: string;
@@ -9,7 +9,6 @@ export interface VRewardModel {
   usesPerStream: string;
   usesPerUser: string;
   cooldown: string;
-  inputRequired: boolean;
   color: string;
 
   action: RewardData
@@ -23,24 +22,29 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel) {
     model.usesPerStream = reward.twitch.max_per_stream_setting?.max_per_stream.toString() ?? '';
     model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
     model.prompt = reward.twitch.prompt;
-    model.inputRequired = reward.twitch.is_user_input_required;
     model.color = reward.twitch.background_color;
     model.action = reward.data;
 }
 
 export function toInputReward(vmodel: VRewardModel): InputReward {
+  const cooldown = parseDuration(vmodel.cooldown) || 0;
   return {
     twitch: {
       title: vmodel.title,
       cost: Number(vmodel.cost),
-      global_cooldown_seconds: parseDuration(vmodel.cooldown) ?? undefined,
-      is_global_cooldown_enabled: !!vmodel.cooldown,
-      max_per_user_per_stream: Number(vmodel.usesPerUser) || undefined,
-      is_max_per_user_per_stream_enabled: !!vmodel.usesPerUser,
-      max_per_stream: Number(vmodel.usesPerStream) || undefined,
-      is_max_per_stream_enabled: !!vmodel.usesPerStream,
       prompt: vmodel.prompt,
-      is_user_input_required: vmodel.inputRequired,
+
+      global_cooldown_seconds: cooldown,
+      is_global_cooldown_enabled: !!cooldown,
+
+      max_per_user_per_stream: Number(vmodel.usesPerUser),
+      is_max_per_user_per_stream_enabled: !!Number(vmodel.usesPerUser),
+
+      max_per_stream: Number(vmodel.usesPerStream),
+      is_max_per_stream_enabled: !!Number(vmodel.usesPerStream),
+
+      is_user_input_required: StaticRewardData[vmodel.action.type].inputRequired,
+
       should_redemptions_skip_request_queue: false,
       background_color: vmodel.color || undefined,
     },
