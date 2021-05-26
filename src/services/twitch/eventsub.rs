@@ -5,8 +5,7 @@ use twitch_api2::{
     helix::{
         eventsub::{
             CreateEventSubSubscription, CreateEventSubSubscriptionBody,
-            CreateEventSubSubscriptionRequest, DeleteEventSubSubscription,
-            DeleteEventSubSubscriptionRequest,
+            CreateEventSubSubscriptionRequest, DeleteEventSubSubscriptionRequest,
         },
         points::{
             CustomRewardRedemptionStatus, UpdateRedemptionStatusBody,

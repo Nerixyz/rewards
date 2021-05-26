@@ -88,6 +88,9 @@ impl From<ClientRequestError<reqwest::Error>> for ErrorResponse {
                 HelixRequestPutError::DeserializeError(_, _, _, _) => {
                     ErrorResponse::new("DeserializeError".to_string())
                 }
+                HelixRequestPutError::InvalidResponse { status, reason, .. } => {
+                    ErrorResponse::with_status(reason.to_string(), status)
+                }
             },
             ClientRequestError::HelixRequestPostError(e) => match e {
                 HelixRequestPostError::Error {
@@ -123,6 +126,9 @@ impl From<ClientRequestError<reqwest::Error>> for ErrorResponse {
                 } => ErrorResponse::with_status(message, status),
                 HelixRequestDeleteError::Utf8Error(_, _, _) => {
                     ErrorResponse::new("UTF8-Error".to_string())
+                },
+                HelixRequestDeleteError::InvalidResponse { status, reason, .. } => {
+                    ErrorResponse::with_status(reason.to_string(), status)
                 }
             },
             ClientRequestError::Custom(e) => ErrorResponse::new(e.to_string()),

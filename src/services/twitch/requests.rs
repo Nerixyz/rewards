@@ -4,8 +4,8 @@ use twitch_api2::{
         points::{
             update_custom_reward::UpdateCustomReward, CreateCustomRewardBody,
             CreateCustomRewardRequest, CreateCustomRewardResponse, CustomReward,
-            DeleteCustomReward, DeleteCustomRewardRequest, GetCustomRewardRequest,
-            UpdateCustomRewardBody, UpdateCustomRewardRequest,
+            DeleteCustomRewardRequest, GetCustomRewardRequest, UpdateCustomRewardBody,
+            UpdateCustomRewardRequest,
         },
         users::{GetUsersRequest, User},
         Response,
