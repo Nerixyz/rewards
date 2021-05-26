@@ -8,6 +8,7 @@ use crate::repositories::init_repositories;
 use crate::services::eventsub::{clear_invalid_rewards, register_eventsub_for_all_unregistered};
 use actix::Actor;
 use actix_files::NamedFile;
+use actix_web::middleware::DefaultHeaders;
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use sqlx::PgPool;
@@ -60,6 +61,7 @@ async fn main() -> std::io::Result<()> {
             .data(pool.clone())
             .data(irc_actor.clone())
             .app_data(app_access_token.clone())
+            .wrap(get_default_headers())
             .service(web::scope("/api/v1").configure(init_repositories))
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(
@@ -93,4 +95,23 @@ async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
         ],
     )
     .await?)
+}
+
+fn get_default_headers() -> DefaultHeaders {
+    let headers = DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"));
+
+    if cfg!(debug_assertions) {
+        headers
+            .header("Access-Control-Allow-Origin", "*")
+            .header(
+                "Access-Control-Allow-Methods",
+                "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            )
+            .header(
+                "Access-Control-Allow-Headers",
+                "Authorization, Content-Type",
+            )
+    } else {
+        headers
+    }
 }
