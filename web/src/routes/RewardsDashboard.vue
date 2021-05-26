@@ -50,7 +50,7 @@
       </div>
 
       <AddOrEditRewardDialog
-        v-model="addEditDialogOpen"
+        v-model:open="addEditDialogOpen"
         :broadcaster-id="broadcasterId"
         :reward-data="editRewardData"
         @added="rewardAdded"
