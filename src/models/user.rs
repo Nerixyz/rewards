@@ -164,7 +164,7 @@ impl Into<UserToken> for User {
             RefreshToken::new(self.refresh_token),
             ClientId::new(TWITCH_CLIENT_ID.to_string()),
             ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
-            String::new(),
+            self.name,
             self.id,
             None,
             // this isn't used anywhere
