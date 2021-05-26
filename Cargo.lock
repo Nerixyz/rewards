@@ -2599,7 +2599,7 @@ dependencies = [
 [[package]]
 name = "twitch_api2"
 version = "0.5.0"
-source = "git+https://github.com/Nerixyz/twitch_api2.git?rev=ad79e36#ad79e36ab880adeb1a95599c9dd9406e960e737c"
+source = "git+https://github.com/Nerixyz/twitch_api2.git?rev=a98141f#a98141fd347fb249a4292fa1e4c11280ecab5a78"
 dependencies = [
  "async-trait",
  "displaydoc",
@@ -2620,7 +2620,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.5.0"
-source = "git+https://github.com/Nerixyz/twitch_api2.git?rev=ad79e36#ad79e36ab880adeb1a95599c9dd9406e960e737c"
+source = "git+https://github.com/Nerixyz/twitch_api2.git?rev=a98141f#a98141fd347fb249a4292fa1e4c11280ecab5a78"
 dependencies = [
  "async-trait",
  "displaydoc",
