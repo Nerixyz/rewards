@@ -70,6 +70,7 @@ This may be managed in the issues.
 * [ ] Pass the auth token via a hash (like twitch does it).
 * [ ] Reduce cloning, consider editing the twitch library
 * [ ] Get rid of uses of `actix_web::Error` where it's not useful
+* [ ] Handle revoke-token eventsub event
 
 ### P3
 
