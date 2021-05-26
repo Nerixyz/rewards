@@ -42,6 +42,7 @@ export default defineComponent({
     href: {
       type: String,
       required: false,
+      default: undefined,
     },
   },
 });

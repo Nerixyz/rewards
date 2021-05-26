@@ -15,12 +15,12 @@
     <form v-else @submit.prevent="onSubmit">
       <div class="flex gap-4 min-w-40vw">
         <div class="flex flex-col gap-3 flex-grow w-full">
-          <TextField label="Title" v-model="rewardState.title" :warn="v$.title.$invalid" />
-          <TextField label="Cost" v-model="rewardState.cost" :warn="v$.cost.$invalid" />
-          <TextField label="Prompt" v-model="rewardState.prompt" :warn="v$.prompt.$invalid" />
-          <TextField label="Uses per Stream" v-model="rewardState.usesPerStream" :warn="v$.usesPerStream.$invalid" />
-          <TextField label="Uses per User" v-model="rewardState.usesPerUser" :warn="v$.usesPerUser.$invalid" />
-          <TextField label="Cooldown" v-model="rewardState.cooldown" :warn="v$.cooldown.$invalid" />
+          <TextField v-model="rewardState.title" label="Title" :warn="v$.title.$invalid" />
+          <TextField v-model="rewardState.cost" label="Cost" :warn="v$.cost.$invalid" />
+          <TextField v-model="rewardState.prompt" label="Prompt" :warn="v$.prompt.$invalid" />
+          <TextField v-model="rewardState.usesPerStream" label="Uses per Stream" :warn="v$.usesPerStream.$invalid" />
+          <TextField v-model="rewardState.usesPerUser" label="Uses per User" :warn="v$.usesPerUser.$invalid" />
+          <TextField v-model="rewardState.cooldown" label="Cooldown" :warn="v$.cooldown.$invalid" />
         </div>
         <div class="flex-grow w-full">
           <CDropdown v-model="rewardState.action.type" :options="RewardTypes" class="z-30 pb-5" />

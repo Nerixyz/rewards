@@ -35,8 +35,8 @@
           <ListboxOption
             v-for="option of options"
             :key="option.value"
-            :value="option.value"
             v-slot="{ active, selected }"
+            :value="option.value"
           >
             <li
               :class="[

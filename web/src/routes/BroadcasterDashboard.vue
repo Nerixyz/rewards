@@ -16,7 +16,7 @@
             class="w-10 h-10 rounded-full"
           />
           <h3>{{ broadcaster.login }}</h3>
-          <CButton @click="goToBroadcaster(broadcaster.id)" :disabled="loading" class="ml-auto">Edit Rewards</CButton>
+          <CButton :disabled="loading" class="ml-auto" @click="goToBroadcaster(broadcaster.id)">Edit Rewards</CButton>
         </div>
       </div>
       <div v-else>

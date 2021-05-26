@@ -1,5 +1,8 @@
 import { ref } from 'vue';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyObject = Record<string, any>;
+
 /**
  * The foundation for the ApiClient. It's just to separate the core functions from the specific API functions.
  */
@@ -18,7 +21,7 @@ export class BaseClient {
     return this.baseRequest(segments.join('/'), {});
   }
 
-  protected put<T>(data: Record<string, unknown> | undefined, ...segments: string[]): Promise<T> {
+  protected put<T>(data: AnyObject | undefined, ...segments: string[]): Promise<T> {
     return this.baseRequest(segments.join('/'), {
       method: 'PUT',
       body: data && JSON.stringify(data),
@@ -26,7 +29,7 @@ export class BaseClient {
     });
   }
 
-  protected patch<T>(data: Record<string, unknown>, ...segments: string[]): Promise<T> {
+  protected patch<T>(data: AnyObject, ...segments: string[]): Promise<T> {
     return this.baseRequest(segments.join('/'), {
       method: 'PATCH',
       body: JSON.stringify(data),

@@ -76,6 +76,7 @@ import {
 
 export default defineComponent({
   name: 'CDialog',
+  components: { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverlay, DialogTitle },
   props: {
     open: {
       type: Boolean,
@@ -88,10 +89,10 @@ export default defineComponent({
     subtitle: {
       type: String,
       required: false,
+      default: undefined,
     },
   },
   emits: ['update:open', 'dialogClosed'],
-  components: { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverlay, DialogTitle },
   methods: {
     onDialogClose() {
       this.$emit('dialogClosed', true);

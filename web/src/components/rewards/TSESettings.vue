@@ -1,5 +1,5 @@
 <template>
-  <TextField label="Duration" v-model="duration" />
+  <TextField v-model="duration" label="Duration" />
 </template>
 
 <script lang="ts">

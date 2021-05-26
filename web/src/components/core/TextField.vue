@@ -47,8 +47,8 @@
     <input
       :value="modelValue"
       :disabled="disabled"
-      @input="onInput"
       class="bg-transparent w-full h-full px-3 py-2 border-none mt-2 outline-none"
+      @input="onInput"
     />
   </div>
 </template>
@@ -59,14 +59,17 @@ import WarnIcon from '../icons/WarnIcon.vue';
 
 export default defineComponent({
   name: 'TextField',
+  components: { WarnIcon },
   props: {
     placeholder: {
       type: String,
       required: false,
+      default: '',
     },
     modelValue: {
       type: String,
       required: false,
+      default: '',
     },
     disabled: {
       type: Boolean,
@@ -81,7 +84,6 @@ export default defineComponent({
       required: false,
     },
   },
-  components: { WarnIcon },
   emits: ['update:modelValue'],
   setup(_props, { emit }) {
     const onInput = (e: Event) => {

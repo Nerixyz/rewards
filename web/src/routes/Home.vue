@@ -2,7 +2,7 @@
   <div class="flex flex-col justify-center items-center w-full h-full gap-4">
     <Heading>Some cool heading...</Heading>
     <SubHeading>An interesting description</SubHeading>
-    <CButton :href="url" v-if="!auth"> <TwitchIcon />Login with twitch </CButton>
+    <CButton v-if="!auth" :href="url"> <TwitchIcon />Login with twitch </CButton>
   </div>
 </template>
 

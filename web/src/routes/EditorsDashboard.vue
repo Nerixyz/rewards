@@ -8,9 +8,9 @@
     </div>
 
     <div v-else class="flex gap-10">
-      <form @submit="addEditor" class="w-1/6 min-w-10rem">
+      <form class="w-1/6 min-w-10rem" @submit="addEditor">
         <h3 class="mb-3">Add an editor</h3>
-        <TextField label="Name" v-model="editorAddName" :disabled="loading" />
+        <TextField v-model="editorAddName" label="Name" :disabled="loading" />
       </form>
       <div class="flex-grow">
         <div v-if="!editors.length">
@@ -26,14 +26,14 @@
             alt="ModTime"
           />
         </div>
-        <div v-else v-for="editor of editors" :key="editor.id" class="flex items-center gap-4">
+        <div v-for="editor of editors" v-else :key="editor.id" class="flex items-center gap-4">
           <img
             :src="editor.profile_image_url"
             :alt="`Profile image of ${editor.login}`"
             class="w-10 h-10 rounded-full"
           />
           <h3>{{ editor.login }}</h3>
-          <OutlinedButton @click="removeEditor(editor.login)" :disabled="loading" class="ml-auto"
+          <OutlinedButton :disabled="loading" class="ml-auto" @click="removeEditor(editor.login)"
             >Remove</OutlinedButton
           >
         </div>
