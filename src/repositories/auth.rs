@@ -82,6 +82,8 @@ async fn twitch_callback(
     // register and save the id into the database
     register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool).await?;
 
+    log::info!("AUTH: Registered {}", user.name);
+
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
 
@@ -155,6 +157,8 @@ async fn revoke(
             println!("Eventsub unregister error: {}", e);
         }
     }
+    log::info!("AUTH: Revoked {}", user_name);
+
     irc.do_send(PartMessage(user_name));
 
     // here we can return the error as there's no work afterwards

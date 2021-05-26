@@ -8,14 +8,17 @@ use crate::repositories::init_repositories;
 use crate::services::eventsub::{clear_invalid_rewards, register_eventsub_for_all_unregistered};
 use actix::Actor;
 use actix_files::NamedFile;
-use actix_web::middleware::DefaultHeaders;
+use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
-use sqlx::PgPool;
+use sqlx::{PgPool, ConnectOptions};
 use tokio::sync::Mutex;
 use twitch_api2::helix::Scope;
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
+use sqlx::postgres::PgConnectOptions;
+use std::str::FromStr;
+use log::LevelFilter;
 
 mod actors;
 mod constants;
@@ -31,9 +34,12 @@ async fn web_index() -> std::io::Result<NamedFile> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let pool = PgPool::connect(DATABASE_URL)
-        .await
-        .expect("Could not connect to database");
+    dotenv::dotenv().ok();
+    env_logger::init();
+
+    let mut pool_options = PgConnectOptions::from_str(DATABASE_URL).expect("couldn't read database url");
+    pool_options.log_statements(LevelFilter::Debug);
+    let pool = PgPool::connect_with(pool_options).await.expect("Could not connect to database");
 
     let db_actor = DbActor::new(pool.clone()).start();
     let irc_actor = IrcActor::new(db_actor.clone()).start();
@@ -62,6 +68,7 @@ async fn main() -> std::io::Result<()> {
             .data(irc_actor.clone())
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
+            .wrap(Logger::default())
             .service(web::scope("/api/v1").configure(init_repositories))
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(

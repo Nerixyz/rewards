@@ -21,10 +21,15 @@ async fn reward_redemption(
     payload: web::Json<eventsub::Payload>,
 ) -> Result<HttpResponse, Error> {
     match payload.into_inner() {
-        Payload::VerificationRequest(rq) => Ok(HttpResponse::Ok().body(rq.challenge)),
+        Payload::VerificationRequest(rq) => {
+            log::info!("ES: verification: {:?}", rq);
+            Ok(HttpResponse::Ok().body(rq.challenge))
+        }
         Payload::ChannelPointsCustomRewardRedemptionAddV1(redemption) => {
             // main path
             let user = User::get_by_id(&redemption.event.broadcaster_user_id, &pool).await?;
+
+            log::info!("ES: redemption: {:?}", redemption);
 
             let pool = pool.into_inner();
             let irc = irc.into_inner();
@@ -41,7 +46,7 @@ async fn reward_redemption(
                     let status = match execute_reward(redemption, reward, user, &*pool, irc).await {
                         Ok(_) => CustomRewardRedemptionStatus::Fulfilled,
                         Err(e) => {
-                            println!("Could not execute reward: {:?}", e);
+                            log::warn!("Could not execute reward: {:?}", e);
                             CustomRewardRedemptionStatus::Canceled
                         }
                     };
@@ -54,20 +59,24 @@ async fn reward_redemption(
                     )
                     .await
                     {
-                        println!("No shot, couldn't update reward redemption: {}", e);
-                        // TODO: logging, better error handling
+                        log::warn!("ES: Couldn't update reward redemption: {}", e);
                     }
+                } else {
+                    log::warn!("ES: failed to get user or reward: userId: {}, rewardID: {}", redemption.event.broadcaster_user_id, redemption.event.reward.id);
                 }
-                // TODO: logging
             });
 
             Ok(HttpResponse::NoContent().finish())
         }
-        Payload::UserAuthorizationRevokeV1(_) => {
+        Payload::UserAuthorizationRevokeV1(re) => {
+            log::warn!("ES: auth revoke: {:?}", re);
             // TODO
             Ok(HttpResponse::NoContent().finish())
         }
-        _ => Ok(HttpResponse::NotFound().body("I can't handle that!")),
+        other => {
+            log::warn!("ES: unknown payload: {:?}", other);
+            Ok(HttpResponse::NotFound().body("I can't handle that!"))
+        },
     }
 }
 
