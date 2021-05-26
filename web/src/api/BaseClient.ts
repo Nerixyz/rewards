@@ -51,14 +51,14 @@ export class BaseClient {
 
       if (isOk(response.status)) return json;
 
-      // if(response.status === 401) this.logout(); TODO
+      if(response.status === 401) this.logout();
       throw new Error(json.error ?? 'An error occurred.');
     } else {
       const text = await response.text();
 
       if (isOk(response.status)) return text as any as T;
 
-      // if(response.status === 401) this.logout(); TODO
+      if(response.status === 401) this.logout();
       throw new Error(text ?? 'An error occurred.');
     }
   }
