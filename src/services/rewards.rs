@@ -1,5 +1,5 @@
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::{EmoteOnlyMessage, SubOnlyMessage, TimeoutMessage};
+use crate::actors::messages::irc_messages::{TimeoutMessage, TimedModeMessage, TimedMode};
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use actix::Addr;
@@ -19,33 +19,27 @@ pub async fn execute_reward(
     irc: Arc<Addr<IrcActor>>,
 ) -> Result<(), AnyError> {
     match reward.data.0 {
-        RewardData::Timeout(timeout) => {
-            let duration = humantime::parse_duration(&timeout)?;
-            let user = extract_username(&redemption.event.user_input)?;
-
+        RewardData::Timeout(timeout) =>
             irc.send(TimeoutMessage {
-                user,
-                duration,
+                user: extract_username(&redemption.event.user_input)?,
+                duration: humantime::parse_duration(&timeout)?,
                 broadcaster: broadcaster.name,
             })
-            .await??;
-        }
-        RewardData::EmoteOnly(duration) => {
-            let duration = humantime::parse_duration(&duration)?;
-            irc.send(EmoteOnlyMessage {
-                duration,
+            .await??,
+        RewardData::EmoteOnly(duration) =>
+            irc.send(TimedModeMessage {
+                duration: humantime::parse_duration(&duration)?,
                 broadcaster: broadcaster.name,
+                mode: TimedMode::Emote
             })
-            .await?;
-        }
-        RewardData::SubOnly(duration) => {
-            let duration = humantime::parse_duration(&duration)?;
-            irc.send(SubOnlyMessage {
-                duration,
+            .await?,
+        RewardData::SubOnly(duration) =>
+            irc.send(TimedModeMessage {
+                duration: humantime::parse_duration(&duration)?,
                 broadcaster: broadcaster.name,
+                mode: TimedMode::Sub
             })
-            .await?;
-        }
+            .await?
     }
     Ok(())
 }

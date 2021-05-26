@@ -2,6 +2,7 @@ use actix::Message;
 use anyhow::Error as AnyError;
 use std::time::Duration;
 use twitch_irc::message::PrivmsgMessage;
+use derive_more::{Display};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -25,14 +26,16 @@ pub struct TimeoutMessage {
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct SubOnlyMessage {
+pub struct TimedModeMessage {
+    pub mode: TimedMode,
     pub broadcaster: String,
     pub duration: Duration,
 }
 
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct EmoteOnlyMessage {
-    pub broadcaster: String,
-    pub duration: Duration,
+#[derive(Display)]
+pub enum TimedMode {
+    #[display(fmt = "emoteonly")]
+    Emote,
+    #[display(fmt = "subscribers")]
+    Sub,
 }

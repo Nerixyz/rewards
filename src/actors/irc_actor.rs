@@ -1,8 +1,6 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{
-    ChatMessage, EmoteOnlyMessage, JoinAllMessage, JoinMessage, SubOnlyMessage, TimeoutMessage,
-};
+use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, TimeoutMessage, TimedModeMessage};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
@@ -138,48 +136,25 @@ impl Handler<TimeoutMessage> for IrcActor {
         })
     }
 }
-// TODO: merge
-impl Handler<SubOnlyMessage> for IrcActor {
+
+impl Handler<TimedModeMessage> for IrcActor {
     type Result = ();
 
-    fn handle(&mut self, msg: SubOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         task::spawn(async move {
             if let Err(e) = client
-                .privmsg(msg.broadcaster.clone(), "/subscribers".to_string())
+                .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await
             {
-                println!("Could not enter subonly: {:?}", e);
+                println!("Could not enter {}: {:?}", msg.mode, e);
             }
             tokio::time::sleep(msg.duration).await;
             if let Err(e) = client
-                .privmsg(msg.broadcaster, "/subscribersoff".to_string())
+                .privmsg(msg.broadcaster, format!("/{}off", msg.mode))
                 .await
             {
-                println!("Could not leave subonly: {:?}", e);
-            }
-        });
-    }
-}
-
-impl Handler<EmoteOnlyMessage> for IrcActor {
-    type Result = ();
-
-    fn handle(&mut self, msg: EmoteOnlyMessage, _ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
-        task::spawn(async move {
-            if let Err(e) = client
-                .privmsg(msg.broadcaster.clone(), "/emoteonly".to_string())
-                .await
-            {
-                println!("Could not enter emoteonly: {:?}", e);
-            }
-            tokio::time::sleep(msg.duration).await;
-            if let Err(e) = client
-                .privmsg(msg.broadcaster, "/emoteonlyoff".to_string())
-                .await
-            {
-                println!("Could not leave emoteonly: {:?}", e);
+                println!("Could not leave {}: {:?}", msg.mode, e);
             }
         });
     }
