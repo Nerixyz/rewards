@@ -93,7 +93,10 @@ where
 
             let mut stream = req.take_payload();
             while let Some(chunk) = stream.next().await {
-                // TODO: size-check
+                // 10Mb
+                if body.len() >= 10_000_000 {
+                    return Err(error::ErrorImATeapot("yeah no, that's too much"));
+                }
                 body.extend_from_slice(&chunk?);
             }
 
