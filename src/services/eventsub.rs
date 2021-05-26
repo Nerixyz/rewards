@@ -78,7 +78,7 @@ pub async fn clear_invalid_rewards(
                 }
             }
             if !is_enabled || (!is_this_server && Regex::new("https?://[\\w_]+.ngrok.io").unwrap().is_match(&sub.transport.callback)) {
-                if let Err(_) = delete_subscription(&*token, sub.id.clone()).await {
+                if let Err(e) = delete_subscription(&*token, sub.id.clone()).await {
                     println!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
                 }
             }
