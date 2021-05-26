@@ -54,7 +54,8 @@ impl Actor for TokenRefresher {
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
-        // this won't be called but should be implemented probably
-        todo!()
+        if let Some(handle) = &self.join_handle {
+            handle.abort();
+        }
     }
 }
