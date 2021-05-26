@@ -74,7 +74,7 @@ where
             let (id_header, timestamp_header, signature_header) =
                 match (id_header, timestamp_header, signature_header) {
                     (Some(id), Some(timestamp), Some(signature)) => {
-                        (id.clone(), timestamp.clone(), signature)
+                        (id, timestamp, signature)
                     }
                     _ => return Err(error::ErrorUnauthorized("Unauthorized")),
                 };
@@ -91,6 +91,11 @@ where
                 return Err(error::ErrorUnauthorized("Ancient message LuL"));
             }
 
+            let mut mac = HmacSha256::new_from_slice(EVENTSUB_BASE64_SECRET.as_bytes())
+                .expect("should take any key");
+            mac.update(id_header.as_bytes());
+            mac.update(timestamp_header.as_bytes());
+
             let mut stream = req.take_payload();
             while let Some(chunk) = stream.next().await {
                 // 10Mb
@@ -100,10 +105,6 @@ where
                 body.extend_from_slice(&chunk?);
             }
 
-            let mut mac = HmacSha256::new_from_slice(EVENTSUB_BASE64_SECRET.as_bytes())
-                .expect("should take any key");
-            mac.update(id_header.as_bytes());
-            mac.update(timestamp_header.as_bytes());
             mac.update(body.as_ref());
             let bytes = mac.finalize().into_bytes();
 
