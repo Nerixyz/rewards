@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "plugin:vue/essential",
+    "@vue/typescript/recommended",
+
+    "@vue/prettier",
+    "@vue/prettier/@typescript-eslint"
+  ],
+  "overrides": [{
+    "rules": {
+      "vue/no-dupe-keys": "off"
+    },
+    "files": ["*.ts", "*.tsx", "*.vue", "*.js"]
+  }]
+}

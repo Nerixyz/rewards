@@ -8,19 +8,16 @@
     </div>
 
     <div v-else>
-      <div
-        v-if="broadcasters.length"
-        v-for="broadcaster of broadcasters"
-        :key="broadcaster.id"
-        class="flex items-center gap-4"
-      >
-        <img
-          :src="broadcaster.profile_image_url"
-          :alt="`Profile image of ${broadcaster.login}`"
-          class="w-10 h-10 rounded-full"
-        />
-        <h3>{{ broadcaster.login }}</h3>
-        <CButton @click="goToBroadcaster(broadcaster.id)" :disabled="loading" class="ml-auto">Edit Rewards</CButton>
+      <div v-if="broadcasters.length">
+        <div v-for="broadcaster of broadcasters" :key="broadcaster.id" class="flex items-center gap-4">
+          <img
+            :src="broadcaster.profile_image_url"
+            :alt="`Profile image of ${broadcaster.login}`"
+            class="w-10 h-10 rounded-full"
+          />
+          <h3>{{ broadcaster.login }}</h3>
+          <CButton @click="goToBroadcaster(broadcaster.id)" :disabled="loading" class="ml-auto">Edit Rewards</CButton>
+        </div>
       </div>
       <div v-else>
         It seems like noone has added you as an editor. Don't be sad

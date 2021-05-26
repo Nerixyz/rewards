@@ -21,10 +21,7 @@
       disabled:cursor-not-allowed
       hover:bg-red-dark
       transition-colors
-      focus:ring-2
-      focus:ring-offset-2
-      focus:ring-pink-700
-      focus:ring-offset-gray-darkest
+      focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest
       focus:outline-none
     "
   >

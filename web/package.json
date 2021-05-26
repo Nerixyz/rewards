@@ -4,20 +4,24 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "format": "prettier -w src/**/*.{vue,ts,tsx,js,html} --loglevel warn",
+    "lint": "eslint --fix src/**/*.{vue,ts,tsx,js,html}"
   },
   "dependencies": {
     "@headlessui/vue": "^1.2.0",
     "@vuelidate/core": "^2.0.0-alpha.18",
     "@vuelidate/validators": "^2.0.0-alpha.15",
     "vue": "^3.0.5",
-    "vue-router": "^4.0.8",
-    "vuex": "^4.0.0"
+    "vue-router": "^4.0.8"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.2.2",
     "@vue/compiler-sfc": "^3.0.5",
+    "@vue/eslint-config-prettier": "^6.0.0",
+    "@vue/eslint-config-typescript": "^7.0.0",
     "autoprefixer": "^10.2.5",
+    "eslint": "^7.27.0",
     "postcss": "^8.3.0",
     "prettier": "^2.3.0",
     "tailwindcss": "^2.1.2",

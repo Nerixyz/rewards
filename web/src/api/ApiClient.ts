@@ -2,9 +2,8 @@ import { InputReward, InternalCustomReward, Reward, TwitchReward, TwitchUser } f
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
-
   getTwitchAuthUrl() {
-    return this.get<{url: string}>('auth', 'twitch-auth-url');
+    return this.get<{ url: string }>('auth', 'twitch-auth-url');
   }
 
   getCurrentUser() {
@@ -32,12 +31,12 @@ class HttpClient extends BaseClient {
   }
 
   async getRewards(id: string): Promise<Reward[]> {
-    const response = await this.get<{twitch: TwitchReward[], data: InternalCustomReward[]}>('rewards', id);
+    const response = await this.get<{ twitch: TwitchReward[]; data: InternalCustomReward[] }>('rewards', id);
 
-    const map = new Map<string, Partial<Reward>>(response.twitch.map(r => [r.id, {twitch: r}]));
-    for(const internal of response.data) {
+    const map = new Map<string, Partial<Reward>>(response.twitch.map(r => [r.id, { twitch: r }]));
+    for (const internal of response.data) {
       const el = map.get(internal.id);
-      if(el) (el as any).data = internal.data;
+      if (el) el.data = internal.data;
     }
 
     return [...map.values()] as Reward[];
@@ -51,7 +50,7 @@ class HttpClient extends BaseClient {
     return this.patch<Reward>(reward, 'rewards', broadcasterId, id);
   }
 
-  deleteReward(broadcasterId: string, reward: Reward){
+  deleteReward(broadcasterId: string, reward: Reward) {
     return this.delete('rewards', broadcasterId, reward.twitch.id);
   }
 }

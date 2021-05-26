@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot :show="open" as="template">
-    <Dialog as='div'>
+    <Dialog as="div">
       <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="min-h-screen px-4 text-center">
           <TransitionChild
@@ -28,7 +28,7 @@
             leave="duration-200 ease-hyper-in"
             leave-from="opacity-100 scale-100"
             leave-to="opacity-0 scale-75"
-            @after-leave='onDialogClose'
+            @after-leave="onDialogClose"
           >
             <div
               class="
@@ -41,8 +41,7 @@
                 transition-all
                 transform
                 bg-gray-300
-                border-4
-                border-red
+                border-4 border-red
                 shadow-xl
                 rounded-2xl
                 text-white
@@ -51,11 +50,11 @@
               <DialogTitle as="h3" class="text-2xl mb-3 font-serif font-medium leading-6 text-white">
                 {{ title }}
               </DialogTitle>
-              <DialogDescription v-if='subtitle' class='mb-4 text-gray-100 font-serif'>
-                {{subtitle}}
+              <DialogDescription v-if="subtitle" class="mb-4 text-gray-100 font-serif">
+                {{ subtitle }}
               </DialogDescription>
 
-              <slot/>
+              <slot />
             </div>
           </TransitionChild>
         </div>
@@ -66,7 +65,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverlay, DialogTitle } from '@headlessui/vue';
+import {
+  TransitionRoot,
+  Dialog,
+  TransitionChild,
+  DialogDescription,
+  DialogOverlay,
+  DialogTitle,
+} from '@headlessui/vue';
 
 export default defineComponent({
   name: 'CDialog',
@@ -89,7 +95,7 @@ export default defineComponent({
   methods: {
     onDialogClose() {
       this.$emit('dialogClosed', true);
-    }
+    },
   },
 });
 </script>

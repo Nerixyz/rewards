@@ -29,9 +29,11 @@
     >
       {{ label }}
     </span>
-    <WarnIcon v-if='warn' class="
-    text-yellow-400
-    absolute
+    <WarnIcon
+      v-if="warn"
+      class="
+        text-yellow-400
+        absolute
         left-auto
         right-1
         max-w-full
@@ -39,7 +41,8 @@
         whitespace-nowrap
         pointer-events-none
         origin-top-left
-        top-5"
+        top-5
+      "
     />
     <input
       :value="modelValue"
@@ -52,7 +55,6 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { TransitionRoot } from '@headlessui/vue';
 import WarnIcon from '../icons/WarnIcon.vue';
 
 export default defineComponent({
@@ -79,11 +81,11 @@ export default defineComponent({
       required: false,
     },
   },
-  components: { WarnIcon, TransitionRoot },
+  components: { WarnIcon },
   emits: ['update:modelValue'],
   setup(_props, { emit }) {
-
     const onInput = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       emit('update:modelValue', (e.target as any).value);
     };
 

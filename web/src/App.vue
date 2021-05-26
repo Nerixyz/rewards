@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-dark text-white w-screen h-screen overflow-hidden">
-      <nav-bar/>
-      <router-view/>
+    <nav-bar />
+    <router-view />
   </div>
 </template>
 
@@ -20,12 +20,12 @@ export default defineComponent({
     const api = useApi();
     const store = useDataStore();
     onBeforeMount(() => {
-      if(api.isAuthenticated.value) {
-        api.getCurrentUser().then(user => store.user.value = user);
+      if (api.isAuthenticated.value) {
+        api.getCurrentUser().then(user => (store.user.value = user));
       }
     });
 
-    return {auth: api.isAuthenticated};
-  }
-})
+    return { auth: api.isAuthenticated };
+  },
+});
 </script>

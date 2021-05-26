@@ -8,7 +8,7 @@ export class BaseClient {
 
   isAuthenticated = ref(!!this.authToken);
 
-  logout() {
+  logout(): void {
     this.authToken = undefined;
     localStorage.removeItem('authToken');
     this.isAuthenticated.value = false;
@@ -18,7 +18,7 @@ export class BaseClient {
     return this.baseRequest(segments.join('/'), {});
   }
 
-  protected put<T>(data: Record<string, any> | undefined, ...segments: string[]): Promise<T> {
+  protected put<T>(data: Record<string, unknown> | undefined, ...segments: string[]): Promise<T> {
     return this.baseRequest(segments.join('/'), {
       method: 'PUT',
       body: data && JSON.stringify(data),
@@ -26,7 +26,7 @@ export class BaseClient {
     });
   }
 
-  protected patch<T>(data: Record<string, any>, ...segments: string[]): Promise<T> {
+  protected patch<T>(data: Record<string, unknown>, ...segments: string[]): Promise<T> {
     return this.baseRequest(segments.join('/'), {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -51,14 +51,14 @@ export class BaseClient {
 
       if (isOk(response.status)) return json;
 
-      if(response.status === 401) this.logout();
+      if (response.status === 401) this.logout();
       throw new Error(json.error ?? 'An error occurred.');
     } else {
       const text = await response.text();
 
-      if (isOk(response.status)) return text as any as T;
+      if (isOk(response.status)) return text as unknown as T;
 
-      if(response.status === 401) this.logout();
+      if (response.status === 401) this.logout();
       throw new Error(text ?? 'An error occurred.');
     }
   }
@@ -73,9 +73,10 @@ function isOk(status: number) {
 }
 
 function getToken() {
-  if (localStorage.getItem('authToken')) return localStorage.getItem('authToken')!;
+  let cookie: string | undefined | null = localStorage.getItem('authToken');
+  if (cookie) return cookie;
 
-  const cookie = document.cookie.match(/auth_token=([^;]+)/)?.[1];
+  cookie = document.cookie.match(/auth_token=([^;]+)/)?.[1];
   if (!cookie) return;
 
   localStorage.setItem('authToken', cookie);

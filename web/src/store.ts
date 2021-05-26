@@ -9,9 +9,9 @@ const injectKey = 're:data-store';
 export const DataStorePlugin: Plugin = {
   install(app) {
     app.provide(injectKey, new DataStore());
-  }
+  },
 };
 
-export function useDataStore() {
+export function useDataStore(): DataStore {
   return inject(injectKey) as DataStore;
 }

@@ -1,8 +1,8 @@
 <template>
-<TextField label='Duration' v-model='duration' />
+  <TextField label="Duration" v-model="duration" />
 </template>
 
-<script lang='ts'>
+<script lang="ts">
 import { defineComponent } from 'vue';
 import TextField from '../core/TextField.vue';
 
@@ -12,7 +12,7 @@ export default defineComponent({
   props: {
     modelValue: {
       type: String,
-      required: true
+      required: true,
     },
   },
   emits: ['update:modelValue'],
@@ -23,8 +23,8 @@ export default defineComponent({
       },
       set(v: string) {
         this.$emit('update:modelValue', v);
-      }
-    }
-  }
+      },
+    },
+  },
 });
 </script>

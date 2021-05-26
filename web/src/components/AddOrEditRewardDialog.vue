@@ -1,43 +1,46 @@
 <template>
-  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed='onDialogClosed'>
-    <div v-if='loading'>
+  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed="onDialogClosed">
+    <div v-if="loading">
       <span>Loading...</span>
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
       </DialogButtons>
     </div>
-    <div v-else-if='error'>
+    <div v-else-if="error">
       docNotl an error occurred!
-      <br/>
-      <pre>{{error}}</pre>
+      <br />
+      <pre>{{ error }}</pre>
       <DialogButtons><OutlinedButton @click="closeAll"> Cancel </OutlinedButton></DialogButtons>
     </div>
-    <form v-else @submit.prevent='onSubmit'>
-      <div class='flex gap-4 min-w-40vw'>
-        <div class='flex flex-col gap-3 flex-grow w-full'>
-          <TextField label="Title" v-model='rewardState.title' :warn='v$.title.$invalid' />
-          <TextField label="Cost" v-model='rewardState.cost' :warn='v$.cost.$invalid' />
-          <TextField label="Prompt" v-model='rewardState.prompt' :warn='v$.prompt.$invalid' />
-          <TextField label="Uses per Stream" v-model='rewardState.usesPerStream' :warn='v$.usesPerStream.$invalid' />
-          <TextField label="Uses per User" v-model='rewardState.usesPerUser' :warn='v$.usesPerUser.$invalid' />
-          <TextField label="Cooldown" v-model='rewardState.cooldown' :warn='v$.cooldown.$invalid' />
+    <form v-else @submit.prevent="onSubmit">
+      <div class="flex gap-4 min-w-40vw">
+        <div class="flex flex-col gap-3 flex-grow w-full">
+          <TextField label="Title" v-model="rewardState.title" :warn="v$.title.$invalid" />
+          <TextField label="Cost" v-model="rewardState.cost" :warn="v$.cost.$invalid" />
+          <TextField label="Prompt" v-model="rewardState.prompt" :warn="v$.prompt.$invalid" />
+          <TextField label="Uses per Stream" v-model="rewardState.usesPerStream" :warn="v$.usesPerStream.$invalid" />
+          <TextField label="Uses per User" v-model="rewardState.usesPerUser" :warn="v$.usesPerUser.$invalid" />
+          <TextField label="Cooldown" v-model="rewardState.cooldown" :warn="v$.cooldown.$invalid" />
         </div>
-        <div class='flex-grow w-full'>
-          <CDropdown v-model='rewardState.action.type' :options='RewardTypes' class='z-30 pb-5'/>
+        <div class="flex-grow w-full">
+          <CDropdown v-model="rewardState.action.type" :options="RewardTypes" class="z-30 pb-5" />
 
-          <TSESettings v-if='["Timeout", "SubOnly", "EmoteOnly"].includes(rewardState.action.type)' v-model='rewardState.action.data'/>
+          <TSESettings
+            v-if="['Timeout', 'SubOnly', 'EmoteOnly'].includes(rewardState.action.type)"
+            v-model="rewardState.action.data"
+          />
         </div>
       </div>
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
-        <CButton :disabled='v$.$invalid'> {{ isAdding ? 'Add' : 'Edit' }} </CButton>
+        <CButton :disabled="v$.$invalid"> {{ isAdding ? 'Add' : 'Edit' }} </CButton>
       </DialogButtons>
     </form>
   </CDialog>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, reactive, ref, toRefs, watch } from 'vue';
+import { computed, defineComponent, PropType, reactive, toRefs, watch } from 'vue';
 import CDialog from './core/CDialog.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
@@ -46,17 +49,16 @@ import { useApi } from '../api/plugin';
 import TextField from './core/TextField.vue';
 import DialogButtons from './DialogButtons.vue';
 import useVuelidate from '@vuelidate/core';
-import { required , numeric,  } from '@vuelidate/validators';
+import { required, numeric } from '@vuelidate/validators';
 import { assignDefaultToModel, assignToVRewardModel, toInputReward, VRewardModel } from '../api/model-conversion';
 import CDropdown from './core/CDropdown.vue';
 import { defaultNewReward, RewardTypes } from '../api/rewards-data';
 import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
-import TickIcon from './icons/TickIcon.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
-  components: { TickIcon, TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
+  components: { TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
   props: {
     open: {
       type: Boolean,
@@ -88,44 +90,55 @@ export default defineComponent({
 
     const onDialogClosed = () => {
       clearAsyncRefs();
-    }
+    };
 
     const rewardState = reactive<VRewardModel>(defaultNewReward());
     watch(rewardData, (newData?: Reward) => {
-      if(!newData) {
+      if (!newData) {
         assignDefaultToModel(rewardState);
       } else {
         assignToVRewardModel(newData, rewardState);
       }
     });
 
-    const v$ = useVuelidate({
-      title: {required},
-      cost: {required, numeric},
-      usesPerStream: {numeric},
-      usesPerUser: {numeric},
-      cooldown: {isValidDuration},
-      prompt: {required}
-    }, rewardState);
+    const v$ = useVuelidate(
+      {
+        title: { required },
+        cost: { required, numeric },
+        usesPerStream: { numeric },
+        usesPerUser: { numeric },
+        cooldown: { isValidDuration },
+        prompt: { required },
+      },
+      rewardState,
+    );
 
     const isAdding = computed(() => !rewardData.value);
 
     const onSubmit = () => {
-      tryAsync(async () => {
-        let response;
-        if(isAdding.value) {
-          response = await api.addReward(broadcasterId.value ?? '', toInputReward(rewardState));
-        } else {
-          response = await api.updateReward(broadcasterId.value ?? '', toInputReward(rewardState), rewardData.value?.twitch?.id ?? '');
-        }
+      tryAsync(
+        async () => {
+          let response;
+          if (isAdding.value) {
+            response = await api.addReward(broadcasterId.value ?? '', toInputReward(rewardState));
+          } else {
+            response = await api.updateReward(
+              broadcasterId.value ?? '',
+              toInputReward(rewardState),
+              rewardData.value?.twitch?.id ?? '',
+            );
+          }
 
-        // clear the dialog
-        assignDefaultToModel(rewardState);
+          // clear the dialog
+          assignDefaultToModel(rewardState);
 
-        emit(isAdding.value ? 'added' : 'updated', response);
-        closeAll();
-      }, loading, error);
-    }
+          emit(isAdding.value ? 'added' : 'updated', response);
+          closeAll();
+        },
+        loading,
+        error,
+      );
+    };
 
     return { loading, error, closeAll, v$, rewardState, RewardTypes, onSubmit, isAdding, onDialogClosed, open };
   },

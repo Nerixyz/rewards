@@ -10,13 +10,21 @@
     <div v-else class="flex gap-10">
       <form @submit="addEditor" class="w-1/6 min-w-10rem">
         <h3 class="mb-3">Add an editor</h3>
-        <TextField label='Name' v-model="editorAddName" :disabled="loading" />
+        <TextField label="Name" v-model="editorAddName" :disabled="loading" />
       </form>
       <div class="flex-grow">
-        <div v-if='!editors.length'>
+        <div v-if="!editors.length">
           No editors? Seriously? Let your mods do the work, add some editors!
-          <img class='inline w-5 h-auto mr-1' src='https://cdn.betterttv.net/emote/58ca80db994bb43c8d2ffa96/2x' alt='FeelsGladMan'/>
-          <img class='inline w-5 h-auto' src='https://cdn.betterttv.net/emote/5e1b12868af14b5f1b43921d/2x' alt='ModTime' />
+          <img
+            class="inline w-5 h-auto mr-1"
+            src="https://cdn.betterttv.net/emote/58ca80db994bb43c8d2ffa96/2x"
+            alt="FeelsGladMan"
+          />
+          <img
+            class="inline w-5 h-auto"
+            src="https://cdn.betterttv.net/emote/5e1b12868af14b5f1b43921d/2x"
+            alt="ModTime"
+          />
         </div>
         <div v-else v-for="editor of editors" :key="editor.id" class="flex items-center gap-4">
           <img
@@ -51,9 +59,13 @@ export default defineComponent({
 
     const { error, loading } = asyncRefs();
     const editors = ref<TwitchUser[]>([]);
-    tryAsync(async() => {
-      editors.value = await api.getEditors();
-    }, loading, error);
+    tryAsync(
+      async () => {
+        editors.value = await api.getEditors();
+      },
+      loading,
+      error,
+    );
 
     const editorAddName = ref('');
 

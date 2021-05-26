@@ -1,33 +1,60 @@
 <template>
-  <Listbox :model-value='modelValue' @update:model-value='onUpdate'>
-    <div class='relative m-1 min-w-10rem w-full outline-none'>
-    <ListboxButton class='relative w-full py-1 pl-3 pr-5 text-left bg-transparent border-2 border-red rounded-md shadow-md outline-none focus:outline-none'>
-      <span class='block truncate'>{{modelValue}}</span>
-      <span class='absolute inset-0 left-auto right-0 flex items-center pr-2 pointer-events-none'><ChevronDown class='w-5 h-5 text-white'/></span>
-    </ListboxButton>
+  <Listbox :model-value="modelValue" @update:model-value="onUpdate">
+    <div class="relative m-1 min-w-10rem w-full outline-none">
+      <ListboxButton
+        class="
+          relative
+          w-full
+          py-1
+          pl-3
+          pr-5
+          text-left
+          bg-transparent
+          border-2 border-red
+          rounded-md
+          shadow-md
+          outline-none
+          focus:outline-none
+        "
+      >
+        <span class="block truncate">{{ modelValue }}</span>
+        <span class="absolute inset-0 left-auto right-0 flex items-center pr-2 pointer-events-none"
+          ><ChevronDown class="w-5 h-5 text-white"
+        /></span>
+      </ListboxButton>
 
       <transition
-        enter-active-class='transition duration-100 ease-out'
-        enter-from-class='opacity-0 scale-75'
-        enter-to-class='opacity-100 scale-100'
+        enter-active-class="transition duration-100 ease-out"
+        enter-from-class="opacity-0 scale-75"
+        enter-to-class="opacity-100 scale-100"
         leave-active-class="transition duration-100 ease-in"
         leave-from-class="opacity-100 scale-100"
         leave-to-class="opacity-0 scale-75"
       >
-      <ListboxOptions class='absolute origin-top w-full mt-1 text-base bg-gray-500 rounded-md shadow-lg max-h-60'>
-        <ListboxOption v-for='option of options' :key='option.value' :value='option.value' v-slot="{ active, selected }">
-          <li :class="[active ? 'text-red bg-grey-500' : 'bg-grey-400', 'cursor-pointer select-none relative py-1 pl-5 pr-4']">
-            <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">{{option.display}}</span>
-          </li>
-        </ListboxOption>
-      </ListboxOptions>
+        <ListboxOptions class="absolute origin-top w-full mt-1 text-base bg-gray-500 rounded-md shadow-lg max-h-60">
+          <ListboxOption
+            v-for="option of options"
+            :key="option.value"
+            :value="option.value"
+            v-slot="{ active, selected }"
+          >
+            <li
+              :class="[
+                active ? 'text-red bg-grey-500' : 'bg-grey-400',
+                'cursor-pointer select-none relative py-1 pl-5 pr-4',
+              ]"
+            >
+              <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">{{ option.display }}</span>
+            </li>
+          </ListboxOption>
+        </ListboxOptions>
       </transition>
     </div>
   </Listbox>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, Ref, toRefs, watch } from 'vue';
+import { defineComponent, PropType } from 'vue';
 import ChevronDown from '../icons/ChevronDown.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 
@@ -53,7 +80,7 @@ export default defineComponent({
   methods: {
     onUpdate(value: string) {
       this.$emit('update:modelValue', value);
-    }
-  }
+    },
+  },
 });
 </script>

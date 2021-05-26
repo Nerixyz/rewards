@@ -1,7 +1,7 @@
 import { VRewardModel } from './model-conversion';
 import { RewardDataMap } from './types';
 
-export const StaticRewardData: Record<keyof RewardDataMap, { display: string, inputRequired: boolean }> = {
+export const StaticRewardData: Record<keyof RewardDataMap, { display: string; inputRequired: boolean }> = {
   Timeout: {
     display: 'Timeout',
     inputRequired: true,
@@ -16,7 +16,7 @@ export const StaticRewardData: Record<keyof RewardDataMap, { display: string, in
   },
 };
 
-export const RewardTypes = Object.entries(StaticRewardData).map(([key, {display}]) => ({value: key, display }));
+export const RewardTypes = Object.entries(StaticRewardData).map(([key, { display }]) => ({ value: key, display }));
 
 export function defaultNewReward(): VRewardModel {
   return {
@@ -29,7 +29,7 @@ export function defaultNewReward(): VRewardModel {
     prompt: '',
     action: {
       type: 'Timeout',
-      data: '1s'
-    }
+      data: '1s',
+    },
   };
 }

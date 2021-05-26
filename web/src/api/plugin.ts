@@ -1,16 +1,16 @@
 import { inject, Plugin } from 'vue';
-import ApiClient  from './ApiClient';
+import ApiClient from './ApiClient';
 
 const injectionKey = 're:api';
 
 const ApiPlugin: Plugin = {
   install(app) {
     app.provide(injectionKey, ApiClient);
-  }
+  },
 };
 
 export default ApiPlugin;
 
-export function useApi() {
+export function useApi(): typeof ApiClient {
   return inject(injectionKey) as typeof ApiClient;
 }

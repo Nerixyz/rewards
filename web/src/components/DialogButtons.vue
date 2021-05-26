@@ -1,10 +1,10 @@
 <template>
   <div class="mt-8 flex justify-end">
-    <slot/>
+    <slot />
   </div>
 </template>
 
-<script lang='ts'>
+<script lang="ts">
 import { defineComponent } from 'vue';
 
 export default defineComponent({

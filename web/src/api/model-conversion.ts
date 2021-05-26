@@ -11,19 +11,18 @@ export interface VRewardModel {
   cooldown: string;
   color: string;
 
-  action: RewardData
+  action: RewardData;
 }
 
-
-export function assignToVRewardModel(reward: Reward, model: VRewardModel) {
-    model.cost = reward.twitch.cost.toString();
-    model.cooldown = reward.twitch.global_cooldown_setting?.global_cooldown_seconds.toString() ?? '';
-    model.title = reward.twitch.title;
-    model.usesPerStream = reward.twitch.max_per_stream_setting?.max_per_stream.toString() ?? '';
-    model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
-    model.prompt = reward.twitch.prompt;
-    model.color = reward.twitch.background_color;
-    model.action = reward.data;
+export function assignToVRewardModel(reward: Reward, model: VRewardModel): void {
+  model.cost = reward.twitch.cost.toString();
+  model.cooldown = reward.twitch.global_cooldown_setting?.global_cooldown_seconds.toString() ?? '';
+  model.title = reward.twitch.title;
+  model.usesPerStream = reward.twitch.max_per_stream_setting?.max_per_stream.toString() ?? '';
+  model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
+  model.prompt = reward.twitch.prompt;
+  model.color = reward.twitch.background_color;
+  model.action = reward.data;
 }
 
 export function toInputReward(vmodel: VRewardModel): InputReward {
@@ -49,11 +48,11 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
       background_color: vmodel.color || undefined,
     },
     data: vmodel.action,
-  }
+  };
 }
 
-export function assignDefaultToModel(model: VRewardModel) {
-  for(const [key, value] of Object.entries(defaultNewReward())) {
-    (model as any)[key] = value;
+export function assignDefaultToModel(model: VRewardModel): void {
+  for (const [key, value] of Object.entries(defaultNewReward())) {
+    model[key as keyof VRewardModel] = value;
   }
 }
