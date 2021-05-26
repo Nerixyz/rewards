@@ -4,7 +4,7 @@
     <SubHeading>Enhance your stream with custom rewards</SubHeading>
     <CButton v-if="!auth" :href="url"> <TwitchIcon />Login with twitch </CButton>
     <div v-else class="inline">
-      Make sure to mod <b class="border-red border-b">RewardsMore</b> in chat to be able to use rewards that require
+      Make sure to mod <b class="border-red border-b">RewardMore</b> in chat to be able to use rewards that require
       mod-access!
     </div>
   </div>
