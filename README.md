@@ -61,6 +61,7 @@ This may be managed in the issues.
 * [ ] Check TODOs throughout the code
 * [ ] Get rid of cloning everywhere
 * [ ] Handle timeout errors
+* [ ] Clear unfulfilled rewards
 
 ### P2
 * [ ] IRC Bot
