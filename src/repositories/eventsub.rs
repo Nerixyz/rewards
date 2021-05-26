@@ -20,7 +20,6 @@ async fn reward_redemption(
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
 ) -> Result<HttpResponse, Error> {
-    println!("{:?}", payload);
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => Ok(HttpResponse::Ok().body(rq.challenge)),
         Payload::ChannelPointsCustomRewardRedemptionAddV1(redemption) => {
