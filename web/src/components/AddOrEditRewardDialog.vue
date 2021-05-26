@@ -119,8 +119,8 @@ export default defineComponent({
           response = await api.updateReward(broadcasterId.value ?? '', toInputReward(rewardState), rewardData.value?.twitch?.id ?? '');
         }
 
-        // not really needed but not bad anyways
-        assignToVRewardModel(response, rewardState);
+        // clear the dialog
+        assignDefaultToModel(rewardState);
 
         emit(isAdding.value ? 'added' : 'updated', response);
         closeAll();
