@@ -91,6 +91,7 @@ impl Actor for IrcActor {
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
+        // this won't be called but should be implemented probably
         todo!()
     }
 }
