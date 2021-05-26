@@ -136,7 +136,7 @@ impl Handler<TimeoutMessage> for IrcActor {
     fn handle(&mut self, msg: TimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         Box::pin(async move {
-            log::info!("IRC: timeout in {} for {} for {:?}", msg.broadcaster, msg.user, msg.duration);
+            log::info!("timeout in {} for {} for {:?}", msg.broadcaster, msg.user, msg.duration);
             Ok(client
                 .privmsg(
                     msg.broadcaster,
@@ -153,7 +153,7 @@ impl Handler<TimedModeMessage> for IrcActor {
     fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         task::spawn(async move {
-            log::info!("IRC: {} in {} for {:?}", msg.mode, msg.broadcaster, msg.duration);
+            log::info!("{} in {} for {:?}", msg.mode, msg.broadcaster, msg.duration);
             if let Err(e) = client
                 .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await

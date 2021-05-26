@@ -12,7 +12,8 @@ use actix_web::{
 use sqlx::PgPool;
 use twitch_api2::eventsub;
 use twitch_api2::eventsub::Payload;
-use twitch_api2::helix::points::CustomRewardRedemptionStatus;
+use twitch_api2::helix::points::{CustomRewardRedemptionStatus, CustomRewardRedemption};
+use crate::services::twitch::errors::ErrorResponse;
 
 #[post("/reward")]
 async fn reward_redemption(
@@ -22,14 +23,14 @@ async fn reward_redemption(
 ) -> Result<HttpResponse, Error> {
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => {
-            log::info!("ES: verification: {:?}", rq);
+            log::info!("verification: {:?}", rq);
             Ok(HttpResponse::Ok().body(rq.challenge))
         }
         Payload::ChannelPointsCustomRewardRedemptionAddV1(redemption) => {
             // main path
             let user = User::get_by_id(&redemption.event.broadcaster_user_id, &pool).await?;
 
-            log::info!("ES: redemption: {:?}", redemption);
+            log::info!("redemption: {:?}", redemption);
 
             let pool = pool.into_inner();
             let irc = irc.into_inner();
@@ -50,7 +51,7 @@ async fn reward_redemption(
                             CustomRewardRedemptionStatus::Canceled
                         }
                     };
-                    if let Err(e) = update_reward_redemption(
+                    match update_reward_redemption(
                         &broadcaster_id,
                         &reward_id,
                         &redemption_id,
@@ -59,23 +60,24 @@ async fn reward_redemption(
                     )
                     .await
                     {
-                        log::warn!("ES: Couldn't update reward redemption: {}", e);
+                        Ok(redemption) => log::info!("Final redemption: {:?}", redemption),
+                        Err(error) => log::warn!("Couldn't update reward redemption: {}", error)
                     }
                 } else {
-                    log::warn!("ES: failed to get user or reward: userId: {}, rewardID: {}", redemption.event.broadcaster_user_id, redemption.event.reward.id);
+                    log::warn!("failed to get user or reward: userId: {}, rewardID: {}", redemption.event.broadcaster_user_id, redemption.event.reward.id);
                 }
             });
 
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::Ok().finish())
         }
         Payload::UserAuthorizationRevokeV1(re) => {
-            log::warn!("ES: auth revoke: {:?}", re);
+            log::warn!("auth revoke: {:?}", re);
             // TODO
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::Ok().finish())
         }
         other => {
-            log::warn!("ES: unknown payload: {:?}", other);
-            Ok(HttpResponse::NotFound().body("I can't handle that!"))
+            log::warn!("unknown payload: {:?}", other);
+            Ok(HttpResponse::Ok().body("I can't handle that!"))
         },
     }
 }

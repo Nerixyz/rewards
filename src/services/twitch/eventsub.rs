@@ -15,6 +15,7 @@ use twitch_api2::{
     },
     twitch_oauth2::{AppAccessToken, UserToken},
 };
+use twitch_api2::helix::points::CustomRewardRedemption;
 
 pub async fn delete_subscription(token: &AppAccessToken, id: String) -> HelixResult<()> {
     RHelixClient::default()
@@ -64,7 +65,7 @@ pub async fn update_reward_redemption(
     redemption_id: &str,
     status: CustomRewardRedemptionStatus,
     token: &UserToken,
-) -> HelixResult<()> {
+) -> HelixResult<CustomRewardRedemption> {
     let response: Response<UpdateRedemptionStatusRequest, UpdateRedemptionStatusInformation> =
         RHelixClient::default()
             .req_patch(
@@ -79,7 +80,7 @@ pub async fn update_reward_redemption(
             .await?;
 
     match response.data {
-        UpdateRedemptionStatusInformation::Success(_) => Ok(()),
+        UpdateRedemptionStatusInformation::Success(r) => Ok(r),
         _ => Err("".into()),
     }
 }

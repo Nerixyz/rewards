@@ -43,7 +43,7 @@ impl Actor for TokenRefresher {
                         )
                         .await;
                         if let Err(e) = res {
-                            println!("{:?}", e);
+                            log::warn!("Failed to insert: {:?}", e);
                         }
                     }
                     tokio::time::sleep(Duration::from_secs(1)).await;
