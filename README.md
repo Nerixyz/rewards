@@ -55,7 +55,7 @@ This may be managed in the issues.
 * [x] WebInterface
 * [x] EventSub
 * [x] IRC
-* [ ] Verify index.html
+* [x] Verify index.html
 * [x] Use migrations  
 * [x] Document setup
 * [ ] Check TODOs throughout the code
