@@ -1,6 +1,6 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, TimeoutMessage, TimedModeMessage};
+use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, TimeoutMessage, TimedModeMessage, PartMessage};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
@@ -101,6 +101,14 @@ impl Handler<JoinMessage> for IrcActor {
 
     fn handle(&mut self, msg: JoinMessage, _ctx: &mut Self::Context) -> Self::Result {
         self.client.join(msg.0)
+    }
+}
+
+impl Handler<PartMessage> for IrcActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
+        self.client.part(msg.0)
     }
 }
 

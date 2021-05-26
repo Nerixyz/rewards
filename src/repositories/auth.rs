@@ -1,5 +1,5 @@
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::JoinMessage;
+use crate::actors::messages::irc_messages::{JoinMessage, PartMessage};
 use crate::constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::user::User;
 use crate::services::eventsub::{register_eventsub_for_id, unregister_eventsub_for_id};
@@ -138,8 +138,10 @@ async fn revoke(
     claims: JwtClaims,
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     pool: web::Data<PgPool>,
+    irc: web::Data<Addr<IrcActor>>
 ) -> Result<HttpResponse, Error> {
     let user = claims.get_user(&pool).await?;
+    let user_name = user.name.clone();
     let eventsub_id = user.eventsub_id.clone();
     let token: UserToken = user.into();
     if let Err(e) = token.revoke_token(reqwest_http_client).await {
@@ -153,11 +155,10 @@ async fn revoke(
             println!("Eventsub unregister error: {}", e);
         }
     }
+    irc.do_send(PartMessage(user_name));
 
     // here we can return the error as there's no work afterwards
     User::delete(claims.user_id(), &pool).await?;
-
-    // TODO: part, remove eventsub
 
     Ok(HttpResponse::Ok().finish())
 }
