@@ -72,7 +72,7 @@ This may be managed in the issues.
 
 ### P3
 
-* [ ] Use Vuetify once it's out
+* [ ] Use Vuetify once it's out ([Project](https://github.com/orgs/vuetifyjs/projects/7))
 
 ## Possible Rewards
 
