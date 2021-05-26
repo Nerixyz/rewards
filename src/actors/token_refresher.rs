@@ -28,17 +28,17 @@ impl Actor for TokenRefresher {
 
         self.join_handle = Some(rt::spawn(async move {
             loop {
-                let users = User::get_all(&pool).await.unwrap_or(vec![]);
+                let users = User::get_all(&pool).await.unwrap_or_default();
                 for user in users {
                     let mut token: UserToken = user.into();
-                    if let Ok(_) = token.refresh_token(reqwest_http_client).await {
+                    if token.refresh_token(reqwest_http_client).await.is_ok() {
                         let res = User::update_refresh(
                             &token.user_id,
                             token.access_token.secret(),
                             &token
                                 .refresh_token
                                 .map(|t| t.secret().clone())
-                                .unwrap_or(String::new()),
+                                .unwrap_or_default(),
                             &pool,
                         )
                         .await;

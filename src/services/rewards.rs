@@ -1,5 +1,5 @@
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::{TimeoutMessage, TimedModeMessage, TimedMode};
+use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, TimeoutMessage};
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use actix::Addr;
@@ -19,33 +19,36 @@ pub async fn execute_reward(
     irc: Arc<Addr<IrcActor>>,
 ) -> Result<(), AnyError> {
     match reward.data.0 {
-        RewardData::Timeout(timeout) =>
+        RewardData::Timeout(timeout) => {
             irc.send(TimeoutMessage {
                 user: extract_username(&redemption.event.user_input)?,
                 duration: humantime::parse_duration(&timeout)?,
                 broadcaster: broadcaster.name,
             })
-            .await??,
-        RewardData::EmoteOnly(duration) =>
+            .await??
+        }
+        RewardData::EmoteOnly(duration) => {
             irc.send(TimedModeMessage {
                 duration: humantime::parse_duration(&duration)?,
                 broadcaster: broadcaster.name,
-                mode: TimedMode::Emote
-            })
-            .await?,
-        RewardData::SubOnly(duration) =>
-            irc.send(TimedModeMessage {
-                duration: humantime::parse_duration(&duration)?,
-                broadcaster: broadcaster.name,
-                mode: TimedMode::Sub
+                mode: TimedMode::Emote,
             })
             .await?
+        }
+        RewardData::SubOnly(duration) => {
+            irc.send(TimedModeMessage {
+                duration: humantime::parse_duration(&duration)?,
+                broadcaster: broadcaster.name,
+                mode: TimedMode::Sub,
+            })
+            .await?
+        }
     }
     Ok(())
 }
 
 pub fn extract_username(str: &str) -> Result<String, AnyError> {
-    if !str.contains(" ") {
+    if !str.contains(' ') {
         return Ok(str.replace("@", ""));
     }
 
@@ -55,13 +58,14 @@ pub fn extract_username(str: &str) -> Result<String, AnyError> {
         .map(|m| m.get(0))
         .flatten()
         .map(|m| m.as_str().to_string())
-        .ok_or(AnyError::msg("No user submitted"))
+        .ok_or_else(|| AnyError::msg("No user submitted"))
 }
 
 pub fn verify_reward(reward: &RewardData) -> Result<(), AnyError> {
-    Ok(match reward {
-        RewardData::Timeout(duration) => humantime::parse_duration(duration).map(|_| ())?,
-        RewardData::SubOnly(duration) => humantime::parse_duration(duration).map(|_| ())?,
-        RewardData::EmoteOnly(duration) => humantime::parse_duration(duration).map(|_| ())?,
-    })
+    match reward {
+        RewardData::Timeout(duration) => humantime::parse_duration(duration)?,
+        RewardData::SubOnly(duration) => humantime::parse_duration(duration)?,
+        RewardData::EmoteOnly(duration) => humantime::parse_duration(duration)?,
+    };
+    Ok(())
 }

@@ -1,8 +1,8 @@
 use actix::Message;
 use anyhow::Error as AnyError;
+use derive_more::Display;
 use std::time::Duration;
 use twitch_irc::message::PrivmsgMessage;
-use derive_more::{Display};
 
 #[derive(Message)]
 #[rtype(result = "()")]

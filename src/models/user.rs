@@ -157,15 +157,15 @@ impl User {
     }
 }
 
-impl Into<UserToken> for User {
-    fn into(self) -> UserToken {
-        UserToken::from_existing_unchecked(
-            AccessToken::new(self.access_token),
-            RefreshToken::new(self.refresh_token),
+impl From<User> for UserToken {
+    fn from(u: User) -> Self {
+        Self::from_existing_unchecked(
+            AccessToken::new(u.access_token),
+            RefreshToken::new(u.refresh_token),
             ClientId::new(TWITCH_CLIENT_ID.to_string()),
             ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
-            self.name,
-            self.id,
+            u.name,
+            u.id,
             None,
             // this isn't used anywhere
             Some(Duration::from_secs(1000)),

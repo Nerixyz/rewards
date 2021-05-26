@@ -67,15 +67,11 @@ async fn main() -> std::io::Result<()> {
             .default_service(
                 web::resource("")
                     .route(web::get().to(web_index))
-                    .route(
-                        web::route()
-                            .guard(guard::Options())
-                            .to(|| HttpResponse::Ok()),
-                    )
+                    .route(web::route().guard(guard::Options()).to(HttpResponse::Ok))
                     .route(
                         web::route()
                             .guard(guard::Not(guard::Get()))
-                            .to(|| HttpResponse::NotFound()),
+                            .to(HttpResponse::NotFound),
                     ),
             )
     })

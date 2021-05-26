@@ -33,7 +33,7 @@ impl Display for ErrorResponse {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(
             serde_json::to_string(&self)
-                .unwrap_or("".to_string())
+                .unwrap_or_else(|_| "".to_string())
                 .as_ref(),
         )
     }
@@ -49,9 +49,7 @@ impl From<ClientRequestError<reqwest::Error>> for ErrorResponse {
     fn from(e: ClientRequestError<reqwest::Error>) -> Self {
         // TODO: logging?
         match e {
-            ClientRequestError::RequestError(e) => match e {
-                reqwest::Error { .. } => ErrorResponse::new("ReqwestError".to_string()),
-            },
+            ClientRequestError::RequestError(_) => ErrorResponse::new("ReqwestError".to_string()),
             ClientRequestError::NoPage => ErrorResponse::new("NoPage".to_string()),
             ClientRequestError::CreateRequestError(e) => match e {
                 CreateRequestError::HttpError(e) => ErrorResponse::new(format!("{}", e)),
@@ -126,7 +124,7 @@ impl From<ClientRequestError<reqwest::Error>> for ErrorResponse {
                 } => ErrorResponse::with_status(message, status),
                 HelixRequestDeleteError::Utf8Error(_, _, _) => {
                     ErrorResponse::new("UTF8-Error".to_string())
-                },
+                }
                 HelixRequestDeleteError::InvalidResponse { status, reason, .. } => {
                     ErrorResponse::with_status(reason.to_string(), status)
                 }

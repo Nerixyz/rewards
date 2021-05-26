@@ -1,6 +1,8 @@
+use crate::constants::SERVER_URL;
 use crate::models::user::User;
 use crate::services::twitch::eventsub::{delete_subscription, subscribe_to_rewards};
 use actix_web::Error;
+use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -9,8 +11,6 @@ use twitch_api2::helix::eventsub::{EventSubSubscriptions, GetEventSubSubscriptio
 use twitch_api2::helix::Response;
 use twitch_api2::twitch_oauth2::AppAccessToken;
 use twitch_api2::HelixClient;
-use crate::constants::SERVER_URL;
-use regex::Regex;
 
 pub async fn register_eventsub_for_id(
     id: &str,
@@ -77,14 +77,19 @@ pub async fn clear_invalid_rewards(
                     println!("Error clearing eventsub in db, but ignoring: {:?}", e);
                 }
             }
-            if !is_enabled || (!is_this_server && Regex::new("https?://[\\w_]+.ngrok.io").unwrap().is_match(&sub.transport.callback)) {
+            if !is_enabled
+                || (!is_this_server
+                    && Regex::new("https?://[\\w_]+.ngrok.io")
+                        .unwrap()
+                        .is_match(&sub.transport.callback))
+            {
                 if let Err(e) = delete_subscription(&*token, sub.id.clone()).await {
                     println!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
                 }
             }
         }
 
-        if let Some(_) = rewards.pagination {
+        if rewards.pagination.is_some() {
             if let Some(res) = rewards.get_next(&client, &*token).await? {
                 rewards = res;
                 continue;

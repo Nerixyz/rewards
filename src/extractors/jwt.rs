@@ -14,7 +14,7 @@ impl FromRequest for JwtClaims {
             .get(header::AUTHORIZATION)
             .map(|h| h.to_str().ok())
             .flatten()
-            .ok_or(error::ErrorUnauthorized(""));
+            .ok_or_else(|| error::ErrorUnauthorized(""));
 
         let auth = match auth {
             Ok(auth) => auth,

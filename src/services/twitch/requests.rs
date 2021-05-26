@@ -105,8 +105,8 @@ pub async fn get_reward_for_broadcaster_by_id(
     response
         .data
         .into_iter()
-        .nth(0)
-        .ok_or("Could not find reward".into())
+        .next()
+        .ok_or_else(|| "Could not find reward".into())
 }
 
 pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
@@ -117,8 +117,8 @@ pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
     response
         .data
         .into_iter()
-        .nth(0)
-        .ok_or("Could not find user".into())
+        .next()
+        .ok_or_else(|| "Could not find user".into())
 }
 
 pub async fn get_user_by_login(login: String, token: &UserToken) -> HelixResult<User> {
@@ -129,8 +129,8 @@ pub async fn get_user_by_login(login: String, token: &UserToken) -> HelixResult<
     response
         .data
         .into_iter()
-        .nth(0)
-        .ok_or("Could not find user".into())
+        .next()
+        .ok_or_else(|| "Could not find user".into())
 }
 
 pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<User>> {

@@ -1,6 +1,8 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, TimeoutMessage, TimedModeMessage, PartMessage};
+use crate::actors::messages::irc_messages::{
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage,
+};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
@@ -30,10 +32,7 @@ impl TokenStorage for PgTokenStorage {
     type UpdateError = AnyError;
 
     async fn load_token(&mut self) -> Result<UserAccessToken, Self::LoadError> {
-        self.0
-            .send(GetToken {})
-            .await?
-            .map_err(|e| AnyError::new(e))
+        self.0.send(GetToken {}).await?.map_err(AnyError::new)
     }
 
     async fn update_token(&mut self, token: &UserAccessToken) -> Result<(), Self::UpdateError> {
@@ -41,11 +40,11 @@ impl TokenStorage for PgTokenStorage {
             .send(SaveToken(UserAccessToken {
                 refresh_token: token.refresh_token.clone(),
                 access_token: token.access_token.clone(),
-                created_at: token.created_at.clone(),
-                expires_at: token.expires_at.clone(),
+                created_at: token.created_at,
+                expires_at: token.expires_at,
             }))
             .await?
-            .map_err(|e| AnyError::new(e))
+            .map_err(AnyError::new)
     }
 }
 
@@ -61,7 +60,7 @@ impl IrcActor {
             TWITCH_CLIENT_USER_LOGIN.to_string(),
             TWITCH_CLIENT_ID.to_string(),
             TWITCH_CLIENT_SECRET.to_string(),
-            PgTokenStorage(db.clone()),
+            PgTokenStorage(db),
         ));
 
         let (incoming, client) = IrcClient::new(config);
@@ -80,7 +79,7 @@ impl Actor for IrcActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         let mut incoming = self.incoming.take().expect("This was set in Self:new");
 
-        let addr = ctx.address().clone();
+        let addr = ctx.address();
         self.listener = Some(task::spawn(async move {
             while let Some(message) = incoming.recv().await {
                 if let ServerMessage::Privmsg(msg) = message {

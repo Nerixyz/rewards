@@ -53,6 +53,7 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
+    #[allow(clippy::type_complexity)]
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     fn poll_ready(&self, ctx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -73,9 +74,7 @@ where
 
             let (id_header, timestamp_header, signature_header) =
                 match (id_header, timestamp_header, signature_header) {
-                    (Some(id), Some(timestamp), Some(signature)) => {
-                        (id, timestamp, signature)
-                    }
+                    (Some(id), Some(timestamp), Some(signature)) => (id, timestamp, signature),
                     _ => return Err(error::ErrorUnauthorized("Unauthorized")),
                 };
             let (timestamp, signature) = match (

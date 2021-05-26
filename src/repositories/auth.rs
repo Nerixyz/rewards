@@ -138,7 +138,7 @@ async fn revoke(
     claims: JwtClaims,
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     pool: web::Data<PgPool>,
-    irc: web::Data<Addr<IrcActor>>
+    irc: web::Data<Addr<IrcActor>>,
 ) -> Result<HttpResponse, Error> {
     let user = claims.get_user(&pool).await?;
     let user_name = user.name.clone();

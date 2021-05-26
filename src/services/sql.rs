@@ -41,7 +41,7 @@ pub async fn get_user_or_editor(
 ) -> Result<User, actix_web::Error> {
     let user = claims.get_user(&pool).await?;
     Ok(if user.id == broadcaster_id {
-        user.into()
+        user
     } else {
         Editor::get_broadcaster_for_editor(&user.id, &broadcaster_id, &pool)
             .await
