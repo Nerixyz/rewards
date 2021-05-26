@@ -4,6 +4,48 @@ This is an application that manages custom Twitch rewards.
 
 The priorities for the project are _P1_ .. _Px_ where _P1_ is the most important.
 
+# Web Interface
+
+## Editors and Broadcasters
+
+A broadcaster can add multiple editors who then can manage the rewards.
+This is done in the `Editors`-tab.
+
+**Important:** A broadcaster can **only** add editors that have registered on this app (like on BTTV).
+
+The editors can access the rewards through the `Broadcasters` tab.
+
+## Rewards
+
+You can edit the rewards in the `Rewards` tab.
+
+In the dialog there are two sides.
+
+On the left side you can edit Twitch specific parameters like the reward title or the cooldown.
+The cooldown can be specified like this: `1h`, `3.5d`, `3m` or `123` (seconds).
+
+On the right side you can edit the specific action done when this reward is redeemed.
+
+Some rewards expose a `Duration` configuration.
+Here, you can specify the duration like this: `1hour 3min 4ms`. For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_duration.html).
+
+
+# Development
+
+## Setup
+
+* Setup a [`postgres`](https://www.postgresql.org/) database.
+* Create a new application on the [Twitch Console](https://dev.twitch.tv/console/apps).
+* Copy `.env.example` to `.env` and set the appropriate values.
+* Run `setup.sh` or `setup.bat` depending on your platform.
+* Now you're done!
+
+### Setting up a development environment
+
+* Use [`ngrok`](https://ngrok.com/) to create a tunnel to your machine for _eventsub_.
+* Edit the `SERVER_URL` to the ngrok-https-url.
+* In the `web` directory set the `VITE_API_BASE_URL` to the ngrok-https-url.
+
 ## TODO
 
 This may be managed in the issues.
@@ -14,41 +56,8 @@ This may be managed in the issues.
 * [x] EventSub
 * [x] IRC
 * [ ] Verify index.html
-* [ ] Use migrations  
-* [ ] Document setup
-
-<details>
-<summary>Example config ('user_token')</summary>
-
-```json5
-{
-    "type": "UserToken",
-    "data": {
-        "access_token": "MY_ACCESS_TOKEN",
-        "refresh_token": "MY_REFRESH_TOKEN",
-      // this is just new Date(timestamp).toISOString() okayge
-        "created_at": "2021-05-24T15:04:47.000Z",
-        "expires_at": "2021-05-24T19:25:51.000Z"
-    }
-  // scopes: Scope::ChatEdit,
-  //         Scope::ChatRead,
-  //         Scope::ChannelModerate,
-  //         Scope::ModeratorManageAutoMod,
-  //         Scope::ModerationRead,
-  //         Scope::UserManageBlockedUsers,
-  //         Scope::UserReadBlockedUsers,
-  //         Scope::UserEditFollows,
-  //         Scope::UserReadFollows,
-  //         Scope::ChannelReadRedemptions,
-  //         Scope::ChannelManageRedemptions,
-  //         Scope::WhispersEdit,
-  //         Scope::WhispersRead,
-  //         Scope::ChannelEditCommercial,
-  //         Scope::ChannelManageBroadcast,
-}
-```
-</details>
-
+* [x] Use migrations  
+* [x] Document setup
 * [ ] Check TODOs throughout the code
 * [ ] Get rid of cloning everywhere
 * [ ] Handle timeout errors
@@ -85,28 +94,3 @@ All endpoints are on `/api/v1`. All endpoints (except `/auth/twich-auth-url` and
 
 Authentication is done through the `Authorization` header 
 that has to be set to `Bearer { cookie(auth_token) }`.
-
-# Web Interface
-
-## Editors and Broadcasters
-
-A broadcaster can add multiple editors who then can manage the rewards.
-This is done in the `Editors`-tab. 
-
-**Important:** A broadcaster can **only** add editors that have registered on this app (like on BTTV).
-
-The editors can access the rewards through the `Broadcasters` tab.
-
-## Rewards
-
-You can edit the rewards in the `Rewards` tab.
-
-In the dialog there are two sides. 
-
-On the left side you can edit Twitch specific parameters like the reward title or the cooldown.
-The cooldown can be specified like this: `1h`, `3.5d`, `3m` or `123` (seconds).
-
-On the right side you can edit the specific action done when this reward is redeemed.
-
-Some rewards expose a `Duration` configuration.
-Here, you can specify the duration like this: `1hour 3min 4ms`. For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_duration.html).
