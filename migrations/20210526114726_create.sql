@@ -14,9 +14,6 @@ comment on column users.id is 'The twitch user-id';
 
 comment on column users.refresh_token is 'The length of the refresh-token isn''t set';
 
-alter table users
-    owner to rewards;
-
 create unique index if not exists users_id_uindex
     on users (id);
 
@@ -31,9 +28,6 @@ create table if not exists rewards
             on delete cascade,
     data    jsonb       not null
 );
-
-alter table rewards
-    owner to rewards;
 
 create unique index if not exists rewards_id_uindex
     on rewards (id);
@@ -52,9 +46,6 @@ create table if not exists editors
         primary key (editor_id, broadcaster_id)
 );
 
-alter table editors
-    owner to rewards;
-
 create table if not exists config
 (
     key   varchar(16) not null
@@ -63,10 +54,5 @@ create table if not exists config
     value jsonb       not null
 );
 
-alter table config
-    owner to rewards;
-
 create unique index if not exists config_key_uindex
     on config (key);
-
-

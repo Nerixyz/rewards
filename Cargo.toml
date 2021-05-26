@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Nerixyz"]
 edition = "2018"
 
+[workspace]
+members = [".", "setup"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -38,3 +41,4 @@ hex = "0.4.3"
 chrono = "0.4.19"
 regex = "1.5.4"
 async-stream = "0.3.2"
+

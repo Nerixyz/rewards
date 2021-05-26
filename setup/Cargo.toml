@@ -1,0 +1,23 @@
+[package]
+name = "setup"
+version = "0.1.0"
+authors = ["Nerixyz"]
+edition = "2018"
+
+[[bin]]
+name = "setup"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dialoguer = "0.8.0"
+twitch_oauth2 = { version = "0.5.1", features = ["reqwest_client"] }
+tokio = "1"
+reqwest = "0.11"
+dotenv = "0.15.0"
+chrono = "0.4.19"
+open = "1.7.0"
+regex = "1.5.4"
+tokio-postgres = { version = "0.7.2", features = ["with-serde_json-1"] }
+serde = { version = "1.0", features = ["derive"] }
