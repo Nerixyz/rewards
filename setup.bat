@@ -9,7 +9,7 @@ cd web || exit 1
 npm i
 
 REM we don't check the types yet as they have issues (looking at you vuelidate)
-vite build
+npm run vite-build
 
 echo Building setup
 

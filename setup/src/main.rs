@@ -101,7 +101,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ]);
     let (url, csrf) = builder.generate_url();
 
-    open::that(url.to_string())?;
+    if open::that(url.to_string()).is_err() {
+        println!("Couldn't open url, so here's the url: {}", style(url.to_string()).cyan());
+    }
 
     let input = Input::<String>::new()
         .with_prompt("Code or Url")
