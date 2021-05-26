@@ -9,6 +9,8 @@ use twitch_api2::helix::eventsub::{EventSubSubscriptions, GetEventSubSubscriptio
 use twitch_api2::helix::Response;
 use twitch_api2::twitch_oauth2::AppAccessToken;
 use twitch_api2::HelixClient;
+use crate::constants::SERVER_URL;
+use regex::Regex;
 
 pub async fn register_eventsub_for_id(
     id: &str,
@@ -65,10 +67,17 @@ pub async fn clear_invalid_rewards(
 
     loop {
         for sub in &rewards.data.subscriptions {
-            if sub.status != Status::Enabled {
+            // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
+
+            let is_enabled = sub.status == Status::Enabled;
+            let is_this_server = sub.transport.callback.starts_with(SERVER_URL);
+
+            if !is_enabled || !is_this_server {
                 if let Err(e) = User::clear_eventsub_id(&sub.id, pool).await {
                     println!("Error clearing eventsub in db, but ignoring: {:?}", e);
                 }
+            }
+            if !is_enabled || (!is_this_server && Regex::new("https?://[\\w_]+.ngrok.io").unwrap().is_match(&sub.transport.callback)) {
                 if let Err(_) = delete_subscription(&*token, sub.id.clone()).await {
                     // TODO: this returns 200 which is ok but an error in twitch_api2
                     // println!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
