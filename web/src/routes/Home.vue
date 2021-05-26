@@ -1,8 +1,12 @@
 <template>
   <div class="flex flex-col justify-center items-center w-full h-full gap-4">
-    <Heading>Some cool heading...</Heading>
-    <SubHeading>An interesting description</SubHeading>
+    <Heading>Rewards</Heading>
+    <SubHeading>Enhance your stream with custom rewards</SubHeading>
     <CButton v-if="!auth" :href="url"> <TwitchIcon />Login with twitch </CButton>
+    <div v-else class="inline">
+      Make sure to mod <b class="border-red border-b">RewardsMore</b> in chat to be able to use rewards that require
+      mod-access!
+    </div>
   </div>
 </template>
 

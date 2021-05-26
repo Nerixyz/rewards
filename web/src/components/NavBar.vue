@@ -1,5 +1,5 @@
 <template>
-  <nav class="w-full h-14 flex bg-gray-light shadow-light justify-between px-10 items-center">
+  <nav v-if="userImage" class="w-full h-14 flex bg-gray-light shadow-light justify-between px-10 items-center">
     <div class="flex">
       <router-link
         v-for="route of routes"
