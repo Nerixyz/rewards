@@ -8,7 +8,7 @@
     </div>
 
     <div v-else>
-      <div v-if="broadcasters.length" class="flex">
+      <div v-if="broadcasters.length" class="flex flex-wrap gap-5">
         <RouterLink v-for="broadcaster of broadcasters" :key="broadcaster.id" :to="makeBroadcasterLink(broadcaster.id)">
           <div
             class="
@@ -36,7 +36,7 @@
               class="w-10 h-10 rounded-full"
             />
             <h3>{{ broadcaster.login }}</h3>
-            <div class="ml-auto bg-red text-black font-bold uppercase w-full px-4 py-2">Edit Rewards</div>
+            <div class="bg-red text-black font-bold uppercase w-full px-4 py-2">Edit Rewards</div>
           </div>
         </RouterLink>
       </div>
@@ -50,18 +50,15 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import CButton from '../components/core/CButton.vue';
 import { useApi } from '../api/plugin';
-import { useRouter } from 'vue-router';
 import { asyncRefs, tryAsync } from '../utilities';
 import { TwitchUser } from '../api/types';
 
 export default defineComponent({
   name: 'BroadcastersDashboard',
-  components: { CButton },
+  components: {},
   setup() {
     const api = useApi();
-    const router = useRouter();
 
     const { loading, error } = asyncRefs();
 
