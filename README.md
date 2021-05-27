@@ -65,6 +65,7 @@ This may be managed in the issues.
 * [ ] Add failed-auth page
 
 ### P2
+* [ ] Add a loading animation
 * [ ] IRC Bot
 * [ ] Automatic auth flow (use `postMessage` on auth)
 * [ ] Check token-scopes
