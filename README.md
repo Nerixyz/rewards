@@ -58,8 +58,8 @@ This may be managed in the issues.
 * [x] Verify index.html
 * [x] Use migrations  
 * [x] Document setup
-* [ ] Check TODOs throughout the code
-* [ ] Get rid of cloning everywhere
+* [x] Check TODOs throughout the code
+* [ ] ~~Get rid of cloning everywhere~~ - Most of the time cloning is required (often by twitch_api2)
 * [ ] Handle timeout errors
 * [x] Clear unfulfilled rewards
 
