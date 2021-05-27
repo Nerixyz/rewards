@@ -47,7 +47,7 @@
                 text-white
               "
             >
-              <DialogTitle as="h3" class="text-2xl mb-3 font-serif font-medium leading-6 text-white">
+              <DialogTitle as="h3" class="text-2xl mb-5 font-serif font-medium leading-6 text-white">
                 {{ title }}
               </DialogTitle>
               <DialogDescription v-if="subtitle" class="mb-4 text-gray-100 font-serif">
