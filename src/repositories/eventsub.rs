@@ -12,8 +12,7 @@ use actix_web::{
 use sqlx::PgPool;
 use twitch_api2::eventsub;
 use twitch_api2::eventsub::Payload;
-use twitch_api2::helix::points::{CustomRewardRedemptionStatus, CustomRewardRedemption};
-use crate::services::twitch::errors::ErrorResponse;
+use twitch_api2::helix::points::CustomRewardRedemptionStatus;
 
 #[post("/reward")]
 async fn reward_redemption(
