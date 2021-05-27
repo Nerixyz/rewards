@@ -37,10 +37,11 @@ module.exports = {
     },
     fontFamily: {
       serif: ['"Zilla Slab"', 'serif'],
-      sans: ['Lato' ,'Helvetica', 'Arial', 'sans-serif'],
+      sans: ['Lato', 'Helvetica', 'Arial', 'sans-serif'],
+      mono: ['ui-monospace', 'monospace'],
     },
     boxShadow: {
-      light: '0 4px 6px -1px #fff2, 0 2px 4px -1px #fff1'
+      light: '0 4px 6px -1px #fff2, 0 2px 4px -1px #fff1',
     },
     minWidth: {
       '10rem': '10rem',
@@ -50,12 +51,12 @@ module.exports = {
       '60p': '60%',
       '40p': '40%',
       '30vw': '30vw',
-      '40vw': '40vw'
+      '40vw': '40vw',
     },
-      transitionTimingFunction: {
-        'hyper-out': 'cubic-bezier(0.000, 0.875, 0.065, 1.000)',
-        'hyper-in': 'cubic-bezier(0.650, 0.000, 1.000, 0.095)'
-      },
+    transitionTimingFunction: {
+      'hyper-out': 'cubic-bezier(0.000, 0.875, 0.065, 1.000)',
+      'hyper-in': 'cubic-bezier(0.650, 0.000, 1.000, 0.095)',
+    },
   },
   variants: {
     extend: {
@@ -65,4 +66,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};
