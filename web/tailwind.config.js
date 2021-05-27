@@ -20,7 +20,6 @@ module.exports = {
         dark: '#d71d29',
       },
       gray: {
-        ...colors.gray,
         darkest: '#050509',
         dark: '#0a0a12',
         200: '#0e0e1a',
@@ -29,6 +28,11 @@ module.exports = {
         350: '#212124',
         400: '#2c2c2e',
         500: '#3b3b3d',
+        600: '#71717a',
+        700: '#a1a1aa',
+        800: '#d4d4d8',
+        900: '#e4e4e7',
+        1000: '#f4f4f5',
       },
       black: colors.black,
       white: colors.white,
@@ -56,6 +60,7 @@ module.exports = {
     transitionTimingFunction: {
       'hyper-out': 'cubic-bezier(0.000, 0.875, 0.065, 1.000)',
       'hyper-in': 'cubic-bezier(0.650, 0.000, 1.000, 0.095)',
+      'cubic-out': 'cubic-bezier(0.215, 0.610, 0.355, 1.000)',
     },
   },
   variants: {

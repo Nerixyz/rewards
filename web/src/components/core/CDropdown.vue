@@ -1,6 +1,6 @@
 <template>
   <Listbox :model-value="modelValue" @update:model-value="onUpdate">
-    <div class="relative m-1 min-w-10rem w-full outline-none">
+    <div class="relative min-w-10rem w-full outline-none">
       <ListboxButton
         class="
           relative
@@ -10,7 +10,12 @@
           pr-5
           text-left
           bg-transparent
-          border-2 border-red
+          border border-gray-900 border-opacity-30
+          focus:border-opacity-100 focus:border-red
+          focus:bg-gray-350
+          hover:bg-gray-350
+          hover:border-red
+          transition-colors
           rounded-md
           shadow-md
           outline-none
@@ -25,13 +30,29 @@
 
       <transition
         enter-active-class="transition duration-100 ease-out"
-        enter-from-class="opacity-0 scale-75"
+        enter-from-class="opacity-0 scale-90"
         enter-to-class="opacity-100 scale-100"
         leave-active-class="transition duration-100 ease-in"
         leave-from-class="opacity-100 scale-100"
         leave-to-class="opacity-0 scale-75"
       >
-        <ListboxOptions class="absolute origin-top w-full mt-1 text-base bg-gray-500 rounded-md shadow-lg max-h-60">
+        <ListboxOptions
+          class="
+            transform
+            transition-transform
+            absolute
+            origin-top
+            w-full
+            mt-1
+            text-base
+            bg-gray-500 bg-opacity-20
+            backdrop-filter backdrop-blur-md
+            border border-gray-900 border-opacity-20
+            rounded-md
+            shadow-lg
+            max-h-60
+          "
+        >
           <ListboxOption
             v-for="option of options"
             :key="option.value"
