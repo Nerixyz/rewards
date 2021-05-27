@@ -1,9 +1,15 @@
+use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::services::sql::SqlError;
 use actix_web::{HttpRequest, HttpResponse, Responder};
+use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 use sqlx::{FromRow, PgPool};
+use std::convert::TryFrom;
+use std::pin::Pin;
+use std::time::Duration;
 use twitch_api2::helix::points::CreateCustomRewardResponse;
+use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct Reward {
@@ -109,5 +115,53 @@ impl Reward {
 
         tx.commit().await?;
         Ok(())
+    }
+}
+
+#[derive(FromRow)]
+pub struct RewardToUpdate {
+    broadcaster_id: Option<String>,
+    access_token: Option<String>,
+    refresh_token: Option<String>,
+    reward_id: String,
+}
+
+impl RewardToUpdate {
+    pub fn get_all<'a>(pool: &'a PgPool) -> Pin<Box<dyn Stream<Item = Result<Self, sqlx::Error>> + 'a>> {
+        // language=PostgreSQL
+        sqlx::query_as!(
+            RewardToUpdate,
+            r#"
+            SELECT u.id as broadcaster_id, access_token, refresh_token, rewards.id as reward_id
+            FROM rewards
+                LEFT JOIN users u on u.id = rewards.user_id
+        "#
+        )
+        .fetch(pool)
+    }
+}
+
+impl TryFrom<RewardToUpdate> for (String, UserToken) {
+    type Error = ();
+    fn try_from(r: RewardToUpdate) -> Result<Self, Self::Error> {
+        if let (Some(access_token), Some(refresh_token), Some(broadcaster_id)) =
+            (r.access_token, r.refresh_token, r.broadcaster_id)
+        {
+            Ok((
+                r.reward_id,
+                UserToken::from_existing_unchecked(
+                    AccessToken::new(access_token),
+                    RefreshToken::new(refresh_token),
+                    ClientId::new(TWITCH_CLIENT_ID.to_string()),
+                    ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
+                    String::new(),
+                    broadcaster_id,
+                    None,
+                    Some(Duration::from_secs(1000)),
+                ),
+            ))
+        } else {
+            Err(())
+        }
     }
 }

@@ -5,7 +5,7 @@ use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::user::User;
 use crate::repositories::init_repositories;
-use crate::services::eventsub::{clear_invalid_rewards, register_eventsub_for_all_unregistered};
+use crate::services::eventsub::{clear_invalid_rewards, register_eventsub_for_all_unregistered, clear_unfulfilled_redemptions};
 use actix::Actor;
 use actix_files::NamedFile;
 use actix_web::middleware::{DefaultHeaders, Logger};
@@ -61,6 +61,13 @@ async fn main() -> std::io::Result<()> {
     register_eventsub_for_all_unregistered(&app_access_token, &pool)
         .await
         .expect("Could not register eventsub FeelsMan");
+
+    let clear_pool = pool.clone();
+    actix::spawn(async move {
+        if let Err(e) = clear_unfulfilled_redemptions(&clear_pool).await {
+            log::warn!("Failed to clear redemptions: {}", e);
+        }
+    });
 
     HttpServer::new(move || {
         App::new()

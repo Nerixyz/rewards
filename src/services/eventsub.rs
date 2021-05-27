@@ -1,16 +1,23 @@
 use crate::constants::SERVER_URL;
+use crate::models::reward::RewardToUpdate;
 use crate::models::user::User;
 use crate::services::twitch::eventsub::{delete_subscription, subscribe_to_rewards};
+use crate::services::twitch::RHelixClient;
 use actix_web::Error;
+use futures::StreamExt;
 use regex::Regex;
 use sqlx::PgPool;
+use std::convert::TryInto;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use twitch_api2::eventsub::Status;
 use twitch_api2::helix::eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest};
+use twitch_api2::helix::points::{
+    CustomRewardRedemption, CustomRewardRedemptionStatus, GetCustomRewardRedemptionRequest,
+    UpdateRedemptionStatusBody, UpdateRedemptionStatusRequest,
+};
 use twitch_api2::helix::Response;
-use twitch_api2::twitch_oauth2::AppAccessToken;
-use twitch_api2::HelixClient;
+use twitch_api2::twitch_oauth2::{AppAccessToken, UserToken};
 
 pub async fn register_eventsub_for_id(
     id: &str,
@@ -21,7 +28,6 @@ pub async fn register_eventsub_for_id(
 
     // this clears every subscription so we make sure, there's a new fresh one
     unregister_eventsub_for_user(id, &*token, pool).await.ok();
-
 
     let reward = subscribe_to_rewards(&*token, id).await?;
 
@@ -79,7 +85,7 @@ pub async fn clear_invalid_rewards(
     pool: &PgPool,
 ) -> Result<(), anyhow::Error> {
     let token = token.lock().await;
-    let client = HelixClient::<'_, reqwest::Client>::default();
+    let client = RHelixClient::default();
     let mut rewards: Response<GetEventSubSubscriptionsRequest, EventSubSubscriptions> = client
         .req_get(GetEventSubSubscriptionsRequest::builder().build(), &*token)
         .await?;
@@ -110,6 +116,75 @@ pub async fn clear_invalid_rewards(
 
         if rewards.pagination.is_some() {
             if let Some(res) = rewards.get_next(&client, &*token).await? {
+                rewards = res;
+                continue;
+            }
+        }
+        break;
+    }
+
+    Ok(())
+}
+
+pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> Result<(), anyhow::Error> {
+    let mut stream = RewardToUpdate::get_all(pool);
+    let client = RHelixClient::default();
+
+    while let Some(Ok(reward_with_user)) = stream.next().await {
+        if let Ok((reward_id, token)) = reward_with_user.try_into() {
+            clear_unfulfilled_redemptions_for_id(reward_id, &token, &client).await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn clear_unfulfilled_redemptions_for_id(
+    reward_id: String,
+    token: &UserToken,
+    client: &RHelixClient<'_>,
+) -> Result<(), anyhow::Error> {
+    let mut rewards: Response<GetCustomRewardRedemptionRequest, Vec<CustomRewardRedemption>> =
+        client
+            .req_get(
+                GetCustomRewardRedemptionRequest::builder()
+                    .broadcaster_id(token.user_id.clone())
+                    .reward_id(reward_id)
+                    .status(Some(CustomRewardRedemptionStatus::Unfulfilled))
+                    .build(),
+                token,
+            )
+            .await?;
+
+    loop {
+        for redemption in &rewards.data {
+            log::info!(
+                "Clearing unfulfilled: broadcaster={}; reward_id={}; redemption_id={}",
+                redemption.broadcaster_login,
+                redemption.reward.id,
+                redemption.id,
+            );
+
+            if let Err(e) = client
+                .req_patch(
+                    UpdateRedemptionStatusRequest::builder()
+                        .broadcaster_id(redemption.broadcaster_id.clone())
+                        .reward_id(redemption.reward.id.clone())
+                        .id(redemption.id.clone())
+                        .build(),
+                    UpdateRedemptionStatusBody::builder()
+                        .status(CustomRewardRedemptionStatus::Canceled)
+                        .build(),
+                    token,
+                )
+                .await
+            {
+                log::warn!("Could not update redemption: {}", e);
+            }
+        }
+
+        if rewards.pagination.is_some() {
+            if let Some(res) = rewards.get_next(client, token).await? {
                 rewards = res;
                 continue;
             }
