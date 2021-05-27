@@ -8,16 +8,37 @@
     </div>
 
     <div v-else>
-      <div v-if="broadcasters.length">
-        <div v-for="broadcaster of broadcasters" :key="broadcaster.id" class="flex items-center gap-4">
-          <img
-            :src="broadcaster.profile_image_url"
-            :alt="`Profile image of ${broadcaster.login}`"
-            class="w-10 h-10 rounded-full"
-          />
-          <h3>{{ broadcaster.login }}</h3>
-          <CButton :disabled="loading" class="ml-auto" @click="goToBroadcaster(broadcaster.id)">Edit Rewards</CButton>
-        </div>
+      <div v-if="broadcasters.length" class="flex">
+        <RouterLink v-for="broadcaster of broadcasters" :key="broadcaster.id" :to="makeBroadcasterLink(broadcaster.id)">
+          <div
+            class="
+              flex
+              items-center
+              flex-col
+              gap-4
+              bg-gray-300
+              rounded-lg
+              overflow-hidden
+              border border-gray-900 border-opacity-30
+              pt-4
+              select-none
+              cursor-pointer
+              transform
+              transition-transform transition-shadow
+              drop-shadow-none
+              hover:scale-105
+              hover:shadow-light
+            "
+          >
+            <img
+              :src="broadcaster.profile_image_url"
+              :alt="`Profile image of ${broadcaster.login}`"
+              class="w-10 h-10 rounded-full"
+            />
+            <h3>{{ broadcaster.login }}</h3>
+            <div class="ml-auto bg-red text-black font-bold uppercase w-full px-4 py-2">Edit Rewards</div>
+          </div>
+        </RouterLink>
       </div>
       <div v-else>
         It seems like noone has added you as an editor. Don't be sad
@@ -54,11 +75,11 @@ export default defineComponent({
       error,
     );
 
-    const goToBroadcaster = (id: string) => {
-      router.push(`/rewards/${encodeURIComponent(id)}`);
+    const makeBroadcasterLink = (id: string) => {
+      return `/rewards/${encodeURIComponent(id)}`;
     };
 
-    return { loading, error, broadcasters, goToBroadcaster };
+    return { loading, error, broadcasters, makeBroadcasterLink };
   },
 });
 </script>
