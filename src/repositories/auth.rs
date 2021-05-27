@@ -28,7 +28,7 @@ impl error::ResponseError for OAuthError {
     fn error_response(&self) -> BaseHttpResponse<Body> {
         // HttpResponse::MovedPermanently().append_header((header::LOCATION, "/failed-auth")).finish().into_body();
 
-        let mut resp = BaseHttpResponse::new(StatusCode::MOVED_PERMANENTLY);
+        let mut resp = BaseHttpResponse::new(StatusCode::FOUND);
         resp.headers_mut().insert(
             header::LOCATION,
             header::HeaderValue::from_static("/failed-auth"),
@@ -88,7 +88,7 @@ async fn twitch_callback(
     irc.do_send(JoinMessage(user.name));
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone())).map_err(|_| OAuthError)?;
-    Ok(HttpResponse::MovedPermanently()
+    Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(
             CookieBuilder::new("auth_token", token)
