@@ -112,9 +112,8 @@ struct TwitchAuthUrlResponse {
     url: String,
 }
 
-#[get("/twitch-auth-url")]
-fn create_twitch_url() -> HttpResponse {
-    // TODO: redirect
+#[get("/twitch-auth")]
+fn redirect_to_twitch_auth() -> HttpResponse {
     let params = TwitchOAuthParams {
         client_id: TWITCH_CLIENT_ID.to_string(),
         redirect_uri: format!("{}/api/v1/auth/twitch-callback", SERVER_URL),
@@ -132,7 +131,8 @@ fn create_twitch_url() -> HttpResponse {
         serde_qs::to_string(&params).expect("Failed to serialize")
     );
 
-    HttpResponse::Ok().json(TwitchAuthUrlResponse { url })
+    HttpResponse::Found()
+        .append_header(("location", url)).finish()
 }
 
 #[delete("")]
@@ -169,7 +169,7 @@ async fn revoke(
 
 pub fn init_auth_routes(config: &mut web::ServiceConfig) {
     config
-        .service(create_twitch_url)
+        .service(redirect_to_twitch_auth)
         .service(twitch_callback)
         .service(revoke);
 }
