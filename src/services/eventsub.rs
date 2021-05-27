@@ -19,9 +19,28 @@ pub async fn register_eventsub_for_id(
 ) -> Result<(), Error> {
     let token = token.lock().await;
 
+    // this clears every subscription so we make sure, there's a new fresh one
+    unregister_eventsub_for_user(id, &*token, pool).await.ok();
+
+
     let reward = subscribe_to_rewards(&*token, id).await?;
 
     User::set_eventsub_id(id, &reward.id, pool).await?;
+
+    Ok(())
+}
+
+pub async fn unregister_eventsub_for_user(
+    id: &str,
+    token: &AppAccessToken,
+    pool: &PgPool,
+) -> Result<(), Error> {
+    let old_id = User::clear_eventsub_for_user(id, pool).await?;
+
+    if let Some(old_id) = old_id {
+        log::info!("Clearing old subscription id={} user={}", old_id, id);
+        delete_subscription(token, old_id).await?;
+    }
 
     Ok(())
 }
