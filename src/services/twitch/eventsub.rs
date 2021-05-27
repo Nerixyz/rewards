@@ -82,6 +82,6 @@ pub async fn update_reward_redemption(
 
     match response.data {
         UpdateRedemptionStatusInformation::Success(r) => Ok(r),
-        _ => Err(TwitchApiError::Custom.into()),
+        _ => Err(TwitchApiError::Custom),
     }
 }

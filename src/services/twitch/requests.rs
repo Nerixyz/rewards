@@ -52,7 +52,7 @@ pub async fn update_reward(
 
     match response.data {
         UpdateCustomReward::Success(r) => Ok(r),
-        _ => Err(TwitchApiError::Other("Expected Success".to_string()).into()),
+        _ => Err(TwitchApiError::Other("Expected Success".to_string())),
     }
 }
 
@@ -107,7 +107,7 @@ pub async fn get_reward_for_broadcaster_by_id(
         .data
         .into_iter()
         .next()
-        .ok_or_else(|| TwitchApiError::Other("No reward found".to_string()).into())
+        .ok_or_else(|| TwitchApiError::Other("No reward found".to_string()))
 }
 
 pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
@@ -119,7 +119,7 @@ pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
         .data
         .into_iter()
         .next()
-        .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()).into())
+        .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()))
 }
 
 pub async fn get_user_by_login(login: String, token: &UserToken) -> HelixResult<User> {
@@ -131,7 +131,7 @@ pub async fn get_user_by_login(login: String, token: &UserToken) -> HelixResult<
         .data
         .into_iter()
         .next()
-        .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()).into())
+        .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()))
 }
 
 pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<User>> {
