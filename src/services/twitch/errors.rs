@@ -30,7 +30,10 @@ pub enum TwitchApiError {
 impl std::error::Error for TwitchApiError {}
 impl error::ResponseError for TwitchApiError {
     fn status_code(&self) -> StatusCode {
-        StatusCode::INTERNAL_SERVER_ERROR
+        match self {
+            Self::Response(status, _) => status.clone(),
+            _ => StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
 }
 
