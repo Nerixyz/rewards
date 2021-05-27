@@ -60,7 +60,7 @@ This may be managed in the issues.
 * [x] Document setup
 * [x] Check TODOs throughout the code
 * [ ] ~~Get rid of cloning everywhere~~ - Most of the time cloning is required (often by twitch_api2)
-* [ ] Handle timeout errors
+* [ ] ~~Handle timeout errors~~ - Seems like this can't be done
 * [x] Clear unfulfilled rewards
 
 ### P2
