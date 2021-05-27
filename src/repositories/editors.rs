@@ -1,11 +1,11 @@
 use crate::models::editor::Editor;
 use crate::services::jwt::JwtClaims;
 use crate::services::twitch::requests::get_users;
-use actix_web::{delete, get, put, web, Error, HttpResponse};
+use actix_web::{delete, get, put, web, Result, HttpResponse};
 use sqlx::PgPool;
 
 #[get("")]
-async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
+async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
     let editors = Editor::get_editors(claims.user_id(), &pool).await?;
 
@@ -21,7 +21,7 @@ async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<Ht
 async fn get_broadcasters(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
     let broadcasters = Editor::get_broadcasters(claims.user_id(), &pool).await?;
 
@@ -38,7 +38,7 @@ async fn add_editor(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     editor: web::Path<String>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     Editor::add_editor(claims.user_id(), &editor, &pool).await?;
     Ok(HttpResponse::Ok().finish())
 }
@@ -48,7 +48,7 @@ async fn delete_editor(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     editor: web::Path<String>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     Editor::delete_editor(claims.user_id(), &editor, &pool).await?;
     Ok(HttpResponse::Ok().finish())
 }

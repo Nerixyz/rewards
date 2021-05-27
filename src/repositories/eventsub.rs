@@ -7,7 +7,7 @@ use actix::Addr;
 use actix_web::{
     post,
     web::{self, ServiceConfig},
-    Error, HttpResponse,
+    Result, HttpResponse,
 };
 use sqlx::PgPool;
 use twitch_api2::eventsub;
@@ -19,7 +19,7 @@ async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => {
             log::info!("verification: {:?}", rq);

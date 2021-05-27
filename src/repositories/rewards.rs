@@ -6,7 +6,7 @@ use crate::services::twitch::requests::{
     create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
     update_reward,
 };
-use actix_web::{delete, error, get, patch, put, web, Error, HttpResponse};
+use actix_web::{delete, error, get, patch, put, web, Result, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};
@@ -35,7 +35,7 @@ async fn create(
     pool: web::Data<PgPool>,
     body: web::Json<CreateRewardBody>,
     broadcaster_id: web::Path<String>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool)
         .await?
         .into();
@@ -61,7 +61,7 @@ async fn update(
     pool: web::Data<PgPool>,
     body: web::Json<UpdateRewardBody>,
     path: web::Path<(String, String)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let (broadcaster_id, reward_id) = path.into_inner();
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool)
         .await?
@@ -87,7 +87,7 @@ async fn delete(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     path: web::Path<(String, String)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let (broadcaster_id, reward_id) = path.into_inner();
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool)
         .await?
@@ -111,7 +111,7 @@ async fn list_for_user(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     broadcaster_id: web::Path<String>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool)
         .await?
         .into();
@@ -139,7 +139,7 @@ async fn get_reward(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     path: web::Path<(String, String)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let (broadcaster_id, reward_id) = path.into_inner();
     let token = get_user_or_editor(&claims, &broadcaster_id, &pool)
         .await?

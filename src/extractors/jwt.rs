@@ -1,6 +1,6 @@
 use crate::services::jwt::{decode_jwt, JwtClaims};
 use actix_web::dev::Payload;
-use actix_web::{error, http::header, Error, FromRequest, HttpRequest};
+use actix_web::{error, http::header, Error, Result, FromRequest, HttpRequest};
 use futures_util::future::{err, ready, Ready};
 
 impl FromRequest for JwtClaims {
@@ -9,7 +9,7 @@ impl FromRequest for JwtClaims {
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        let auth: Result<&str, Error> = req
+        let auth: Result<&str> = req
             .headers()
             .get(header::AUTHORIZATION)
             .map(|h| h.to_str().ok())

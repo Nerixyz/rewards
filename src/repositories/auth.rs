@@ -8,7 +8,7 @@ use actix::Addr;
 use actix_web::body::Body;
 use actix_web::cookie::CookieBuilder;
 use actix_web::http::{header, StatusCode};
-use actix_web::{delete, error, get, web, BaseHttpResponse, Error, HttpResponse};
+use actix_web::{delete, error, get, web, BaseHttpResponse, Result, HttpResponse};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -50,7 +50,7 @@ async fn twitch_callback(
     irc: web::Data<Addr<IrcActor>>,
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let mut builder = UserTokenBuilder::new(
         ClientId::new(TWITCH_CLIENT_ID.to_string()),
         ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
@@ -141,7 +141,7 @@ async fn revoke(
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let user = claims.get_user(&pool).await?;
     let user_name = user.name.clone();
     let eventsub_id = user.eventsub_id.clone();
