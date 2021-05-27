@@ -4,7 +4,7 @@ use crate::models::user::User;
 use crate::services::twitch::eventsub::{delete_subscription, subscribe_to_rewards};
 use crate::services::twitch::RHelixClient;
 use actix_web::Error;
-use futures::StreamExt;
+use futures::TryStreamExt;
 use regex::Regex;
 use sqlx::PgPool;
 use std::convert::TryInto;
@@ -130,7 +130,7 @@ pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> Result<(), anyhow::
     let mut stream = RewardToUpdate::get_all(pool);
     let client = RHelixClient::default();
 
-    while let Some(Ok(reward_with_user)) = stream.next().await {
+    while let Some(reward_with_user) = stream.try_next().await? {
         if let Ok((reward_id, token)) = reward_with_user.try_into() {
             clear_unfulfilled_redemptions_for_id(reward_id, &token, &client).await?;
         }
