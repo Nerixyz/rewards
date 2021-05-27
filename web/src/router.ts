@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ApiClient from './api/ApiClient';
 const Home = () => import('./routes/Home.vue');
 const NotFound = () => import('./routes/NotFound.vue');
+const FailedAuth = () => import('./routes/FailedAuth.vue');
 const RewardsDashboard = () => import('./routes/RewardsDashboard.vue');
 const EditorsDashboard = () => import('./routes/EditorsDashboard.vue');
 const BroadcasterDashboard = () => import('./routes/BroadcasterDashboard.vue');
@@ -11,6 +12,13 @@ const router = createRouter({
     {
       path: '/',
       component: Home,
+      meta: {
+        open: true,
+      },
+    },
+    {
+      path: '/failed-auth',
+      component: FailedAuth,
       meta: {
         open: true,
       },
