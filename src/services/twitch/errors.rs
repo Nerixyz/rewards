@@ -24,7 +24,7 @@ pub enum TwitchApiError {
     #[display(fmt = "Some custom error")]
     Custom,
     #[display(fmt = "{}", _0)]
-    Other(String)
+    Other(String),
 }
 
 impl std::error::Error for TwitchApiError {}

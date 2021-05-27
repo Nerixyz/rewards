@@ -8,7 +8,7 @@ use actix::Addr;
 use actix_web::body::Body;
 use actix_web::cookie::CookieBuilder;
 use actix_web::http::{header, StatusCode};
-use actix_web::{delete, error, get, web, BaseHttpResponse, Result, HttpResponse};
+use actix_web::{delete, error, get, web, BaseHttpResponse, HttpResponse, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;

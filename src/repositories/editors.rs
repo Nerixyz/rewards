@@ -1,7 +1,7 @@
 use crate::models::editor::Editor;
 use crate::services::jwt::JwtClaims;
 use crate::services::twitch::requests::get_users;
-use actix_web::{delete, get, put, web, Result, HttpResponse};
+use actix_web::{delete, get, put, web, HttpResponse, Result};
 use sqlx::PgPool;
 
 #[get("")]
@@ -18,10 +18,7 @@ async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<Ht
 }
 
 #[get("/broadcasters")]
-async fn get_broadcasters(
-    claims: JwtClaims,
-    pool: web::Data<PgPool>,
-) -> Result<HttpResponse> {
+async fn get_broadcasters(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
     let broadcasters = Editor::get_broadcasters(claims.user_id(), &pool).await?;
 

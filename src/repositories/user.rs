@@ -1,6 +1,6 @@
 use crate::services::jwt::JwtClaims;
 use crate::services::twitch::requests::{get_user, get_user_by_login};
-use actix_web::{get, web, Result, HttpResponse};
+use actix_web::{get, web, HttpResponse, Result};
 use sqlx::PgPool;
 
 #[get("/me")]

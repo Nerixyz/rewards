@@ -3,7 +3,7 @@ use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, Timeout
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use actix::Addr;
-use anyhow::{Result as AnyResult, Error as AnyError};
+use anyhow::{Error as AnyError, Result as AnyResult};
 use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;

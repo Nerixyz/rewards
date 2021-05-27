@@ -1,6 +1,6 @@
 use crate::services::jwt::{decode_jwt, JwtClaims};
 use actix_web::dev::Payload;
-use actix_web::{error, http::header, Error, Result, FromRequest, HttpRequest};
+use actix_web::{error, http::header, Error, FromRequest, HttpRequest, Result};
 use futures_util::future::{err, ready, Ready};
 
 impl FromRequest for JwtClaims {

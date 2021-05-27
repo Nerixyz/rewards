@@ -127,7 +127,9 @@ pub struct RewardToUpdate {
 }
 
 impl RewardToUpdate {
-    pub fn get_all<'a>(pool: &'a PgPool) -> Pin<Box<dyn Stream<Item = Result<Self, sqlx::Error>> + 'a>> {
+    pub fn get_all<'a>(
+        pool: &'a PgPool,
+    ) -> Pin<Box<dyn Stream<Item = Result<Self, sqlx::Error>> + 'a>> {
         // language=PostgreSQL
         sqlx::query_as!(
             RewardToUpdate,

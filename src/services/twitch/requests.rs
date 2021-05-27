@@ -1,3 +1,4 @@
+use crate::services::twitch::errors::TwitchApiError;
 use crate::services::twitch::{HelixResult, RHelixClient};
 use twitch_api2::{
     helix::{
@@ -12,7 +13,6 @@ use twitch_api2::{
     },
     twitch_oauth2::UserToken,
 };
-use crate::services::twitch::errors::TwitchApiError;
 
 pub async fn create_reward(
     user_id: &str,

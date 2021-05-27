@@ -6,7 +6,7 @@ use crate::services::twitch::requests::{
     create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
     update_reward,
 };
-use actix_web::{delete, error, get, patch, put, web, Result, HttpResponse};
+use actix_web::{delete, error, get, patch, put, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};
