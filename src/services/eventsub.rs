@@ -3,7 +3,8 @@ use crate::models::reward::RewardToUpdate;
 use crate::models::user::User;
 use crate::services::twitch::eventsub::{delete_subscription, subscribe_to_rewards};
 use crate::services::twitch::RHelixClient;
-use actix_web::Error;
+use actix_web::Result as ActixResult;
+use anyhow::Result as AnyhowResult;
 use futures::TryStreamExt;
 use regex::Regex;
 use sqlx::PgPool;
@@ -23,7 +24,7 @@ pub async fn register_eventsub_for_id(
     id: &str,
     token: &Arc<Mutex<AppAccessToken>>,
     pool: &PgPool,
-) -> Result<(), Error> {
+) -> ActixResult<()> {
     let token = token.lock().await;
 
     // this clears every subscription so we make sure, there's a new fresh one
@@ -40,7 +41,7 @@ pub async fn unregister_eventsub_for_user(
     id: &str,
     token: &AppAccessToken,
     pool: &PgPool,
-) -> Result<(), Error> {
+) -> ActixResult<()> {
     let old_id = User::clear_eventsub_for_user(id, pool).await?;
 
     if let Some(old_id) = old_id {
@@ -55,7 +56,7 @@ pub async fn unregister_eventsub_for_id(
     id: String,
     token: &Arc<Mutex<AppAccessToken>>,
     pool: &PgPool,
-) -> Result<(), Error> {
+) -> ActixResult<()> {
     let token = token.lock().await;
 
     User::clear_eventsub_id(&id, pool).await?;
@@ -68,7 +69,7 @@ pub async fn unregister_eventsub_for_id(
 pub async fn register_eventsub_for_all_unregistered(
     token: &Arc<Mutex<AppAccessToken>>,
     pool: &PgPool,
-) -> Result<(), anyhow::Error> {
+) -> AnyhowResult<()> {
     let non_subs = User::get_all_non_subscribers(pool).await?;
 
     for user_id in non_subs {
@@ -83,7 +84,7 @@ pub async fn register_eventsub_for_all_unregistered(
 pub async fn clear_invalid_rewards(
     token: &Arc<Mutex<AppAccessToken>>,
     pool: &PgPool,
-) -> Result<(), anyhow::Error> {
+) -> AnyhowResult<()> {
     let token = token.lock().await;
     let client = RHelixClient::default();
     let mut rewards: Response<GetEventSubSubscriptionsRequest, EventSubSubscriptions> = client
@@ -126,7 +127,7 @@ pub async fn clear_invalid_rewards(
     Ok(())
 }
 
-pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> Result<(), anyhow::Error> {
+pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
     let mut stream = RewardToUpdate::get_all(pool);
     let client = RHelixClient::default();
 
@@ -143,7 +144,7 @@ pub async fn clear_unfulfilled_redemptions_for_id(
     reward_id: String,
     token: &UserToken,
     client: &RHelixClient<'_>,
-) -> Result<(), anyhow::Error> {
+) -> AnyhowResult<()> {
     let mut rewards: Response<GetCustomRewardRedemptionRequest, Vec<CustomRewardRedemption>> =
         client
             .req_get(
