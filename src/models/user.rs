@@ -155,6 +155,21 @@ impl User {
         .await?;
         Ok(())
     }
+    pub async fn clear_eventsub_for_user(user_id: &str, pool: &PgPool) -> Result<Option<String>, SqlError> {
+        // language=PostgreSQL
+        let old_id = sqlx::query_scalar!(
+            r#"
+            UPDATE users
+            SET eventsub_id = null
+            WHERE id= $1
+            RETURNING (SELECT eventsub_id FROM users WHERE id = $1)
+            "#,
+            user_id
+        )
+            .fetch_one(pool)
+            .await?;
+        Ok(old_id)
+    }
 }
 
 impl From<User> for UserToken {
