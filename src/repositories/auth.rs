@@ -20,9 +20,9 @@ use twitch_api2::twitch_oauth2::{
     AppAccessToken, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TwitchToken, UserToken,
 };
 
-#[derive(Debug, derive_more::Display, derive_more::Error)]
+#[derive(Debug, derive_more::Display, Default)]
 #[display(fmt = "Error during oauth authorization")]
-struct OAuthError;
+struct OAuthError(Option<String>);
 
 impl error::ResponseError for OAuthError {
     fn error_response(&self) -> BaseHttpResponse<Body> {
@@ -31,7 +31,11 @@ impl error::ResponseError for OAuthError {
         let mut resp = BaseHttpResponse::new(StatusCode::FOUND);
         resp.headers_mut().insert(
             header::LOCATION,
-            header::HeaderValue::from_static("/failed-auth"),
+            match &self.0 {
+                Some(error) => header::HeaderValue::from_str(&format!("/failed-auth#{}", error))
+                    .unwrap_or(header::HeaderValue::from_static("/failed-auth")),
+                None => header::HeaderValue::from_static("/failed-auth"),
+            },
         );
         resp.set_body(Body::None)
     }
@@ -40,8 +44,10 @@ impl error::ResponseError for OAuthError {
 #[derive(Deserialize)]
 #[non_exhaustive]
 struct TwitchCallbackQuery {
-    code: String,
-    scope: String,
+    code: Option<String>,
+    scope: Option<String>,
+    error: Option<String>,
+    error_description: Option<String>,
 }
 
 #[get("/twitch-callback")]
@@ -51,6 +57,12 @@ async fn twitch_callback(
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
 ) -> Result<HttpResponse> {
+    let query = query.into_inner();
+    let (code, scope) = match (query.code, query.scope) {
+        (Some(code), Some(scope)) => (code, scope),
+        _ => return Err(OAuthError(query.error_description.or(query.error)).into()),
+    };
+
     let mut builder = UserTokenBuilder::new(
         ClientId::new(TWITCH_CLIENT_ID.to_string()),
         ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
@@ -62,22 +74,24 @@ async fn twitch_callback(
     builder.set_csrf(CsrfToken::new("".to_string()));
 
     let user_token = builder
-        .get_user_token(reqwest_http_client, "", &query.code)
+        .get_user_token(reqwest_http_client, "", &code)
         .await
-        .map_err(|_| OAuthError)?;
+        .map_err(|_| OAuthError(Some("Could not get token".to_string())))?;
 
-    let refresh_token = user_token.refresh_token.ok_or(OAuthError)?;
+    let refresh_token = user_token.refresh_token.ok_or(OAuthError::default())?;
 
     let user = User {
         id: user_token.user_id.clone(),
         refresh_token: refresh_token.secret().clone(),
         access_token: user_token.access_token.secret().clone(),
-        scopes: query.scope.clone(),
+        scopes: scope,
         name: user_token.login.clone(),
         eventsub_id: None,
     };
 
-    user.create(&pool).await.map_err(|_| OAuthError)?;
+    user.create(&pool)
+        .await
+        .map_err(|_| OAuthError::default())?;
 
     // register and save the id into the database
     register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool).await?;
@@ -87,7 +101,8 @@ async fn twitch_callback(
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
 
-    let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone())).map_err(|_| OAuthError)?;
+    let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone()))
+        .map_err(|_| OAuthError::default())?;
     Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(
@@ -132,7 +147,8 @@ fn redirect_to_twitch_auth() -> HttpResponse {
     );
 
     HttpResponse::Found()
-        .append_header(("location", url)).finish()
+        .append_header(("location", url))
+        .finish()
 }
 
 #[delete("")]
