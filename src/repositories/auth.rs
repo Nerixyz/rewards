@@ -8,7 +8,7 @@ use actix::Addr;
 use actix_web::body::Body;
 use actix_web::cookie::CookieBuilder;
 use actix_web::http::{header, StatusCode};
-use actix_web::{delete, error, get, web, BaseHttpResponse, Error, HttpResponse};
+use actix_web::{delete, error, get, web, BaseHttpResponse, HttpResponse, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -28,7 +28,7 @@ impl error::ResponseError for OAuthError {
     fn error_response(&self) -> BaseHttpResponse<Body> {
         // HttpResponse::MovedPermanently().append_header((header::LOCATION, "/failed-auth")).finish().into_body();
 
-        let mut resp = BaseHttpResponse::new(StatusCode::MOVED_PERMANENTLY);
+        let mut resp = BaseHttpResponse::new(StatusCode::FOUND);
         resp.headers_mut().insert(
             header::LOCATION,
             header::HeaderValue::from_static("/failed-auth"),
@@ -50,7 +50,7 @@ async fn twitch_callback(
     irc: web::Data<Addr<IrcActor>>,
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let mut builder = UserTokenBuilder::new(
         ClientId::new(TWITCH_CLIENT_ID.to_string()),
         ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
@@ -88,7 +88,7 @@ async fn twitch_callback(
     irc.do_send(JoinMessage(user.name));
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone())).map_err(|_| OAuthError)?;
-    Ok(HttpResponse::MovedPermanently()
+    Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(
             CookieBuilder::new("auth_token", token)
@@ -141,7 +141,7 @@ async fn revoke(
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let user = claims.get_user(&pool).await?;
     let user_name = user.name.clone();
     let eventsub_id = user.eventsub_id.clone();

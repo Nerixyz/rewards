@@ -3,7 +3,7 @@ use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, Timeout
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use actix::Addr;
-use anyhow::Error as AnyError;
+use anyhow::{Error as AnyError, Result as AnyResult};
 use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -17,7 +17,7 @@ pub async fn execute_reward(
     broadcaster: User,
     _pool: &PgPool,
     irc: Arc<Addr<IrcActor>>,
-) -> Result<(), AnyError> {
+) -> AnyResult<()> {
     match reward.data.0 {
         RewardData::Timeout(timeout) => {
             irc.send(TimeoutMessage {
@@ -47,7 +47,7 @@ pub async fn execute_reward(
     Ok(())
 }
 
-pub fn extract_username(str: &str) -> Result<String, AnyError> {
+pub fn extract_username(str: &str) -> AnyResult<String> {
     if !str.contains(' ') {
         return Ok(str.replace("@", ""));
     }
@@ -61,7 +61,7 @@ pub fn extract_username(str: &str) -> Result<String, AnyError> {
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
 
-pub fn verify_reward(reward: &RewardData) -> Result<(), AnyError> {
+pub fn verify_reward(reward: &RewardData) -> AnyResult<()> {
     match reward {
         RewardData::Timeout(duration) => humantime::parse_duration(duration)?,
         RewardData::SubOnly(duration) => humantime::parse_duration(duration)?,

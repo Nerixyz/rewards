@@ -15,7 +15,6 @@ pub enum SqlError {
 
 impl From<sqlx::Error> for SqlError {
     fn from(e: Error) -> Self {
-        // println!("SQL error: {:?}", e);
         match e {
             Error::RowNotFound | Error::TypeNotFound { .. } | Error::ColumnNotFound(_) => {
                 Self::NotFound

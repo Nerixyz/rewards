@@ -7,7 +7,7 @@ use actix::Addr;
 use actix_web::{
     post,
     web::{self, ServiceConfig},
-    Error, HttpResponse,
+    HttpResponse, Result,
 };
 use sqlx::PgPool;
 use twitch_api2::eventsub;
@@ -19,7 +19,7 @@ async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => {
             log::info!("verification: {:?}", rq);
@@ -60,10 +60,14 @@ async fn reward_redemption(
                     .await
                     {
                         Ok(redemption) => log::info!("Final redemption: {:?}", redemption),
-                        Err(error) => log::warn!("Couldn't update reward redemption: {}", error)
+                        Err(error) => log::warn!("Couldn't update reward redemption: {}", error),
                     }
                 } else {
-                    log::warn!("failed to get user or reward: userId: {}, rewardID: {}", redemption.event.broadcaster_user_id, redemption.event.reward.id);
+                    log::warn!(
+                        "failed to get user or reward: userId: {}, rewardID: {}",
+                        redemption.event.broadcaster_user_id,
+                        redemption.event.reward.id
+                    );
                 }
             });
 
@@ -77,7 +81,7 @@ async fn reward_redemption(
         other => {
             log::warn!("unknown payload: {:?}", other);
             Ok(HttpResponse::Ok().body("I can't handle that!"))
-        },
+        }
     }
 }
 
