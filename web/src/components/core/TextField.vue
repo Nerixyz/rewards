@@ -6,8 +6,10 @@
       rounded-t-lg
       border border-gray-900
       border-opacity-30
+      bg-opacity-50
       transition-colors
       hover:bg-gray-350
+      hover:bg-opacity-50
       relative nerix-underline-tf`,
         isFocused ? 'nerix-underline-tf-active bg-gray-350' : '',
       ]"
