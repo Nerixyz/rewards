@@ -1,9 +1,11 @@
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::{JoinMessage, PartMessage};
 use crate::constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::models::reward::Reward;
 use crate::models::user::User;
 use crate::services::eventsub::{register_eventsub_for_id, unregister_eventsub_for_id};
 use crate::services::jwt::{encode_jwt, JwtClaims};
+use crate::services::twitch::requests::delete_reward;
 use actix::Addr;
 use actix_web::body::Body;
 use actix_web::cookie::CookieBuilder;
@@ -162,10 +164,6 @@ async fn revoke(
     let user_name = user.name.clone();
     let eventsub_id = user.eventsub_id.clone();
     let token: UserToken = user.into();
-    if let Err(e) = token.revoke_token(reqwest_http_client).await {
-        // we don't return the error, so me make sure everything is cleaned up
-        println!("Revoke token error: {}", e);
-    }
 
     if let Some(id) = eventsub_id {
         if let Err(e) = unregister_eventsub_for_id(id, &app_access_token, &pool).await {
@@ -173,6 +171,18 @@ async fn revoke(
             println!("Eventsub unregister error: {}", e);
         }
     }
+
+    if let Ok(rewards) = Reward::get_all_for_user(&token.user_id, &pool).await {
+        for reward in rewards {
+            delete_reward(&reward.user_id, reward.id, &token).await.ok();
+        }
+    }
+
+    if let Err(e) = token.revoke_token(reqwest_http_client).await {
+        // we don't return the error, so me make sure everything is cleaned up
+        println!("Revoke token error: {}", e);
+    }
+
     log::info!("AUTH: Revoked {}", user_name);
 
     irc.do_send(PartMessage(user_name));
