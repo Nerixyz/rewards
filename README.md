@@ -63,6 +63,7 @@ This may be managed in the issues.
 * [ ] ~~Handle timeout errors~~ - Seems like this can't be done
 * [x] Clear unfulfilled rewards
 * [x] Add failed-auth page
+* [ ] Allow logging-out
 
 ### P2
 * [ ] Add a loading animation
