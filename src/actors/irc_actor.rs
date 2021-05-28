@@ -1,9 +1,6 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{
-    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
-    TimeoutMessage,
-};
+use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage, WhisperMessage};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
@@ -139,14 +136,24 @@ impl Handler<ChatMessage> for IrcActor {
     }
 }
 
-impl Handler<SayMessage> for IrcActor {
+impl Handler<WhisperMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
 
-    fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: WhisperMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
-        Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
+        Box::pin(async move { Ok(client.privmsg(TWITCH_CLIENT_USER_LOGIN.to_string(), format!("/w {} {}", msg.0, msg.1)).await?) })
     }
 }
+
+// currently unused
+// impl Handler<SayMessage> for IrcActor {
+//     type Result = ResponseFuture<Result<(), AnyError>>;
+//
+//     fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+//         let client = self.client.clone();
+//         Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
+//     }
+// }
 
 impl Handler<TimeoutMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
@@ -165,7 +172,7 @@ impl Handler<TimeoutMessage> for IrcActor {
                 .privmsg(
                     msg.broadcaster.clone(),
                     format!(
-                        "/timeout {} {}s Redemption",
+                        "/timeout {} {}",
                         msg.user,
                         msg.duration
                     ),
@@ -217,6 +224,8 @@ impl Handler<TimedModeMessage> for IrcActor {
                 println!("Could not enter {}: {:?}", msg.mode, e);
             }
             tokio::time::sleep(std::time::Duration::from_secs(msg.duration)).await;
+
+            log::info!("Leave {} in {}", msg.mode, msg.broadcaster);
             if let Err(e) = client
                 .privmsg(msg.broadcaster, format!("/{}off", msg.mode))
                 .await

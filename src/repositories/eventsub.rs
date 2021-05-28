@@ -1,5 +1,5 @@
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::SayMessage;
+use crate::actors::messages::irc_messages::WhisperMessage;
 use crate::models::reward::Reward;
 use crate::models::user::User;
 use crate::services::rewards::execute_reward;
@@ -42,7 +42,6 @@ async fn reward_redemption(
                 let redemption_id = redemption.event.id.clone();
 
                 let executing_user_login = redemption.event.user_name.clone();
-                let broadcaster_login = redemption.event.broadcaster_user_login.clone();
 
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)
@@ -54,7 +53,7 @@ async fn reward_redemption(
                         Err(e) => {
                             log::warn!("Could not execute reward: {:?}", e);
 
-                            match irc.send(SayMessage(broadcaster_login, format!("[Refund] @{}, ⚠ I could not execute the reward. Make sure you provided the correct input!", executing_user_login))).await {
+                            match irc.send(WhisperMessage(executing_user_login, "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
                                 Err(e) => log::warn!("MailboxError on sending chat: {}", e),
                                 Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
                                 _ => ()
