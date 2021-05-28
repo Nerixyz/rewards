@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5">
+  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
     <div class="flex gap-5 flex-col">
       <form class="w-full min-w-10rem border-b border-gray-900 border-opacity-20 pb-6" @submit="addEditor">
         <h3 class="ml-1 mb-3 font-serif text-xl">Add an editor</h3>

@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5">
+  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
     <div v-if="loading">Loading...</div>
     <div v-else-if="error">
       Failed!
