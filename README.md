@@ -66,6 +66,8 @@ This may be managed in the issues.
 
 ### P2
 * [ ] Add a loading animation
+* [ ] Use `reactive` for the async state
+* [ ] Make the dialogs better (avoid the last flash) 
 * [ ] IRC Bot
 * [ ] Automatic auth flow (use `postMessage` on auth)
 * [ ] Check token-scopes
