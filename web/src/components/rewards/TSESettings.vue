@@ -20,7 +20,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const { modelValue } = toRefs(props);
 
-    const warn = computed(() => !isValidRewardDurationExpression(modelValue.value));
+    const warn = computed(() => !isValidRewardDurationExpression(modelValue.value.trim()));
     const onUpdate = (value: string) => {
       emit('update:modelValue', value);
     };
