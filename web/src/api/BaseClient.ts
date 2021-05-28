@@ -11,7 +11,8 @@ export class BaseClient {
 
   isAuthenticated = ref(!!this.authToken);
 
-  logout(): void {
+  async logout(): Promise<void> {
+    await this.delete('auth').catch(console.error);
     this.authToken = undefined;
     localStorage.removeItem('authToken');
     this.isAuthenticated.value = false;
@@ -54,14 +55,14 @@ export class BaseClient {
 
       if (isOk(response.status)) return json;
 
-      if (response.status === 401) this.logout();
+      if (response.status === 401 && this.isAuthenticated.value) this.logout();
       throw new Error(json.error ?? 'An error occurred.');
     } else {
       const text = await response.text();
 
       if (isOk(response.status)) return text as unknown as T;
 
-      if (response.status === 401) this.logout();
+      if (response.status === 401 && this.isAuthenticated.value) this.logout();
       throw new Error(text ?? 'An error occurred.');
     }
   }
@@ -83,7 +84,7 @@ function getToken() {
   if (!cookie) return;
 
   localStorage.setItem('authToken', cookie);
-  document.cookie = '';
+  document.cookie = 'auth_token=;expires=0;SameSite=None; Secure';
 
   return cookie;
 }
