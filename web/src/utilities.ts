@@ -45,3 +45,10 @@ export function isValidDuration(s: unknown): boolean {
 }
 
 const DURATIONS = { s: 1, m: 60, h: 60 * 60, d: 24 * 60 * 60 };
+
+export function isValidRewardDurationExpression(expr: string): boolean {
+  if (expr.startsWith('rand')) {
+    return /rand\(([^;]+);([^)]+)\)/.test(expr);
+  }
+  return true;
+}
