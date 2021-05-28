@@ -37,7 +37,9 @@ async fn web_index() -> std::io::Result<NamedFile> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
-    env_logger::init();
+    env_logger::builder().format_timestamp(None).init();
+
+    log::info!("Connecting to database");
 
     let mut pool_options =
         PgConnectOptions::from_str(DATABASE_URL).expect("couldn't read database url");
@@ -46,13 +48,19 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not connect to database");
 
+    log::info!("Starting Db and Irc");
+
     let db_actor = DbActor::new(pool.clone()).start();
     let irc_actor = IrcActor::new(db_actor.clone()).start();
+
+    log::info!("Joining all channels");
 
     let names = User::get_all_names(&pool)
         .await
         .expect("Could not get users");
     irc_actor.do_send(JoinAllMessage(names));
+
+    log::info!("Getting access-token");
 
     let app_access_token = get_app_access_token()
         .await
@@ -60,9 +68,14 @@ async fn main() -> std::io::Result<()> {
     let app_access_token = web::Data::new(Mutex::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
 
+    log::info!("Clearing old rewards");
+
     clear_invalid_rewards(&app_access_token, &pool)
         .await
         .expect("Could not clear invalid rewards");
+
+    log::info!("Registering eventsub callbacks");
+
     register_eventsub_for_all_unregistered(&app_access_token, &pool)
         .await
         .expect("Could not register eventsub FeelsMan");
