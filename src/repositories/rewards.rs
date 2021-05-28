@@ -11,13 +11,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct CreateRewardBody {
     pub twitch: CreateCustomRewardBody,
     pub data: RewardData,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct UpdateRewardBody {
     pub twitch: UpdateCustomRewardBody,
     pub data: RewardData,
@@ -41,6 +41,8 @@ async fn create(
         .into();
 
     let body = body.into_inner();
+
+    log::info!("Create reward: broadcaster_id={}; data={:?}", broadcaster_id, body);
 
     verify_reward(&body.data)
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
@@ -68,6 +70,8 @@ async fn update(
         .into();
 
     let body = body.into_inner();
+
+    log::info!("Update reward: broadcaster_id={}; reward_id={}; data={:?}", broadcaster_id, reward_id, body);
 
     verify_reward(&body.data)
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
