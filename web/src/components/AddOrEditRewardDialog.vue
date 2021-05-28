@@ -28,19 +28,20 @@
           <TSESettings
             v-if="['Timeout', 'SubOnly', 'EmoteOnly'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"
+            @update:warn="updateRewardWarning"
           />
         </div>
       </div>
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
-        <CButton :disabled="v$.$invalid"> {{ isAdding ? 'Add' : 'Edit' }} </CButton>
+        <CButton :disabled="!maySubmit"> {{ isAdding ? 'Add' : 'Edit' }} </CButton>
       </DialogButtons>
     </form>
   </CDialog>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, reactive, toRefs, watch } from 'vue';
+import { computed, defineComponent, PropType, reactive, ref, toRefs, watch } from 'vue';
 import CDialog from './core/CDialog.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
@@ -112,6 +113,11 @@ export default defineComponent({
       },
       rewardState,
     );
+    const rewardInvalid = ref(false);
+    const updateRewardWarning = (valid: boolean) => {
+      rewardInvalid.value = valid;
+    };
+    const maySubmit = computed(() => !v$.value.$invalid && !rewardInvalid.value);
 
     const isAdding = computed(() => !rewardData.value);
 
@@ -140,7 +146,20 @@ export default defineComponent({
       );
     };
 
-    return { loading, error, closeAll, v$, rewardState, RewardTypes, onSubmit, isAdding, onDialogClosed, open };
+    return {
+      loading,
+      error,
+      closeAll,
+      v$,
+      rewardState,
+      RewardTypes,
+      onSubmit,
+      isAdding,
+      onDialogClosed,
+      open,
+      maySubmit,
+      updateRewardWarning,
+    };
   },
 });
 </script>

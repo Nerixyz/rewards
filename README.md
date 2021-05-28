@@ -27,7 +27,11 @@ The cooldown can be specified like this: `1h`, `3.5d`, `3m` or `123` (seconds).
 On the right side you can edit the specific action done when this reward is redeemed.
 
 Some rewards expose a `Duration` configuration.
-Here, you can specify the duration like this: `1hour 3min 4ms`. For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_duration.html).
+Here, you can specify the duration like this: `1hour 3min 4ms`. 
+For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_duration.html).
+
+You can also provide the duration like this: `rand( 10m ; 10h )`. 
+This would timeout the user for a random duration between `10m` and `1h`.
 
 
 # Development
@@ -63,6 +67,7 @@ This may be managed in the issues.
 * [ ] ~~Handle timeout errors~~ - Seems like this can't be done
 * [x] Clear unfulfilled rewards
 * [x] Add failed-auth page
+* [ ] Allow logging-out
 
 ### P2
 * [ ] Add a loading animation

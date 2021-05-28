@@ -108,11 +108,9 @@ export default defineComponent({
 
     const isFocused = ref(false);
     const onFocus = () => {
-      console.log('focus');
       isFocused.value = true;
     };
     const onBlur = () => {
-      console.log('blur');
       isFocused.value = false;
     };
 
