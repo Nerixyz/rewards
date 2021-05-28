@@ -22,14 +22,14 @@ pub async fn execute_reward(
         RewardData::Timeout(timeout) => {
             irc.send(TimeoutMessage {
                 user: extract_username(&redemption.event.user_input)?,
-                duration: humantime::parse_duration(&timeout)?,
+                duration: get_duration(&timeout)?,
                 broadcaster: broadcaster.name,
             })
             .await??
         }
         RewardData::EmoteOnly(duration) => {
             irc.send(TimedModeMessage {
-                duration: humantime::parse_duration(&duration)?,
+                duration: get_duration(&duration)?,
                 broadcaster: broadcaster.name,
                 mode: TimedMode::Emote,
             })
@@ -37,7 +37,7 @@ pub async fn execute_reward(
         }
         RewardData::SubOnly(duration) => {
             irc.send(TimedModeMessage {
-                duration: humantime::parse_duration(&duration)?,
+                duration: get_duration(&duration)?,
                 broadcaster: broadcaster.name,
                 mode: TimedMode::Sub,
             })
@@ -47,7 +47,7 @@ pub async fn execute_reward(
     Ok(())
 }
 
-pub fn extract_username(str: &str) -> AnyResult<String> {
+fn extract_username(str: &str) -> AnyResult<String> {
     if !str.contains(' ') {
         return Ok(str.replace("@", ""));
     }
@@ -61,11 +61,41 @@ pub fn extract_username(str: &str) -> AnyResult<String> {
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
 
+fn get_duration(duration: &str) -> AnyResult<u64> {
+    if let Some(captures) = Regex::new("^rand\\(([^;]+);([^)]+)\\)$")
+        .expect("must compile").captures(duration) {
+        let mut iter = captures
+            .iter()
+            .skip(1)
+            .take(2)
+            .flatten()
+            .map(|m|
+                humantime::parse_duration(m.as_str().trim()).map(|d| d.as_secs())
+            );
+        let (first, second) = (iter.next(), iter.next());
+
+        let (first, second) = match (first, second) {
+            (Some(Ok(first)), Some(Ok(second))) => (first, second),
+            tuple => return Err(AnyError::msg(format!("Could not parse duration: {:?}", tuple)))
+        };
+
+        let (start, diff) = if first < second {
+            (first, second - first)
+        } else {
+            (second, first - second)
+        };
+
+        Ok((start as f64 + rand::random::<f64>() * (diff as f64)).floor() as u64)
+    } else {
+        Ok(humantime::parse_duration(duration)?.as_secs())
+    }
+}
+
 pub fn verify_reward(reward: &RewardData) -> AnyResult<()> {
     match reward {
-        RewardData::Timeout(duration) => humantime::parse_duration(duration)?,
-        RewardData::SubOnly(duration) => humantime::parse_duration(duration)?,
-        RewardData::EmoteOnly(duration) => humantime::parse_duration(duration)?,
+        RewardData::Timeout(duration) => get_duration(duration)?,
+        RewardData::SubOnly(duration) => get_duration(duration)?,
+        RewardData::EmoteOnly(duration) => get_duration(duration)?,
     };
     Ok(())
 }

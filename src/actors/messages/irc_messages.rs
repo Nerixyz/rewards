@@ -25,7 +25,7 @@ pub struct JoinAllMessage(pub Vec<String>);
 pub struct TimeoutMessage {
     pub broadcaster: String,
     pub user: String,
-    pub duration: Duration,
+    pub duration: u64,
 }
 
 #[derive(Message)]
@@ -33,7 +33,7 @@ pub struct TimeoutMessage {
 pub struct TimedModeMessage {
     pub mode: TimedMode,
     pub broadcaster: String,
-    pub duration: Duration,
+    pub duration: u64,
 }
 
 #[derive(Display)]
