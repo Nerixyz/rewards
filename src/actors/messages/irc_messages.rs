@@ -17,6 +17,10 @@ pub struct JoinMessage(pub String);
 pub struct PartMessage(pub String);
 
 #[derive(Message)]
+#[rtype(result = "Result<(), AnyError>")]
+pub struct SayMessage(pub String, pub String);
+
+#[derive(Message)]
 #[rtype(result = "()")]
 pub struct JoinAllMessage(pub Vec<String>);
 
