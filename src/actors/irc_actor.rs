@@ -1,6 +1,9 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage, WhisperMessage};
+use crate::actors::messages::irc_messages::{
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage,
+    WhisperMessage,
+};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
@@ -141,7 +144,14 @@ impl Handler<WhisperMessage> for IrcActor {
 
     fn handle(&mut self, msg: WhisperMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
-        Box::pin(async move { Ok(client.privmsg(TWITCH_CLIENT_USER_LOGIN.to_string(), format!("/w {} {}", msg.0, msg.1)).await?) })
+        Box::pin(async move {
+            Ok(client
+                .privmsg(
+                    TWITCH_CLIENT_USER_LOGIN.to_string(),
+                    format!("/w {} {}", msg.0, msg.1),
+                )
+                .await?)
+        })
     }
 }
 
@@ -171,11 +181,7 @@ impl Handler<TimeoutMessage> for IrcActor {
             client
                 .privmsg(
                     msg.broadcaster.clone(),
-                    format!(
-                        "/timeout {} {}",
-                        msg.user,
-                        msg.duration
-                    ),
+                    format!("/timeout {} {}", msg.user, msg.duration),
                 )
                 .await?;
 
@@ -216,7 +222,12 @@ impl Handler<TimedModeMessage> for IrcActor {
     fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         task::spawn(async move {
-            log::info!("{} in {} for {:?}s", msg.mode, msg.broadcaster, msg.duration);
+            log::info!(
+                "{} in {} for {:?}s",
+                msg.mode,
+                msg.broadcaster,
+                msg.duration
+            );
             if let Err(e) = client
                 .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await

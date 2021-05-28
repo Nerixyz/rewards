@@ -42,7 +42,11 @@ async fn create(
 
     let body = body.into_inner();
 
-    log::info!("Create reward: broadcaster_id={}; data={:?}", broadcaster_id, body);
+    log::info!(
+        "Create reward: broadcaster_id={}; data={:?}",
+        broadcaster_id,
+        body
+    );
 
     verify_reward(&body.data)
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
@@ -71,7 +75,12 @@ async fn update(
 
     let body = body.into_inner();
 
-    log::info!("Update reward: broadcaster_id={}; reward_id={}; data={:?}", broadcaster_id, reward_id, body);
+    log::info!(
+        "Update reward: broadcaster_id={}; reward_id={}; data={:?}",
+        broadcaster_id,
+        reward_id,
+        body
+    );
 
     verify_reward(&body.data)
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
