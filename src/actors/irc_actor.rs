@@ -172,7 +172,7 @@ impl Handler<TimeoutMessage> for IrcActor {
                 .privmsg(
                     msg.broadcaster.clone(),
                     format!(
-                        "/timeout {} {}s Redemption",
+                        "/timeout {} {}",
                         msg.user,
                         msg.duration
                     ),
@@ -224,6 +224,8 @@ impl Handler<TimedModeMessage> for IrcActor {
                 println!("Could not enter {}: {:?}", msg.mode, e);
             }
             tokio::time::sleep(std::time::Duration::from_secs(msg.duration)).await;
+
+            log::info!("Leave {} in {}", msg.mode, msg.broadcaster);
             if let Err(e) = client
                 .privmsg(msg.broadcaster, format!("/{}off", msg.mode))
                 .await
