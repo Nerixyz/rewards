@@ -33,7 +33,7 @@ impl error::ResponseError for OAuthError {
             header::LOCATION,
             match &self.0 {
                 Some(error) => header::HeaderValue::from_str(&format!("/failed-auth#{}", error))
-                    .unwrap_or(header::HeaderValue::from_static("/failed-auth")),
+                    .unwrap_or_else(|_| header::HeaderValue::from_static("/failed-auth")),
                 None => header::HeaderValue::from_static("/failed-auth"),
             },
         );
@@ -78,7 +78,7 @@ async fn twitch_callback(
         .await
         .map_err(|_| OAuthError(Some("Could not get token".to_string())))?;
 
-    let refresh_token = user_token.refresh_token.ok_or(OAuthError::default())?;
+    let refresh_token = user_token.refresh_token.ok_or_else(OAuthError::default)?;
 
     let user = User {
         id: user_token.user_id.clone(),

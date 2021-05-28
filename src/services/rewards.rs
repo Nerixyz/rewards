@@ -48,6 +48,8 @@ pub async fn execute_reward(
 }
 
 fn extract_username(str: &str) -> AnyResult<String> {
+    let str = str.trim();
+
     if !str.contains(' ') {
         return Ok(str.replace("@", ""));
     }
@@ -62,6 +64,8 @@ fn extract_username(str: &str) -> AnyResult<String> {
 }
 
 fn get_duration(duration: &str) -> AnyResult<u64> {
+    let duration = duration.trim();
+
     if let Some(captures) = Regex::new("^rand\\(([^;]+);([^)]+)\\)$")
         .expect("must compile").captures(duration) {
         let mut iter = captures

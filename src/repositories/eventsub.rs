@@ -1,4 +1,5 @@
 use crate::actors::irc_actor::IrcActor;
+use crate::actors::messages::irc_messages::SayMessage;
 use crate::models::reward::Reward;
 use crate::models::user::User;
 use crate::services::rewards::execute_reward;
@@ -40,13 +41,25 @@ async fn reward_redemption(
                 let reward_id = redemption.event.reward.id.clone();
                 let redemption_id = redemption.event.id.clone();
 
+                let executing_user_login = redemption.event.user_name.clone();
+                let broadcaster_login = redemption.event.broadcaster_user_login.clone();
+
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)
                 {
-                    let status = match execute_reward(redemption, reward, user, &*pool, irc).await {
+                    let status = match execute_reward(redemption, reward, user, &*pool, irc.clone())
+                        .await
+                    {
                         Ok(_) => CustomRewardRedemptionStatus::Fulfilled,
                         Err(e) => {
                             log::warn!("Could not execute reward: {:?}", e);
+
+                            match irc.send(SayMessage(broadcaster_login, format!("[Refund] @{}, ⚠ I could not execute the reward. Make sure you provided the correct input!", executing_user_login))).await {
+                                Err(e) => log::warn!("MailboxError on sending chat: {}", e),
+                                Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
+                                _ => ()
+                            }
+
                             CustomRewardRedemptionStatus::Canceled
                         }
                     };
