@@ -86,6 +86,9 @@ where
                 (Ok(Ok(ts)), Ok(sig)) => (ts, sig.to_string()),
                 _ => return Err(error::ErrorUnauthorized("Bad header")),
             };
+            if signature.len() <= 7 {
+                return Err(error::ErrorUnauthorized("Bad signature"));
+            }
             if Utc::now() - timestamp > Duration::minutes(10) {
                 return Err(error::ErrorUnauthorized("Ancient message LuL"));
             }
