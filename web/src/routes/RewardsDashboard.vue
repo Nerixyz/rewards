@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5">
+  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
     <!-- Loading handler -->
     <div v-if="loading">Loading...</div>
 
@@ -16,8 +16,8 @@
     </div>
 
     <!-- The main page -->
-    <div v-else class="flex">
-      <div class="min-w-15rem">
+    <div v-else class="flex flex-col gap-5">
+      <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
         <OutlinedButton @click="openAddDialog"> <PlusIcon /> Add Reward </OutlinedButton>
       </div>
       <div class="w-full flex flex-col gap-5">
