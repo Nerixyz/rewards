@@ -21,6 +21,10 @@ impl FromRequest for JwtClaims {
             Err(e) => return err(e),
         };
 
+        if auth.len() <= 7 {
+            return err(error::ErrorUnauthorized(""));
+        }
+
         let (head, token) = auth.split_at(7);
         if head != "Bearer " {
             return err(error::ErrorUnauthorized(""));

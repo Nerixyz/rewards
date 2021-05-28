@@ -67,20 +67,25 @@ fn get_duration(duration: &str) -> AnyResult<u64> {
     let duration = duration.trim();
 
     if let Some(captures) = Regex::new("^rand\\(([^;]+);([^)]+)\\)$")
-        .expect("must compile").captures(duration) {
+        .expect("must compile")
+        .captures(duration)
+    {
         let mut iter = captures
             .iter()
             .skip(1)
             .take(2)
             .flatten()
-            .map(|m|
-                humantime::parse_duration(m.as_str().trim()).map(|d| d.as_secs())
-            );
+            .map(|m| humantime::parse_duration(m.as_str().trim()).map(|d| d.as_secs()));
         let (first, second) = (iter.next(), iter.next());
 
         let (first, second) = match (first, second) {
             (Some(Ok(first)), Some(Ok(second))) => (first, second),
-            tuple => return Err(AnyError::msg(format!("Could not parse duration: {:?}", tuple)))
+            tuple => {
+                return Err(AnyError::msg(format!(
+                    "Could not parse duration: {:?}",
+                    tuple
+                )))
+            }
         };
 
         let (start, diff) = if first < second {
