@@ -1,7 +1,6 @@
 use actix::Message;
 use anyhow::Error as AnyError;
 use derive_more::Display;
-use std::time::Duration;
 use twitch_irc::message::PrivmsgMessage;
 
 #[derive(Message)]
@@ -16,9 +15,14 @@ pub struct JoinMessage(pub String);
 #[rtype(result = "()")]
 pub struct PartMessage(pub String);
 
+// currently unused
+// #[derive(Message)]
+// #[rtype(result = "Result<(), AnyError>")]
+// pub struct SayMessage(pub String, pub String);
+
 #[derive(Message)]
 #[rtype(result = "Result<(), AnyError>")]
-pub struct SayMessage(pub String, pub String);
+pub struct WhisperMessage(pub String, pub String);
 
 #[derive(Message)]
 #[rtype(result = "()")]
