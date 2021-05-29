@@ -48,7 +48,7 @@ async fn create(
         body
     );
 
-    verify_reward(&body.data, &broadcaster_id, &pool)
+    verify_reward(&body.data, &broadcaster_id,  &pool, &token)
         .await
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
@@ -83,7 +83,7 @@ async fn update(
         body
     );
 
-    verify_reward(&body.data, &broadcaster_id, &pool)
+    verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 

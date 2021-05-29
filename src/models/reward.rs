@@ -25,6 +25,7 @@ pub enum RewardData {
     SubOnly(String),
     EmoteOnly(String),
     BttvSwap(()),
+    FfzSwap(()),
 }
 
 impl Responder for Reward {

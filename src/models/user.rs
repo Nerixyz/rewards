@@ -102,6 +102,41 @@ impl User {
         Ok(())
     }
 
+    pub async fn get_ffz_history(user_id: &str, pool: &PgPool) -> Result<Vec<usize>, SqlError> {
+        // language=PostgreSQL
+        let history = sqlx::query_scalar!(
+            r#"
+            SELECT ffz_history as "ffz_history: Json<Vec<usize>>"
+            FROM users
+            WHERE id = $1
+            "#,
+            user_id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(history.0)
+    }
+
+    pub async fn set_ffz_history(
+        user_id: &str,
+        history: Vec<usize>,
+        pool: &PgPool,
+    ) -> Result<(), SqlError> {
+        // language=PostgreSQL
+        let _ = sqlx::query!(
+            r#"
+            UPDATE users SET ffz_history = $2 WHERE id = $1
+            "#,
+            user_id,
+            Json(history) as _
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL

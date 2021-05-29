@@ -46,6 +46,7 @@ pub async fn swap_or_add_emote(
     );
 
     // check if there's already an emote with the same name or id
+    // If the added emote will replace an emote with the same name it will never work!
     if bttv_user
         .shared_emotes
         .iter()
@@ -86,6 +87,20 @@ pub async fn swap_or_add_emote(
     User::set_bttv_history(user_id, history, pool)
         .await
         .map_err(|_| AnyError::msg("Internal error"))?;
+
+    let removed_emote = if let Some(id) = removed_emote {
+        Some(get_emote(&id).await.map(|e| e.code).unwrap_or_else(|e| {
+            log::warn!(
+                "Emote {} was added in {} but isn't there anymore error={}",
+                id,
+                user_id,
+                e
+            );
+            "[?]".to_string()
+        }))
+    } else {
+        None
+    };
 
     Ok((removed_emote, emote_data.code))
 }
