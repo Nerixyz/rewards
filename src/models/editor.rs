@@ -46,7 +46,7 @@ impl Editor {
             User,
             // language=PostgreSQL
             r#"
-                SELECT u.*
+                SELECT u.id, access_token, refresh_token, scopes, name, eventsub_id
                 FROM editors
                     LEFT JOIN users u on u.id = editors.broadcaster_id
                 WHERE broadcaster_id = $2 and editor_id = $1

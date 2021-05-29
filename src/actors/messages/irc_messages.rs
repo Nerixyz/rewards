@@ -15,10 +15,9 @@ pub struct JoinMessage(pub String);
 #[rtype(result = "()")]
 pub struct PartMessage(pub String);
 
-// currently unused
-// #[derive(Message)]
-// #[rtype(result = "Result<(), AnyError>")]
-// pub struct SayMessage(pub String, pub String);
+#[derive(Message)]
+#[rtype(result = "Result<(), AnyError>")]
+pub struct SayMessage(pub String, pub String);
 
 #[derive(Message)]
 #[rtype(result = "Result<(), AnyError>")]

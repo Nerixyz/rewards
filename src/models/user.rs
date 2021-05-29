@@ -1,6 +1,6 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::services::sql::SqlError;
-use sqlx::{FromRow, PgPool};
+use sqlx::{FromRow, PgPool, types::Json};
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
 
@@ -14,10 +14,17 @@ pub struct User {
     pub eventsub_id: Option<String>,
 }
 
+#[derive(FromRow)]
+pub struct UserBttvData {
+    pub id: String,
+    pub bttv_id: Option<String>,
+    pub bttv_history: Json<Vec<String>>,
+}
+
 impl User {
     pub async fn get_by_id(id: &str, pool: &PgPool) -> Result<User, SqlError> {
         // language=PostgreSQL
-        let user: User = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
+        let user: User = sqlx::query_as!(User, "SELECT id, access_token, refresh_token, scopes, name, eventsub_id FROM users WHERE id = $1", id)
             .fetch_one(pool)
             .await?;
 
@@ -26,7 +33,7 @@ impl User {
 
     pub async fn get_all(pool: &PgPool) -> Result<Vec<User>, SqlError> {
         // language=PostgreSQL
-        let users = sqlx::query_as!(User, "SELECT * FROM users")
+        let users = sqlx::query_as!(User, "SELECT id, access_token, refresh_token, scopes, name, eventsub_id FROM users")
             .fetch_all(pool)
             .await?;
 
@@ -54,6 +61,30 @@ impl User {
             .await?;
 
         Ok(ids)
+    }
+
+    pub async fn get_bttv_data(user_id: &str, pool: &PgPool) -> Result<UserBttvData, SqlError> {
+        // language=PostgreSQL
+        let data = sqlx::query_as!(UserBttvData,r#"
+            SELECT id, bttv_id, bttv_history as "bttv_history: Json<Vec<String>>"
+            FROM users
+            WHERE id = $1
+            "#, user_id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(data)
+    }
+
+    pub async fn set_bttv_history(user_id: &str, history: Vec<String>, pool: &PgPool) -> Result<(), SqlError> {
+        // language=PostgreSQL
+        let _ = sqlx::query!(r#"
+            UPDATE users SET bttv_history = $2 WHERE id = $1
+            "#, user_id, Json(history) as _)
+            .execute(pool)
+            .await?;
+
+        Ok(())
     }
 
     pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
@@ -102,6 +133,15 @@ impl User {
         .await?;
 
         tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn set_bttv_id(user_id: &str, bttv_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+        // language=PostgreSQL
+        let _ = sqlx::query_scalar!("UPDATE users SET bttv_id = $2 WHERE id = $1", user_id, bttv_id)
+            .execute(pool)
+            .await?;
+
         Ok(())
     }
 
