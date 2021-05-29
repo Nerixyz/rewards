@@ -1,6 +1,9 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage, WhisperMessage, SayMessage};
+use crate::actors::messages::irc_messages::{
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
+    TimeoutMessage, WhisperMessage,
+};
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
