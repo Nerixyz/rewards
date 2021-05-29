@@ -1,5 +1,3 @@
-import { assignToVRewardModel } from './model-conversion';
-
 export interface TwitchUser {
   id: string;
   login: string;
