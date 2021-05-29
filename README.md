@@ -93,8 +93,8 @@ This may be managed in the issues.
 * [x] Enable EmoteOnly (for x-seconds)
   
 ### P2
-* [ ] Change FFZ Emote (requires the bot to be an **editor**)
-* [ ] Change BTTV Emote (requires the bot to be an **editor**)
+* [x] Change FFZ Emote (requires the bot to be an **editor**)
+* [x] Change BTTV Emote (requires the bot to be an **editor**)
   
 ### P3
 * [ ] Queue Spotify song
