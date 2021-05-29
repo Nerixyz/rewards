@@ -90,7 +90,7 @@ export interface RewardDataMap {
   EmoteOnly: string;
   BttvSwap: null;
 
-  // ckeck assignToVRewardModel clone of data if object
+  // check assignToVRewardModel clone of data if object
 }
 
 export interface InternalCustomReward {
