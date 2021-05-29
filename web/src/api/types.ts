@@ -1,3 +1,5 @@
+import { assignToVRewardModel } from './model-conversion';
+
 export interface TwitchUser {
   id: string;
   login: string;
@@ -88,6 +90,9 @@ export interface RewardDataMap {
   Timeout: string;
   SubOnly: string;
   EmoteOnly: string;
+  BttvSwap: null;
+
+  // ckeck assignToVRewardModel clone of data if object
 }
 
 export interface InternalCustomReward {

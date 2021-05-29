@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, toRefs, watch } from 'vue';
+import { computed, defineComponent, onBeforeMount, PropType, toRefs, watch } from 'vue';
 import TextField from '../core/TextField.vue';
 import { isValidRewardDurationExpression } from '../../utilities';
 
@@ -14,6 +14,7 @@ export default defineComponent({
     modelValue: {
       type: String,
       required: true,
+      default: '',
     },
   },
   emits: ['update:modelValue', 'update:warn'],

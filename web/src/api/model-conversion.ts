@@ -22,7 +22,11 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
   model.prompt = reward.twitch.prompt;
   model.color = reward.twitch.background_color;
-  model.action = reward.data;
+  model.action = {
+    type: reward.data.type,
+    // use spread on object -- no objects currently - may change
+    data: reward.data.data,
+  };
 }
 
 export function toInputReward(vmodel: VRewardModel): InputReward {
