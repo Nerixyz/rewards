@@ -6,6 +6,7 @@ use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use crate::services::bttv::{self, fetch_save_bttv_id, get_user_limits};
 use crate::services::ffz::{self, is_editor_in};
+use crate::services::twitch::requests::get_user;
 use actix::Addr;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
@@ -14,7 +15,6 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
 use twitch_api2::eventsub::NotificationPayload;
-use crate::services::twitch::requests::get_user;
 use twitch_api2::twitch_oauth2::UserToken;
 
 /// This doesn't update the reward-redemption on twitch!
@@ -232,7 +232,7 @@ pub async fn verify_reward(
     reward: &RewardData,
     broadcaster_id: &str,
     pool: &PgPool,
-    token: &UserToken
+    token: &UserToken,
 ) -> AnyResult<()> {
     match reward {
         RewardData::EmoteOnly(duration)

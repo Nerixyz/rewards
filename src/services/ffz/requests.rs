@@ -16,7 +16,7 @@ pub struct FfzEmote {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 struct FfzEmoteReply {
-    emote: FfzEmote
+    emote: FfzEmote,
 }
 
 #[derive(Deserialize, Debug)]
@@ -30,13 +30,13 @@ pub struct FfzEmoteSet {
 #[non_exhaustive]
 pub struct FfzRoomData {
     pub sets: HashMap<String, FfzEmoteSet>,
-    pub room: FfzRoom
+    pub room: FfzRoom,
 }
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct FfzRoom {
-    pub _id: usize
+    pub _id: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -50,11 +50,13 @@ pub struct FfzUser {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 struct FfzUserReply {
-    user: FfzUser
+    user: FfzUser,
 }
 
 pub async fn get_emote(id: &str) -> AnyResult<FfzEmote> {
-    ffz_get_json::<FfzEmoteReply, _>(format!("https://api.frankerfacez.com/v1/emote/{}", id)).await.map(|e| e.emote)
+    ffz_get_json::<FfzEmoteReply, _>(format!("https://api.frankerfacez.com/v1/emote/{}", id))
+        .await
+        .map(|e| e.emote)
 }
 
 pub async fn get_room(id: &str) -> AnyResult<FfzRoomData> {
@@ -62,7 +64,9 @@ pub async fn get_room(id: &str) -> AnyResult<FfzRoomData> {
 }
 
 pub async fn get_user(id: &str) -> AnyResult<FfzUser> {
-    ffz_get_json::<FfzUserReply, _>(format!("https://api.frankerfacez.com/v1/user/id/{}", id)).await.map(|u| u.user)
+    ffz_get_json::<FfzUserReply, _>(format!("https://api.frankerfacez.com/v1/user/id/{}", id))
+        .await
+        .map(|u| u.user)
 }
 
 pub async fn get_channels() -> AnyResult<Vec<String>> {
@@ -87,10 +91,13 @@ pub async fn add_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
             Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>").expect("must compile");
     }
 
-    let text = ffz_get_text_auth(format!(
-        "https://www.frankerfacez.com/emoticons/channel/True?channels={}&ids={}&unlock_code=",
-        channel_id, emote_id
-    ), &emote_id.to_string())
+    let text = ffz_get_text_auth(
+        format!(
+            "https://www.frankerfacez.com/emoticons/channel/True?channels={}&ids={}&unlock_code=",
+            channel_id, emote_id
+        ),
+        &emote_id.to_string(),
+    )
     .await?;
     check_for_success(&text, &SUCCESS_REGEX, &REASON_REGEX)
 }
@@ -103,10 +110,13 @@ pub async fn delete_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
             Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>").expect("must compile");
     }
 
-    let text = ffz_get_text_auth(format!(
-        "https://www.frankerfacez.com/emoticons/channel/False?channels={}&ids={}&unlock_code=",
-        channel_id, emote_id
-    ), &emote_id.to_string())
+    let text = ffz_get_text_auth(
+        format!(
+            "https://www.frankerfacez.com/emoticons/channel/False?channels={}&ids={}&unlock_code=",
+            channel_id, emote_id
+        ),
+        &emote_id.to_string(),
+    )
     .await?;
     check_for_success(&text, &SUCCESS_REGEX, &REASON_REGEX)
 }
@@ -154,15 +164,18 @@ where
 }
 
 async fn ffz_get_text_auth<U>(url: U, referer: &str) -> AnyResult<String>
-    where
-        U: IntoUrl,
+where
+    U: IntoUrl,
 {
     Ok(reqwest::Client::builder()
         .cookie_store(true)
         .build()?
         .get(url)
         .header("Cookie", format!("session={}", FFZ_SESSION))
-        .header("Referer", format!("https://www.frankerfacez.com/emoticon/{}", referer))
+        .header(
+            "Referer",
+            format!("https://www.frankerfacez.com/emoticon/{}", referer),
+        )
         .send()
         .await?
         .text()
