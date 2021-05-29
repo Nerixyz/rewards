@@ -53,7 +53,7 @@ import useVuelidate from '@vuelidate/core';
 import { required, numeric } from '@vuelidate/validators';
 import { assignDefaultToModel, assignToVRewardModel, toInputReward, VRewardModel } from '../api/model-conversion';
 import CDropdown from './core/CDropdown.vue';
-import { defaultNewReward, RewardTypes } from '../api/rewards-data';
+import { defaultNewReward, RewardTypes, StaticRewardData } from '../api/rewards-data';
 import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
 
@@ -101,6 +101,15 @@ export default defineComponent({
         assignToVRewardModel(newData, rewardState);
       }
     });
+    watch(
+      () => rewardState.action.type,
+      newType => {
+        if (!StaticRewardData[newType].validOptions(rewardState.action.data)) {
+          rewardState.action.data = StaticRewardData[newType].defaultOptions;
+          rewardInvalid.value = false;
+        }
+      },
+    );
 
     const v$ = useVuelidate(
       {

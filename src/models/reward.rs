@@ -24,6 +24,7 @@ pub enum RewardData {
     Timeout(String),
     SubOnly(String),
     EmoteOnly(String),
+    BttvSwap(()),
 }
 
 impl Responder for Reward {

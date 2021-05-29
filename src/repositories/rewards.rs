@@ -48,7 +48,8 @@ async fn create(
         body
     );
 
-    verify_reward(&body.data)
+    verify_reward(&body.data, &broadcaster_id, &pool)
+        .await
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
@@ -82,7 +83,8 @@ async fn update(
         body
     );
 
-    verify_reward(&body.data)
+    verify_reward(&body.data, &broadcaster_id, &pool)
+        .await
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;

@@ -88,6 +88,9 @@ export interface RewardDataMap {
   Timeout: string;
   SubOnly: string;
   EmoteOnly: string;
+  BttvSwap: null;
+
+  // check assignToVRewardModel clone of data if object
 }
 
 export interface InternalCustomReward {

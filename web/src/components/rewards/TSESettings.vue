@@ -14,6 +14,7 @@ export default defineComponent({
     modelValue: {
       type: String,
       required: true,
+      default: '',
     },
   },
   emits: ['update:modelValue', 'update:warn'],

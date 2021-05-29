@@ -1,8 +1,8 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::actors::messages::irc_messages::{
-    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, TimedModeMessage, TimeoutMessage,
-    WhisperMessage,
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
+    TimeoutMessage, WhisperMessage,
 };
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use actix::{Actor, Addr, Context, Handler, ResponseFuture};
@@ -155,15 +155,15 @@ impl Handler<WhisperMessage> for IrcActor {
     }
 }
 
-// currently unused
-// impl Handler<SayMessage> for IrcActor {
-//     type Result = ResponseFuture<Result<(), AnyError>>;
-//
-//     fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
-//         let client = self.client.clone();
-//         Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
-//     }
-// }
+impl Handler<SayMessage> for IrcActor {
+    type Result = ResponseFuture<Result<(), AnyError>>;
+
+    fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+        let client = self.client.clone();
+        log::info!("Send message login={}; message={}", msg.0, msg.1);
+        Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
+    }
+}
 
 impl Handler<TimeoutMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
