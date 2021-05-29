@@ -144,6 +144,7 @@ impl Handler<WhisperMessage> for IrcActor {
 
     fn handle(&mut self, msg: WhisperMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
+        log::info!("whisper to={} message={}", msg.0, msg.1);
         Box::pin(async move {
             Ok(client
                 .privmsg(
@@ -191,6 +192,12 @@ impl Handler<TimeoutMessage> for IrcActor {
                     Some(v) => v,
                     None => continue,
                 };
+                log::info!(
+                    "NOTICE: channel={:?} id={:?} text={}",
+                    notice.channel_login,
+                    notice.message_id,
+                    notice.message_text
+                );
                 if Some(&msg.broadcaster) != notice.channel_login.as_ref() {
                     continue;
                 }
