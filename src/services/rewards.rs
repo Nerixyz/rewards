@@ -8,6 +8,7 @@ use crate::services::bttv::requests::get_emote;
 use crate::services::bttv::{fetch_save_bttv_id, get_user_limits, swap_or_add_emote};
 use actix::Addr;
 use anyhow::{Error as AnyError, Result as AnyResult};
+use lazy_static::lazy_static;
 use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -109,14 +110,17 @@ pub async fn execute_reward(
 }
 
 fn extract_username(str: &str) -> AnyResult<String> {
+    lazy_static! {
+        static ref USERNAME_REGEX: Regex = Regex::new("@([\\w_]+)").expect("must compile");
+    }
+
     let str = str.trim();
 
     if !str.contains(' ') {
         return Ok(str.replace("@", ""));
     }
 
-    Regex::new("@([\\w_]+)")
-        .expect("must compile")
+    USERNAME_REGEX
         .captures(str)
         .map(|m| m.get(0))
         .flatten()
@@ -125,8 +129,13 @@ fn extract_username(str: &str) -> AnyResult<String> {
 }
 
 fn extract_bttv_id(str: &str) -> AnyResult<&str> {
-    Regex::new("(?:^| )(?:https?://)?(?:betterttv\\.com/)?(?:emotes/)?([a-f0-9]{24})(?:$| )")
-        .expect("must compile")
+    lazy_static! {
+        static ref BTTV_REGEX: Regex = Regex::new(
+            "(?:^| )(?:https?://)?(?:betterttv\\.com/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
+        )
+        .expect("must compile");
+    }
+    BTTV_REGEX
         .captures(str)
         .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
         .flatten()

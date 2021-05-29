@@ -1885,6 +1885,7 @@ dependencies = [
  "humantime",
  "itertools",
  "jsonwebtoken",
+ "lazy_static",
  "log",
  "rand 0.8.3",
  "regex",
