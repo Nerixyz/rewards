@@ -33,7 +33,7 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   },
 };
 
-function TSEValid(opts: unknown) {
+function TSEValid(opts: unknown): boolean {
   return typeof opts === 'string';
 }
 
