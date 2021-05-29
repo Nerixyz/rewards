@@ -31,6 +31,12 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
     validOptions: opts => opts === null,
     defaultOptions: null,
   },
+  FfzSwap: {
+    display: 'Add/Swap Ffz Emote',
+    inputRequired: true,
+    validOptions: opts => opts === null,
+    defaultOptions: null,
+  },
 };
 
 function TSEValid(opts: unknown): boolean {

@@ -89,6 +89,7 @@ export interface RewardDataMap {
   SubOnly: string;
   EmoteOnly: string;
   BttvSwap: null;
+  FfzSwap: null;
 
   // check assignToVRewardModel clone of data if object
 }

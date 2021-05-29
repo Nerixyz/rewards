@@ -210,7 +210,7 @@ dependencies = [
  "actix-web-codegen",
  "ahash 0.7.2",
  "bytes",
- "cookie",
+ "cookie 0.15.0",
  "derive_more",
  "either",
  "encoding_rs",
@@ -526,6 +526,17 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
 name = "cookie"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03a5d7b21829bc7b4bf4754a978a241ae54ea55a40f92bb20216e54096f4b951"
+dependencies = [
+ "percent-encoding",
+ "time 0.2.26",
+ "version_check",
+]
+
+[[package]]
+name = "cookie"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffdf8865bac3d9a3bde5bde9088ca431b11f5d37c7a578b8086af77248b76627"
@@ -533,6 +544,22 @@ dependencies = [
  "percent-encoding",
  "time 0.2.26",
  "version_check",
+]
+
+[[package]]
+name = "cookie_store"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3818dfca4b0cb5211a659bbcbb94225b7127407b2b135e650d717bfb78ab10d3"
+dependencies = [
+ "cookie 0.14.4",
+ "idna",
+ "log",
+ "publicsuffix",
+ "serde",
+ "serde_json",
+ "time 0.2.26",
+ "url",
 ]
 
 [[package]]
@@ -1685,6 +1712,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "publicsuffix"
+version = "1.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95b4ce31ff0a27d93c8de1849cf58162283752f065a90d508f1105fa6c9a213f"
+dependencies = [
+ "idna",
+ "url",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1833,6 +1870,8 @@ checksum = "2296f2fac53979e8ccbc4a1136b25dcefd37be9ed7e4a1f6b05a6029c84ff124"
 dependencies = [
  "base64 0.13.0",
  "bytes",
+ "cookie 0.14.4",
+ "cookie_store",
  "encoding_rs",
  "futures-core",
  "futures-util",
@@ -1851,6 +1890,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
+ "time 0.2.26",
  "tokio",
  "tokio-native-tls",
  "url",
@@ -1872,7 +1912,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "chrono",
- "cookie",
+ "cookie 0.15.0",
  "deadpool-postgres",
  "derive_more",
  "dotenv",
