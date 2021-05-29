@@ -71,7 +71,11 @@ async fn reward_redemption(
                     )
                     .await
                     {
-                        Ok(redemption) => log::info!("Final redemption: {:?}", redemption),
+                        Ok(redemption) => log::info!(
+                            "Final redemption: status={:?} {:?}",
+                            redemption.status,
+                            redemption
+                        ),
                         Err(error) => log::warn!("Couldn't update reward redemption: {}", error),
                     }
                 } else {
