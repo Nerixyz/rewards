@@ -22,7 +22,7 @@
         </div>
       </form>
 
-      <div v-if="state.loading">Loading...</div>
+      <div v-if="state.loading"><CLoader/></div>
       <div v-else-if="state.error">
         Failed!
         <br />
@@ -102,10 +102,11 @@ import OutlinedButton from '../components/core/OutlinedButton.vue';
 import { TwitchUser } from '../api/types';
 import PlaneIcon from '../components/icons/PlaneIcon.vue';
 import { asyncState, tryAsync } from '../async-state';
+import CLoader from '../components/core/CLoader.vue';
 
 export default defineComponent({
   name: 'EditorsDashboard',
-  components: { PlaneIcon, TextField, OutlinedButton },
+  components: { CLoader, PlaneIcon, TextField, OutlinedButton },
 
   setup() {
     const api = useApi();

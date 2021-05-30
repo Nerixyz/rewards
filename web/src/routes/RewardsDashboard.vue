@@ -1,7 +1,7 @@
 <template>
   <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
     <!-- Loading handler -->
-    <div v-if="rewards.loading">Loading...</div>
+    <div v-if="rewards.loading"><CLoader /></div>
 
     <!-- Error handler -->
     <div v-else-if="rewards.error">
@@ -58,7 +58,7 @@
       />
 
       <CDialog title="Delete Reward" :open="deleteDialog.value">
-        <div v-if="deleteDialog.loading">Loading...</div>
+        <div v-if="deleteDialog.loading"><CLoader /></div>
         <div v-else-if="deleteDialog.error">
           Could not delete :/
           <br />
@@ -90,10 +90,21 @@ import TrashIcon from '../components/icons/TrashIcon.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
 import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
+import CLoader from '../components/core/CLoader.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
-  components: { DialogButtons, CDialog, TrashIcon, EditIcon, CButton, AddOrEditRewardDialog, PlusIcon, OutlinedButton },
+  components: {
+    CLoader,
+    DialogButtons,
+    CDialog,
+    TrashIcon,
+    EditIcon,
+    CButton,
+    AddOrEditRewardDialog,
+    PlusIcon,
+    OutlinedButton,
+  },
   setup() {
     // TODO: explain
     const route = useRoute();
