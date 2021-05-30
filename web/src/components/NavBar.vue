@@ -11,11 +11,12 @@
       </router-link>
     </div>
     <div
+      v-if="!userLoading"
       class="flex gap-2 h-5/6 px-2 rounded-lg justify-center items-center select-none cursor-pointer hover:bg-gray-350"
       @click="openMenu"
     >
       <span>{{ userName }}</span>
-      <img v-if="!userLoading" :src="userImage" alt="Profile Image" class="h-8 w-8 rounded-full" />
+      <img :src="userImage" alt="Profile Image" class="h-8 w-8 rounded-full" />
       <ChevronDown :class="[userMenuState.menuOpen ? 'rotate-180' : '', 'transform transition transition-transform']" />
       <div v-if="userMenuState.menuOpen" class="absolute block top-16 bg-gray-350 rounded-lg">
         <button

@@ -1,10 +1,10 @@
 <template>
   <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
     <!-- Loading handler -->
-    <div v-if="loading">Loading...</div>
+    <div v-if="rewards.loading">Loading...</div>
 
     <!-- Error handler -->
-    <div v-else-if="error">
+    <div v-else-if="rewards.error">
       Something went wrong.
       <span v-if="broadcasterId !== thisUserId"
         >Make sure the broadcaster has added you as an editor and they have the feature available.</span
@@ -12,7 +12,7 @@
       <span v-else>It seems like you don't have the rewards feature available.</span>
       <br />
       <br />
-      <pre>Error: {{ error }}</pre>
+      <span class="break-words font-mono">Error: {{ rewards.error }}</span>
     </div>
 
     <!-- The main page -->
@@ -21,8 +21,8 @@
         <OutlinedButton @click="openAddDialog"> <PlusIcon /> Add Reward </OutlinedButton>
       </div>
       <div class="w-full flex flex-col gap-5">
-        <div v-if="rewards.length">
-          <div v-for="reward of rewards" :key="reward.twitch.id" class="flex">
+        <div v-if="rewards.value.length">
+          <div v-for="reward of rewards.value" :key="reward.twitch.id" class="flex">
             <div>
               <h3 class="font-serif text-2xl">{{ reward.twitch.title }}</h3>
               <h4 class="font-serif italic text-sm">{{ reward.data.type }}</h4>
@@ -57,13 +57,14 @@
         @updated="rewardUpdated"
       />
 
-      <CDialog title="Delete Reward" :open="deleteDialogOpen">
-        <div v-if="deleteLoading">Loading...</div>
-        <div v-else-if="deleteError">
+      <CDialog title="Delete Reward" :open="deleteDialog.value">
+        <div v-if="deleteDialog.loading">Loading...</div>
+        <div v-else-if="deleteDialog.error">
           Could not delete :/
           <br />
-          <pre>{{ deleteError }}</pre>
+          <span class="break-words font-mono">{{ deleteDialog.error }}</span>
         </div>
+        <div v-else-if="deleteDialog.success">Deleted!</div>
         <div v-else>Are you sure about that?</div>
         <DialogButtons>
           <OutlinedButton @click="closeDeleteDialog">Cancel</OutlinedButton>
@@ -80,7 +81,6 @@ import { useRoute } from 'vue-router';
 import { useDataStore } from '../store';
 import { useApi } from '../api/plugin';
 import { Reward } from '../api/types';
-import { asyncRefs, tryAsync } from '../utilities';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import AddOrEditRewardDialog from '../components/AddOrEditRewardDialog.vue';
@@ -89,6 +89,7 @@ import EditIcon from '../components/icons/EditIcon.vue';
 import TrashIcon from '../components/icons/TrashIcon.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
+import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
 
 export default defineComponent({
   name: 'RewardsDashboard',
@@ -101,24 +102,19 @@ export default defineComponent({
 
     // core stuff to ensure we have a user id
 
-    const rewards = ref<Reward[]>([]);
+    const { state: rewards } = asyncState<Reward[]>([]);
     const broadcasterId = ref<string>(((route.params.id as string | undefined) || store.user.value?.id) ?? '');
     const thisUserId = ref<undefined | string>(undefined);
 
-    const { loading, error } = asyncRefs();
     const updateBroadcaster = () =>
-      tryAsync(
-        async () => {
-          const id = (route.params.id as string | undefined) || store.user.value?.id;
+      tryAsync(async rewards => {
+        const id = (route.params.id as string | undefined) || store.user.value?.id;
 
-          thisUserId.value = store.user.value?.id;
-          broadcasterId.value = id ?? '';
+        thisUserId.value = store.user.value?.id;
+        broadcasterId.value = id ?? '';
 
-          rewards.value = await api.getRewards(id ?? '');
-        },
-        loading,
-        error,
-      );
+        rewards.value = await api.getRewards(id ?? '');
+      }, rewards);
 
     watch(() => route.params.id, updateBroadcaster);
 
@@ -131,7 +127,7 @@ export default defineComponent({
       updateBroadcaster();
     }
 
-    const coreExports = { rewards, broadcasterId, thisUserId, loading, error };
+    const coreExports = { rewards, broadcasterId, thisUserId };
 
     // Add/Edit Dialog
 
@@ -158,26 +154,21 @@ export default defineComponent({
     const addExports = { addEditDialogOpen, openAddDialog, openEditDialog, rewardAdded, rewardUpdated, editRewardData };
 
     // Delete actions
-    const { loading: deleteLoading, error: deleteError } = asyncRefs(false);
-    const deleteDialogOpen = ref(false);
+    const { state: deleteDialog, reset: resetDeleteDialog } = asyncDialog(ref(false));
 
     const currentRewardToDelete = ref<null | Reward>(null);
     const openDeleteDialogForReward = (reward: Reward) => {
       currentRewardToDelete.value = reward;
-      deleteDialogOpen.value = true;
+      deleteDialog.value = true;
     };
 
     const deleteReward = (reward: Reward) => {
-      tryAsync(
-        async () => {
-          await api.deleteReward(broadcasterId.value ?? '', reward);
-          deleteDialogOpen.value = false;
+      tryAsyncDialog(async () => {
+        await api.deleteReward(broadcasterId.value ?? '', reward);
+        rewards.value = rewards.value.filter(r => r.twitch.id !== reward.twitch.id);
 
-          rewards.value = rewards.value.filter(r => r.twitch.id !== reward.twitch.id);
-        },
-        deleteLoading,
-        deleteError,
-      );
+        closeDeleteDialog();
+      }, deleteDialog);
     };
     const deleteCurrentReward = () => {
       if (!currentRewardToDelete.value) {
@@ -187,18 +178,15 @@ export default defineComponent({
       deleteReward(currentRewardToDelete.value);
     };
     const clearDeleteDialog = () => {
-      deleteLoading.value = false;
-      deleteError.value = null;
+      resetDeleteDialog();
       currentRewardToDelete.value = null;
     };
     const closeDeleteDialog = () => {
-      deleteDialogOpen.value = false;
+      deleteDialog.value = false;
     };
 
     const deleteExports = {
-      deleteDialogOpen,
-      deleteError,
-      deleteLoading,
+      deleteDialog,
       closeDeleteDialog,
       deleteCurrentReward,
       openDeleteDialogForReward,

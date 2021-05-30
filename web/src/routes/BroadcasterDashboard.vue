@@ -1,15 +1,15 @@
 <template>
   <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="error">
+    <div v-if="state.loading">Loading...</div>
+    <div v-else-if="state.error">
       Failed!
       <br />
-      <pre>{{ error }}</pre>
+      <span class="break-words font-mono">{{ state.error }}</span>
     </div>
 
     <div v-else>
-      <div v-if="broadcasters.length" class="flex flex-wrap gap-5">
-        <RouterLink v-for="broadcaster of broadcasters" :key="broadcaster.id" :to="makeBroadcasterLink(broadcaster.id)">
+      <div v-if="state.value.length" class="flex flex-wrap gap-5">
+        <RouterLink v-for="broadcaster of state.value" :key="broadcaster.id" :to="makeBroadcasterLink(broadcaster.id)">
           <div
             class="
               flex
@@ -49,10 +49,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import { useApi } from '../api/plugin';
-import { asyncRefs, tryAsync } from '../utilities';
 import { TwitchUser } from '../api/types';
+import { asyncState, tryAsync } from '../async-state';
 
 export default defineComponent({
   name: 'BroadcastersDashboard',
@@ -60,23 +60,17 @@ export default defineComponent({
   setup() {
     const api = useApi();
 
-    const { loading, error } = asyncRefs();
+    const { state } = asyncState<TwitchUser[]>([]);
 
-    const broadcasters = ref<TwitchUser[]>([]);
-
-    tryAsync(
-      async () => {
-        broadcasters.value = await api.getBroadcasters();
-      },
-      loading,
-      error,
-    );
+    tryAsync(async state => {
+      state.value = await api.getBroadcasters();
+    }, state);
 
     const makeBroadcasterLink = (id: string) => {
       return `/rewards/${encodeURIComponent(id)}`;
     };
 
-    return { loading, error, broadcasters, makeBroadcasterLink };
+    return { state, makeBroadcasterLink };
   },
 });
 </script>

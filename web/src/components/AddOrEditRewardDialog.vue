@@ -1,16 +1,20 @@
 <template>
-  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed="onDialogClosed">
-    <div v-if="loading">
+  <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed="resetDialog">
+    <div v-if="dialogState.loading">
       <span>Loading...</span>
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
       </DialogButtons>
     </div>
-    <div v-else-if="error">
+    <div v-else-if="dialogState.error">
       docNotl an error occurred!
       <br />
-      <pre>{{ error }}</pre>
+      <span class="break-words font-mono">{{ dialogState.error }}</span>
       <DialogButtons><OutlinedButton @click="closeAll"> Cancel </OutlinedButton></DialogButtons>
+    </div>
+    <div v-else-if="dialogState.success">
+      <span v-if="isAdding">Added</span><span v-else>Updated</span>
+      <DialogButtons><OutlinedButton @click="closeAll"> Close </OutlinedButton></DialogButtons>
     </div>
     <form v-else @submit.prevent="onSubmit">
       <div class="flex gap-4 min-w-40vw">
@@ -45,7 +49,7 @@ import { computed, defineComponent, PropType, reactive, ref, toRefs, watch } fro
 import CDialog from './core/CDialog.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
-import { asyncRefs, isValidDuration, tryAsync } from '../utilities';
+import { isValidDuration } from '../utilities';
 import { useApi } from '../api/plugin';
 import TextField from './core/TextField.vue';
 import DialogButtons from './DialogButtons.vue';
@@ -56,6 +60,7 @@ import CDropdown from './core/CDropdown.vue';
 import { defaultNewReward, RewardTypes, StaticRewardData } from '../api/rewards-data';
 import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
+import { asyncDialog, tryAsyncDialog } from '../async-state';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
@@ -79,18 +84,10 @@ export default defineComponent({
     const { broadcasterId, rewardData, open } = toRefs(props);
     const api = useApi();
 
-    const { loading, error } = asyncRefs(false);
-    const clearAsyncRefs = () => {
-      loading.value = false;
-      error.value = null;
-    };
+    const { state: dialogState, reset: resetDialog } = asyncDialog(open);
 
     const closeAll = () => {
       emit('update:open', false);
-    };
-
-    const onDialogClosed = () => {
-      clearAsyncRefs();
     };
 
     const rewardState = reactive<VRewardModel>(defaultNewReward());
@@ -131,40 +128,37 @@ export default defineComponent({
     const isAdding = computed(() => !rewardData.value);
 
     const onSubmit = () => {
-      tryAsync(
-        async () => {
-          let response;
-          if (isAdding.value) {
-            response = await api.addReward(broadcasterId.value ?? '', toInputReward(rewardState));
-          } else {
-            response = await api.updateReward(
-              broadcasterId.value ?? '',
-              toInputReward(rewardState),
-              rewardData.value?.twitch?.id ?? '',
-            );
-          }
+      tryAsyncDialog(async () => {
+        let response;
+        if (isAdding.value) {
+          response = await api.addReward(broadcasterId.value ?? '', toInputReward(rewardState));
+        } else {
+          response = await api.updateReward(
+            broadcasterId.value ?? '',
+            toInputReward(rewardState),
+            rewardData.value?.twitch?.id ?? '',
+          );
+        }
 
-          // clear the dialog
-          assignDefaultToModel(rewardState);
+        // clear the dialog
+        assignDefaultToModel(rewardState);
 
-          emit(isAdding.value ? 'added' : 'updated', response);
-          closeAll();
-        },
-        loading,
-        error,
-      );
+        emit(isAdding.value ? 'added' : 'updated', response);
+        closeAll();
+      }, dialogState);
     };
 
     return {
-      loading,
-      error,
+      dialogState,
+      resetDialog,
       closeAll,
+
       v$,
       rewardState,
+
       RewardTypes,
       onSubmit,
       isAdding,
-      onDialogClosed,
       open,
       maySubmit,
       updateRewardWarning,
