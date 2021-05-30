@@ -33,6 +33,14 @@ For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_d
 You can also provide the duration like this: `rand( 10m ; 10h )`. 
 This would timeout the user for a random duration between `10m` and `1h`.
 
+### Available Rewards
+
+* Timeout user (set or random duration)
+* Enter Subonly-mode (set or random duration)
+* Enter Emoteonly-mode (set or random duration)
+* Swap/Add BTTV emotes (requires `RewardMore` to be an editor)
+* Swap/Add FFZ emotes (requires `RewardMore` to be an editor)
+
 
 # Development
 
@@ -50,54 +58,9 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Edit the `SERVER_URL` to the ngrok-https-url.
 * In the `web` directory set the `VITE_API_BASE_URL` to the ngrok-https-url.
 
-## TODO
+## Roadmap
 
-This may be managed in the issues.
-
-### P1
-
-* [x] WebInterface
-* [x] EventSub
-* [x] IRC
-* [x] Verify index.html
-* [x] Use migrations  
-* [x] Document setup
-* [x] Check TODOs throughout the code
-* [ ] ~~Get rid of cloning everywhere~~ - Most of the time cloning is required (often by twitch_api2)
-* [ ] ~~Handle timeout errors~~ - Seems like this can't be done
-* [x] Clear unfulfilled rewards
-* [x] Add failed-auth page
-* [x] Allow logging-out
-
-### P2
-* [ ] Add a loading animation
-* [ ] Use `reactive` for the async state
-* [ ] Make the dialogs better (avoid the last flash) 
-* [ ] IRC Bot
-* [ ] Automatic auth flow (use `postMessage` on auth)
-* [ ] Check token-scopes
-* [ ] Pass the auth token via a hash (like twitch does it).
-* [ ] Reduce cloning, consider editing the twitch library
-* [ ] Get rid of uses of `actix_web::Error` where it's not useful
-* [ ] Handle revoke-token eventsub event
-
-### P3
-
-* [ ] Use Vuetify once it's out ([Project](https://github.com/orgs/vuetifyjs/projects/7))
-
-## Possible Rewards
-
-### P1
-* [x] Timeout user (for x-seconds)
-* [x] Enable SubMode (for x-seconds)
-* [x] Enable EmoteOnly (for x-seconds)
-  
-### P2
-* [x] Change FFZ Emote (requires the bot to be an **editor**)
-* [x] Change BTTV Emote (requires the bot to be an **editor**)
-  
-### P3
-* [ ] Queue Spotify song
+Things to-do are tracked [here](https://github.com/Nerixyz/rewards/projects).
 
 # Internal - web API
 
