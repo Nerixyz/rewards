@@ -1,7 +1,7 @@
 <template>
   <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed="resetDialog">
     <div v-if="dialogState.loading">
-      <span>Loading...</span>
+      <CLoader/>
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
       </DialogButtons>
@@ -61,10 +61,11 @@ import { defaultNewReward, RewardTypes, StaticRewardData } from '../api/rewards-
 import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
 import { asyncDialog, tryAsyncDialog } from '../async-state';
+import CLoader from './core/CLoader.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
-  components: { TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
+  components: { CLoader, TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
   props: {
     open: {
       type: Boolean,

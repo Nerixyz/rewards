@@ -1,6 +1,6 @@
 <template>
   <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
-    <div v-if="state.loading">Loading...</div>
+    <div v-if="state.loading"><CLoader/></div>
     <div v-else-if="state.error">
       Failed!
       <br />
@@ -53,10 +53,11 @@ import { defineComponent } from 'vue';
 import { useApi } from '../api/plugin';
 import { TwitchUser } from '../api/types';
 import { asyncState, tryAsync } from '../async-state';
+import CLoader from '../components/core/CLoader.vue';
 
 export default defineComponent({
   name: 'BroadcastersDashboard',
-  components: {},
+  components: { CLoader },
   setup() {
     const api = useApi();
 
