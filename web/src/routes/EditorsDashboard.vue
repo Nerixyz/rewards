@@ -4,7 +4,7 @@
       <form class="w-full min-w-10rem border-b border-gray-900 border-opacity-20 pb-6" @submit="addEditor">
         <h3 class="ml-1 mb-3 font-serif text-xl">Add an editor</h3>
         <div class="flex w-full items-center">
-          <TextField v-model="editorAddName" class="flex-grow" label="Name" :disabled="loading" />
+          <TextField v-model="editorAddName" class="flex-grow" label="Name" :disabled="state.loading" />
           <button
             type="submit"
             class="
@@ -22,15 +22,15 @@
         </div>
       </form>
 
-      <div v-if="loading">Loading...</div>
-      <div v-else-if="error">
+      <div v-if="state.loading">Loading...</div>
+      <div v-else-if="state.error">
         Failed!
         <br />
-        <pre>{{ error }}</pre>
+        <span class="break-words font-mono">{{ state.error }}</span>
         <OutlinedButton>Ok</OutlinedButton>
       </div>
       <div v-else class="">
-        <div v-if="!editors.length">
+        <div v-if="!state.value.length">
           No editors? Seriously? Let your mods do the work, add some editors!
           <img
             class="inline w-5 h-auto mr-1"
@@ -45,7 +45,7 @@
         </div>
         <div v-else class="flex flex-wrap gap-5">
           <div
-            v-for="editor of editors"
+            v-for="editor of state.value"
             :key="editor.id"
             class="
               flex
@@ -97,11 +97,11 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import { useApi } from '../api/plugin';
-import { asyncRefs, tryAsync } from '../utilities';
 import TextField from '../components/core/TextField.vue';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import { TwitchUser } from '../api/types';
 import PlaneIcon from '../components/icons/PlaneIcon.vue';
+import { asyncState, tryAsync } from '../async-state';
 
 export default defineComponent({
   name: 'EditorsDashboard',
@@ -110,46 +110,31 @@ export default defineComponent({
   setup() {
     const api = useApi();
 
-    const { error, loading } = asyncRefs();
-    const editors = ref<TwitchUser[]>([]);
-    tryAsync(
-      async () => {
-        editors.value = await api.getEditors();
-      },
-      loading,
-      error,
-    );
+    const { state } = asyncState<TwitchUser[]>([]);
+    tryAsync(async state => {
+      state.value = await api.getEditors();
+    }, state);
 
     const editorAddName = ref('');
 
-    const addEditor = async (e: Event) => {
+    const addEditor = (e: Event) => {
       e.preventDefault();
-      try {
+      tryAsync(async state => {
         const name = editorAddName.value.toLowerCase();
-        loading.value = true;
         await api.addEditor(name);
         const user = await api.getUserInfo(name);
-        editors.value = [...editors.value, user];
+        state.value = [...state.value, user];
         editorAddName.value = '';
-      } catch (e) {
-        error.value = e.message;
-      } finally {
-        loading.value = false;
-      }
+      }, state);
     };
-    const removeEditor = async (name: string) => {
-      try {
-        loading.value = true;
+    const removeEditor = (name: string) => {
+      tryAsync(async state => {
         await api.removeEditor(name);
-        editors.value = editors.value.filter(x => x.login !== name);
-      } catch (e) {
-        error.value = e.message;
-      } finally {
-        loading.value = false;
-      }
+        state.value = state.value.filter(x => x.login !== name);
+      }, state);
     };
 
-    return { loading, error, addEditor, removeEditor, editorAddName, editors };
+    return { state, addEditor, removeEditor, editorAddName };
   },
 });
 </script>

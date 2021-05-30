@@ -1,25 +1,3 @@
-import { ref, Ref } from 'vue';
-
-export async function tryAsync(
-  fn: () => Promise<unknown>,
-  loading: Ref<boolean>,
-  error: Ref<string | null>,
-): Promise<void> {
-  try {
-    loading.value = true;
-    error.value = null;
-    await fn();
-  } catch (e) {
-    error.value = e.toString();
-  } finally {
-    loading.value = false;
-  }
-}
-
-export function asyncRefs(initialLoading = true): { loading: Ref<boolean>; error: Ref<null | string> } {
-  return { loading: ref(initialLoading), error: ref<null | string>(null) };
-}
-
 export function parseDuration(d: string): number | null {
   if (!d.length) {
     return null;
