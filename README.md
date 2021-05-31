@@ -40,6 +40,7 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Enter Emoteonly-mode (set or random duration)
 * Swap/Add BTTV emotes (requires `RewardMore` to be an editor)
 * Swap/Add FFZ emotes (requires `RewardMore` to be an editor)
+* Add BTTV emotes to slots that expire after a set amount of time (+/- 10min)
 
 
 # Development
