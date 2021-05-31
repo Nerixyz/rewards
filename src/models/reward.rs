@@ -26,6 +26,13 @@ pub enum RewardData {
     EmoteOnly(String),
     BttvSwap(()),
     FfzSwap(()),
+    BttvSlot(BttvSlotRewardData),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BttvSlotRewardData {
+    pub slots: usize,
+    pub expiration: String,
 }
 
 impl Responder for Reward {
@@ -84,7 +91,7 @@ impl Reward {
             "INSERT INTO rewards (id, user_id, data) VALUES ($1, $2, $3)",
             self.id,
             self.user_id,
-            Json(self.data.clone()) as _
+            Json(&self.data) as _
         )
         .execute(&mut tx)
         .await?;
