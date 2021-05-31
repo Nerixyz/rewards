@@ -13,7 +13,7 @@
       <DialogButtons><OutlinedButton @click="closeAll"> Cancel </OutlinedButton></DialogButtons>
     </div>
     <div v-else-if="dialogState.success">
-      <span v-if="isAdding">Added</span><span v-else>Updated</span>
+      <TickIcon />
       <DialogButtons><OutlinedButton @click="closeAll"> Close </OutlinedButton></DialogButtons>
     </div>
     <form v-else @submit.prevent="onSubmit">
@@ -64,10 +64,12 @@ import TSESettings from './rewards/TSESettings.vue';
 import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from './core/CLoader.vue';
 import BttvSlotSettings from './rewards/BttvSlotSettings.vue';
+import TickIcon from './icons/TickIcon.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
   components: {
+    TickIcon,
     BttvSlotSettings,
     CLoader,
     TSESettings,

@@ -57,14 +57,14 @@
         @updated="rewardUpdated"
       />
 
-      <CDialog title="Delete Reward" :open="deleteDialog.value">
+      <CDialog title="Delete Reward" :open="deleteDialog.value" @dialogClosed="clearDeleteDialog">
         <div v-if="deleteDialog.loading"><CLoader /></div>
         <div v-else-if="deleteDialog.error">
           Could not delete :/
           <br />
           <span class="break-words font-mono">{{ deleteDialog.error }}</span>
         </div>
-        <div v-else-if="deleteDialog.success">Deleted!</div>
+        <div v-else-if="deleteDialog.success"><TickIcon /></div>
         <div v-else>Are you sure about that?</div>
         <DialogButtons>
           <OutlinedButton @click="closeDeleteDialog">Cancel</OutlinedButton>
@@ -91,10 +91,12 @@ import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
 import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
+import TickIcon from '../components/icons/TickIcon.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    TickIcon,
     CLoader,
     DialogButtons,
     CDialog,
