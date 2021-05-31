@@ -22,7 +22,7 @@
         </div>
       </form>
 
-      <div v-if="state.loading"><CLoader/></div>
+      <div v-if="state.loading"><CLoader /></div>
       <div v-else-if="state.error">
         Failed!
         <br />

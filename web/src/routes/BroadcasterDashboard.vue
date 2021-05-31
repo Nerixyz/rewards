@@ -1,6 +1,6 @@
 <template>
   <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
-    <div v-if="state.loading"><CLoader/></div>
+    <div v-if="state.loading"><CLoader /></div>
     <div v-else-if="state.error">
       Failed!
       <br />

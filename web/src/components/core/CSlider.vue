@@ -2,7 +2,7 @@
   <div class="w-full mb-2">
     <span>{{ label }}</span>
     <div class="flex w-full gap-3 px-1">
-      <input class='flex-grow' type="range" :value="value" :min="min" :max="max" :step="step" @input="onUpdate" />
+      <input class="flex-grow" type="range" :value="value" :min="min" :max="max" :step="step" @input="onUpdate" />
       <span>{{ currentValueStr }}</span>
     </div>
   </div>
@@ -46,6 +46,7 @@ export default defineComponent({
       value.value = v;
     });
     const onUpdate = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       emit('update:modelValue', Number((e.target as any).value) || min.value);
     };
     const currentValueStr = computed(() => (Math.round(value.value / step.value) * step.value).toString());
