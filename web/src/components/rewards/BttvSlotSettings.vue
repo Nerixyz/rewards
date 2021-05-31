@@ -1,5 +1,5 @@
 <template>
-  <CSlider v-model="state.slots" label="Slots" :min="0" :max="10" />
+  <CSlider v-model="state.slots" label="Slots" :min="1" :max="10" />
   <TextField v-model="state.expiration" label="Expiration" />
 </template>
 
