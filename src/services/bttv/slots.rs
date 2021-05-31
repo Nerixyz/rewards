@@ -20,7 +20,7 @@ pub async fn adjust_size(
     pool: &PgPool,
 ) -> AnyResult<()> {
     if n_slots == 0 {
-        return Err(AnyError::msg("You can't have 0 slots"))
+        return Err(AnyError::msg("You can't have 0 slots"));
     }
     let mut current = BttvSlot::get_all_slots(user_id, reward_id, pool).await?;
 
