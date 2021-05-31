@@ -1,7 +1,7 @@
 <template>
   <CDialog :title="`${isAdding ? 'Add' : 'Edit'} Reward`" :open="open" @dialog-closed="resetDialog">
     <div v-if="dialogState.loading">
-      <CLoader/>
+      <CLoader />
       <DialogButtons>
         <OutlinedButton @click.prevent="closeAll"> Cancel </OutlinedButton>
       </DialogButtons>
@@ -34,6 +34,7 @@
             v-model="rewardState.action.data"
             @update:warn="updateRewardWarning"
           />
+          <BttvSlotSettings v-else-if="rewardState.action.type === 'BttvSlot'" v-model="rewardState.action.data" />
         </div>
       </div>
       <DialogButtons>
@@ -62,10 +63,21 @@ import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
 import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from './core/CLoader.vue';
+import BttvSlotSettings from './rewards/BttvSlotSettings.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
-  components: { CLoader, TSESettings, CDropdown, DialogButtons, TextField, CButton, OutlinedButton, CDialog },
+  components: {
+    BttvSlotSettings,
+    CLoader,
+    TSESettings,
+    CDropdown,
+    DialogButtons,
+    TextField,
+    CButton,
+    OutlinedButton,
+    CDialog,
+  },
   props: {
     open: {
       type: Boolean,
@@ -92,16 +104,24 @@ export default defineComponent({
     };
 
     const rewardState = reactive<VRewardModel>(defaultNewReward());
-    watch(rewardData, (newData?: Reward) => {
+    const assignToState = (newData?: Reward) => {
+      console.log('update data', newData);
       if (!newData) {
         assignDefaultToModel(rewardState);
       } else {
         assignToVRewardModel(newData, rewardState);
       }
+    };
+    watch(rewardData, assignToState);
+    watch(open, value => {
+      if (value && rewardData.value) {
+        assignToState(rewardData.value);
+      }
     });
     watch(
       () => rewardState.action.type,
       newType => {
+        console.log('check new type');
         if (!StaticRewardData[newType].validOptions(rewardState.action.data)) {
           rewardState.action.data = StaticRewardData[newType].defaultOptions;
           rewardInvalid.value = false;

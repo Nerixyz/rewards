@@ -2,7 +2,7 @@ use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::WhisperMessage;
 use crate::models::reward::Reward;
 use crate::models::user::User;
-use crate::services::rewards::execute_reward;
+use crate::services::rewards::execute::execute_reward;
 use crate::services::twitch::eventsub::update_reward_redemption;
 use actix::Addr;
 use actix_web::{

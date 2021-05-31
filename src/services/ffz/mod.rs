@@ -23,19 +23,19 @@ pub async fn swap_or_add_emote(
     .await;
     let (ffz_user, ffz_emote, ffz_room, ffz_history) = (
         ffz_user.map_err(|e| {
-            println!("err: {}", e);
+            log::warn!("err: {}", e);
             AnyError::msg("No such ffz-user")
         })?,
         ffz_emote.map_err(|e| {
-            println!("err: {}", e);
+            log::warn!("err: {}", e);
             AnyError::msg("No such emote")
         })?,
         ffz_room.map_err(|e| {
-            println!("err: {}", e);
+            log::warn!("err: {}", e);
             AnyError::msg("No such ffz-room")
         })?,
         ffz_history.map_err(|e| {
-            println!("err: {}", e);
+            log::warn!("err: {}", e);
             AnyError::msg("No history?!")
         })?,
     );

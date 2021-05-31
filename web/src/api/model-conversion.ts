@@ -24,8 +24,12 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   model.color = reward.twitch.background_color;
   model.action = {
     type: reward.data.type,
-    // use spread on object -- no objects currently - may change
-    data: reward.data.data,
+    data:
+      typeof reward.data.data === 'object' && reward.data.data !== null
+        ? {
+            ...reward.data.data,
+          }
+        : reward.data.data,
   };
 }
 
@@ -51,7 +55,15 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
       should_redemptions_skip_request_queue: false,
       background_color: vmodel.color || undefined,
     },
-    data: vmodel.action,
+    data: {
+      type: vmodel.action.type,
+      data:
+        typeof vmodel.action.data === 'object' && vmodel.action.data !== null
+          ? {
+              ...vmodel.action.data,
+            }
+          : vmodel.action.data,
+    },
   };
 }
 

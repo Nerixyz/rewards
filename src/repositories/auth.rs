@@ -168,7 +168,7 @@ async fn revoke(
     if let Some(id) = eventsub_id {
         if let Err(e) = unregister_eventsub_for_id(id, &app_access_token, &pool).await {
             // we don't return the error, so me make sure everything is cleaned up
-            println!("Eventsub unregister error: {}", e);
+            log::warn!("Eventsub unregister error: {}", e);
         }
     }
 
@@ -180,7 +180,7 @@ async fn revoke(
 
     if let Err(e) = token.revoke_token(reqwest_http_client).await {
         // we don't return the error, so me make sure everything is cleaned up
-        println!("Revoke token error: {}", e);
+        log::warn!("Revoke token error: {}", e);
     }
 
     log::info!("AUTH: Revoked {}", user_name);

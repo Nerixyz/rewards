@@ -1,6 +1,7 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::JoinAllMessage;
+use crate::actors::slot_actor::SlotActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::user::User;
@@ -48,10 +49,11 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not connect to database");
 
-    log::info!("Starting Db and Irc");
+    log::info!("Starting Db, Irc and Slot-Actor");
 
     let db_actor = DbActor::new(pool.clone()).start();
     let irc_actor = IrcActor::new(db_actor.clone()).start();
+    let _slot_actor = SlotActor::new(pool.clone()).start();
 
     log::info!("Joining all channels");
 

@@ -1,6 +1,7 @@
 use crate::models::reward::{Reward, RewardData};
 use crate::services::jwt::JwtClaims;
-use crate::services::rewards::verify_reward;
+use crate::services::rewards::save::save_reward;
+use crate::services::rewards::verify::verify_reward;
 use crate::services::sql::get_user_or_editor;
 use crate::services::twitch::requests::{
     create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
@@ -53,8 +54,30 @@ async fn create(
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
-    let db_reward = Reward::from_response(&reward, body.data);
+
+    let db_reward = Reward::from_response(&reward, body.data.clone());
     db_reward.create(&pool).await?;
+
+    if let Err(e) = save_reward(&body.data, &reward.id, &broadcaster_id, &pool).await {
+        log::warn!("Could not save reward: {}", e);
+
+        let (internal, twitch) = futures::future::join(
+            Reward::delete(&reward.id, &pool),
+            delete_reward(&broadcaster_id, reward.id.clone(), &token),
+        )
+        .await;
+        if let Err(e) = internal {
+            log::warn!("Could not delete invalid reward internally: {}", e);
+        }
+        if let Err(e) = twitch {
+            log::warn!("Could not delete invalid reward: {}", e);
+        }
+
+        return Err(error::ErrorBadRequest(format!(
+            "Your reward could not be saved: {}",
+            e
+        )));
+    }
 
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
         twitch: reward,
@@ -86,6 +109,16 @@ async fn update(
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
         .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+
+    // check this before it's actually saved
+    if let Err(e) = save_reward(&body.data, &reward_id, &broadcaster_id, &pool).await {
+        log::warn!("Could not save reward: {}", e);
+
+        return Err(error::ErrorBadRequest(format!(
+            "Your reward could not be saved: {}",
+            e
+        )));
+    }
 
     let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;
     let db_reward = Reward::from_response(&reward, body.data);
