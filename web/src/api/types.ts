@@ -90,8 +90,13 @@ export interface RewardDataMap {
   EmoteOnly: string;
   BttvSwap: null;
   FfzSwap: null;
-
+  BttvSlot: BttvSlotRewardData;
   // check assignToVRewardModel clone of data if object
+}
+
+export interface BttvSlotRewardData {
+  slots: number;
+  expiration: string;
 }
 
 export interface InternalCustomReward {
