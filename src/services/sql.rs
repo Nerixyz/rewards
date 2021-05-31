@@ -7,9 +7,9 @@ use sqlx::{Error, PgPool};
 
 #[derive(Debug, derive_more::Error, derive_more::Display)]
 pub enum SqlError {
-    #[display(fmt = "")]
+    #[display(fmt = "NotFound")]
     NotFound,
-    #[display(fmt = "")]
+    #[display(fmt = "Internal")]
     Internal,
 }
 
@@ -19,7 +19,10 @@ impl From<sqlx::Error> for SqlError {
             Error::RowNotFound | Error::TypeNotFound { .. } | Error::ColumnNotFound(_) => {
                 Self::NotFound
             }
-            _ => Self::Internal,
+            _ => {
+                log::warn!("Internal sql-error: {}", e);
+                Self::Internal
+            }
         }
     }
 }
