@@ -100,7 +100,7 @@ pub async fn clear_invalid_rewards(
 
             if !is_enabled || !is_this_server {
                 if let Err(e) = User::clear_eventsub_id(&sub.id, pool).await {
-                    println!("Error clearing eventsub in db, but ignoring: {:?}", e);
+                    log::warn!("Error clearing eventsub in db, but ignoring: {:?}", e);
                 }
             }
             if !is_enabled
@@ -110,7 +110,7 @@ pub async fn clear_invalid_rewards(
                         .is_match(&sub.transport.callback))
             {
                 if let Err(e) = delete_subscription(&*token, sub.id.clone()).await {
-                    println!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
+                    log::warn!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
                 }
             }
         }

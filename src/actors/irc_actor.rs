@@ -239,7 +239,7 @@ impl Handler<TimedModeMessage> for IrcActor {
                 .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await
             {
-                println!("Could not enter {}: {:?}", msg.mode, e);
+                log::warn!("Could not enter {}: {:?}", msg.mode, e);
             }
             tokio::time::sleep(std::time::Duration::from_secs(msg.duration)).await;
 
@@ -248,7 +248,7 @@ impl Handler<TimedModeMessage> for IrcActor {
                 .privmsg(msg.broadcaster, format!("/{}off", msg.mode))
                 .await
             {
-                println!("Could not leave {}: {:?}", msg.mode, e);
+                log::warn!("Could not leave {}: {:?}", msg.mode, e);
             }
         });
     }
