@@ -9,7 +9,7 @@ use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use std::fmt::{Debug, Formatter};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::watch::{channel, Receiver, Sender};
 use tokio::task;
@@ -51,12 +51,13 @@ impl TokenStorage for PgTokenStorage {
     }
 }
 
+type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {
     client: IrcClient,
     incoming: Option<UnboundedReceiver<ServerMessage>>,
     listener: Option<JoinHandle<()>>,
-    notice_tx: Option<Sender<Option<NoticeMessage>>>,
-    notice_rx: Receiver<Option<NoticeMessage>>,
+    notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
+    notice_rx: Receiver<Option<NoticeChannelMessage>>,
 }
 
 impl IrcActor {
@@ -91,7 +92,7 @@ impl Actor for IrcActor {
         self.listener = Some(task::spawn(async move {
             while let Some(message) = incoming.recv().await {
                 match message {
-                    ServerMessage::Notice(notice) => tx.send(Some(notice)).ok(),
+                    ServerMessage::Notice(notice) => tx.send(Some((Instant::now(), notice))).ok(),
                     _ => None,
                 };
             }
@@ -185,12 +186,13 @@ impl Handler<TimeoutMessage> for IrcActor {
                     format!("/timeout {} {}", msg.user, msg.duration),
                 )
                 .await?;
+            let sent = Instant::now();
 
             while let Ok(Ok(_)) = tokio::time::timeout(Duration::from_secs(5), rx.changed()).await {
                 let value = (*rx.borrow()).clone();
                 let notice = match value {
-                    Some(v) => v,
-                    None => continue,
+                    Some((now, v)) if now > sent => v,
+                    _ => continue,
                 };
                 log::info!(
                     "NOTICE: channel={:?} id={:?} text={}",
@@ -217,6 +219,7 @@ impl Handler<TimeoutMessage> for IrcActor {
                     }
                 }
             }
+            log::error!("No reply for timeout");
 
             Err(AnyError::msg("No reply"))
         })
