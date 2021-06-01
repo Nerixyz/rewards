@@ -11,6 +11,7 @@ use sqlx::PgPool;
 use std::cmp::Ordering;
 use twitch_api2::helix::points::UpdateCustomRewardBody;
 use twitch_api2::twitch_oauth2::UserToken;
+use crate::log_err;
 
 pub async fn adjust_size(
     user_id: &str,
@@ -151,18 +152,15 @@ pub async fn add_emote(
         })?;
 
         let token: UserToken = this_user.into();
-        if let Err(e) = update_reward(
+
+        log_err!(update_reward(
             &token.user_id,
             reward_id.to_string(),
             UpdateCustomRewardBody::builder()
                 .is_paused(Some(true))
                 .build(),
-            &token,
-        )
-        .await
-        {
-            log::warn!("Could not disable reward: {}", e);
-        }
+            &token
+        ).await, "Failed to update reward");
     }
 
     Ok((emote_data.code, n_available - 1))
