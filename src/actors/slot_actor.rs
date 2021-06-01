@@ -68,7 +68,7 @@ impl SlotActor {
                 &token.user_id,
                 p.reward_id.clone(),
                 UpdateCustomRewardBody::builder()
-                    .is_enabled(Some(true))
+                    .is_paused(Some(false))
                     .build(),
                 &token,
             )
