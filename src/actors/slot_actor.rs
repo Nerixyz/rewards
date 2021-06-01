@@ -86,7 +86,7 @@ impl Actor for SlotActor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        ctx.run_interval(Duration::from_secs(10 * 60), |this, ctx| {
+        ctx.run_interval(Duration::from_secs(2 * 60), |this, ctx| {
             ctx.spawn(Self::queue_rewards(this.pool.clone()).into_actor(this));
         });
     }
