@@ -155,7 +155,7 @@ pub async fn add_emote(
             &token.user_id,
             reward_id.to_string(),
             UpdateCustomRewardBody::builder()
-                .is_enabled(Some(false))
+                .is_paused(Some(true))
                 .build(),
             &token,
         )
