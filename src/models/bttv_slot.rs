@@ -69,7 +69,7 @@ impl BttvSlot {
         // language=PostgreSQL
         let pending = sqlx::query_as!(Self, r#"
             SELECT * FROM bttv_slots
-            WHERE emote_id is not null AND expires is not null AND expires < (now() -  '1 minute'::interval)
+            WHERE emote_id is not null AND expires is not null AND expires < (now() + '1 minute'::interval)
         "#).fetch_all(pool).await?;
 
         Ok(pending)
