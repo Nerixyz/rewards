@@ -6,6 +6,7 @@ const FailedAuth = () => import('./routes/FailedAuth.vue');
 const RewardsDashboard = () => import('./routes/RewardsDashboard.vue');
 const EditorsDashboard = () => import('./routes/EditorsDashboard.vue');
 const BroadcasterDashboard = () => import('./routes/BroadcasterDashboard.vue');
+const LogViewer = () => import('./routes/LogViewer.vue');
 
 const router = createRouter({
   routes: [
@@ -30,6 +31,14 @@ const router = createRouter({
     },
     { name: 'Editors', path: '/editors', component: EditorsDashboard },
     { name: 'Broadcasters', path: '/broadcasters', component: BroadcasterDashboard },
+    {
+      name: 'Logs',
+      path: '/rewards/logs/:id?',
+      component: LogViewer,
+      meta: {
+        ignoreNav: true,
+      },
+    },
     {
       path: '/:pathMatch(.*)*',
       component: NotFound,

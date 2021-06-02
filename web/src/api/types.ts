@@ -114,3 +114,8 @@ export interface InputReward {
   twitch: TwitchInputReward;
   data: RewardData;
 }
+
+export interface LogEntry {
+  date: string;
+  content: string;
+}

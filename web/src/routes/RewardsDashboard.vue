@@ -19,6 +19,9 @@
     <div v-else class="flex flex-col gap-5">
       <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
         <OutlinedButton @click="openAddDialog"> <PlusIcon /> Add Reward </OutlinedButton>
+        <router-link :to="`/rewards/logs/${encodeURIComponent(broadcasterId || thisUserId || '')}`">
+          <OutlinedButton><LogIcon /> Logs</OutlinedButton>
+        </router-link>
       </div>
       <div class="w-full flex flex-col gap-5">
         <div v-if="rewards.value.length">
@@ -92,10 +95,12 @@ import DialogButtons from '../components/DialogButtons.vue';
 import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
+import LogIcon from '../components/icons/LogIcon.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    LogIcon,
     TickIcon,
     CLoader,
     DialogButtons,
