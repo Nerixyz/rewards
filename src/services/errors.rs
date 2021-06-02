@@ -5,5 +5,9 @@ macro_rules! log_err {
                 log::warn!("{}: {}", $format, __e);
             };
     };
+    ($result:expr, $format:literal, $($arg:tt)+) => {
+            if let Err(e) = $result {
+                log::warn!($format, $($arg)+, e);
+            };
+    };
 }
-
