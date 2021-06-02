@@ -101,6 +101,7 @@ pub async fn execute_reward(
                 &redemption.event.reward.id,
                 slot,
                 emote_id,
+                &redemption.event.user_login,
                 pool,
             )
             .await;

@@ -1,4 +1,5 @@
 pub mod bttv;
+pub mod errors;
 pub mod eventsub;
 pub mod ffz;
 pub mod jwt;

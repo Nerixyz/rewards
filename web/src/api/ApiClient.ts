@@ -1,4 +1,4 @@
-import { InputReward, InternalCustomReward, Reward, TwitchReward, TwitchUser } from './types';
+import { InputReward, InternalCustomReward, LogEntry, Reward, TwitchReward, TwitchUser } from './types';
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
@@ -40,6 +40,21 @@ class HttpClient extends BaseClient {
     }
 
     return [...map.values()] as Reward[];
+  }
+
+  async getLogs(id: string): Promise<LogEntry[]> {
+    const response = await this.get<{ date: string; content: string }[]>('logs', id);
+    const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' });
+    return response
+      .map(({ date, content }) => ({ date: new Date(date), content }))
+      .sort(({ date: a }, { date: b }) => Number(b) - Number(a))
+      .map(({ date, content }) => {
+        try {
+          return { date: fmt.format(date), content };
+        } catch (e) {
+          return { date: '?', content };
+        }
+      });
   }
 
   addReward(broadcasterId: string, reward: InputReward) {

@@ -79,7 +79,7 @@ export default defineComponent({
     };
 
     return {
-      routes: router.getRoutes().filter(r => !!r.name),
+      routes: router.getRoutes().filter(r => !!r.name && !r.meta.ignoreNav),
       currentRoute: route,
       userImage: computed(() => store.user.value?.profile_image_url),
       userLoading: computed(() => !store.user.value),

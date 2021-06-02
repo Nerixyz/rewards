@@ -1,4 +1,6 @@
+use crate::log_err;
 use crate::models::bttv_slot::BttvSlot;
+use crate::models::log_entry::LogEntry;
 use crate::models::reward::BttvSlotRewardData;
 use crate::models::user::User;
 use crate::services::bttv::requests::{delete_shared_emote, get_user};
@@ -98,6 +100,7 @@ pub async fn add_emote(
     reward_id: &str,
     data: BttvSlotRewardData,
     emote_id: &str,
+    redeemed_user_login: &str,
     pool: &PgPool,
 ) -> AnyResult<(String, usize)> {
     let available_slots = BttvSlot::get_available_slots(user_id, reward_id, pool)
@@ -151,19 +154,36 @@ pub async fn add_emote(
         })?;
 
         let token: UserToken = this_user.into();
-        if let Err(e) = update_reward(
-            &token.user_id,
-            reward_id.to_string(),
-            UpdateCustomRewardBody::builder()
-                .is_paused(Some(true))
-                .build(),
-            &token,
-        )
-        .await
-        {
-            log::warn!("Could not disable reward: {}", e);
-        }
+
+        log_err!(
+            update_reward(
+                &token.user_id,
+                reward_id.to_string(),
+                UpdateCustomRewardBody::builder()
+                    .is_paused(Some(true))
+                    .build(),
+                &token
+            )
+            .await,
+            "Failed to update reward"
+        );
     }
 
+    log_err!(
+        LogEntry::create(
+            user_id,
+            &format!(
+                "[bttv::slots] Added {}; slots-open={}; expires={:?}; redeemed={}; slot_id={}",
+                emote_data.code,
+                n_available - 1,
+                slot.expires.map(|exp| exp.to_string()),
+                redeemed_user_login,
+                slot.id
+            ),
+            pool
+        )
+        .await,
+        "Could not create log-entry"
+    );
     Ok((emote_data.code, n_available - 1))
 }

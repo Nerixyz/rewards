@@ -62,12 +62,18 @@ module.exports = {
       'hyper-in': 'cubic-bezier(0.650, 0.000, 1.000, 0.095)',
       'cubic-out': 'cubic-bezier(0.215, 0.610, 0.355, 1.000)',
     },
+    gridTemplateColumns: {
+      logs: 'auto 1fr',
+    },
   },
   variants: {
     extend: {
       borderWidth: ['hover'],
       backgroundColor: ['disabled'],
       cursor: ['disabled'],
+      borderColor: ['disabled'],
+      textColor: ['disabled'],
+      ringColor: ['disabled'],
     },
   },
   plugins: [],
