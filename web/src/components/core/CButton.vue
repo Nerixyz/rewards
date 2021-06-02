@@ -19,18 +19,20 @@
       shadow-md
       disabled:bg-gray-600
       disabled:cursor-not-allowed
+      disabled:ring-gray-600
       hover:bg-red-dark
       transition-colors
       focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest
       focus:outline-none
     "
+    @click.capture="tryClick"
   >
     <span class="flex items-center justify-center"><slot /></span>
   </component>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, toRefs } from 'vue';
 
 export default defineComponent({
   name: 'CButton',
@@ -44,6 +46,17 @@ export default defineComponent({
       required: false,
       default: undefined,
     },
+  },
+  setup(props) {
+    const { disabled } = toRefs(props);
+
+    const tryClick = (e: Event) => {
+      if (disabled.value) {
+        e.stopPropagation();
+      }
+    };
+
+    return { tryClick };
   },
 });
 </script>
