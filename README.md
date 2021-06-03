@@ -41,6 +41,9 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Swap/Add BTTV emotes (requires `RewardMore` to be an editor)
 * Swap/Add FFZ emotes (requires `RewardMore` to be an editor)
 * Add BTTV emotes to slots that expire after a set amount of time (+/- 2min)
+* Skip a Spotify track
+* Play a Spotify track
+* Queue a Spotify track
 
 
 # Development
