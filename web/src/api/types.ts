@@ -91,12 +91,18 @@ export interface RewardDataMap {
   BttvSwap: null;
   FfzSwap: null;
   BttvSlot: BttvSlotRewardData;
-  // check assignToVRewardModel clone of data if object
+  SpotifySkip: null;
+  SpotifyPlay: SpotifyPlayOptions;
+  SpotifyQueue: SpotifyPlayOptions;
 }
 
 export interface BttvSlotRewardData {
   slots: number;
   expiration: string;
+}
+
+export interface SpotifyPlayOptions {
+  allow_explicit: boolean;
 }
 
 export interface InternalCustomReward {
@@ -118,4 +124,8 @@ export interface InputReward {
 export interface LogEntry {
   date: string;
   content: string;
+}
+
+export interface Connections {
+  spotify: boolean;
 }

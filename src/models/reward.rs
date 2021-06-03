@@ -27,12 +27,20 @@ pub enum RewardData {
     BttvSwap(()),
     FfzSwap(()),
     BttvSlot(BttvSlotRewardData),
+    SpotifySkip(()),
+    SpotifyQueue(SpotifyPlayOptions),
+    SpotifyPlay(SpotifyPlayOptions),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BttvSlotRewardData {
     pub slots: usize,
     pub expiration: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SpotifyPlayOptions {
+    pub allow_explicit: bool,
 }
 
 impl Responder for Reward {

@@ -7,13 +7,15 @@ use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
 use twitch_api2::eventsub::NotificationPayload;
 
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::{
-    SayMessage, TimedMode, TimedModeMessage, TimeoutMessage,
-};
+use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, TimeoutMessage};
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
 use crate::services::bttv::{slots, swap};
+use crate::services::rewards::reply;
+use crate::services::rewards::reply::SpotifyAction;
+use crate::services::spotify::rewards as spotify;
 use crate::services::{ffz, rewards};
+use futures::TryFutureExt;
 
 /// This doesn't update the reward-redemption on twitch!
 pub async fn execute_reward(
@@ -59,7 +61,7 @@ pub async fn execute_reward(
             .await?;
             log::info!("Adding BTTV emote {} in {}", emote_id, broadcaster.name);
             let data = swap::swap_or_add_emote(&broadcaster.id, emote_id, pool).await;
-            send_emote_reply(
+            reply::send_emote_reply(
                 data,
                 &irc,
                 redemption.event.broadcaster_user_login,
@@ -78,7 +80,7 @@ pub async fn execute_reward(
             .await?;
             log::info!("Adding FFZ emote {} in {}", emote_id, broadcaster.name);
             let data = ffz::swap_or_add_emote(&broadcaster.id, emote_id, pool).await;
-            send_emote_reply(
+            reply::send_emote_reply(
                 data,
                 &irc,
                 redemption.event.broadcaster_user_login,
@@ -105,7 +107,7 @@ pub async fn execute_reward(
                 pool,
             )
             .await;
-            send_slot_reply(
+            reply::send_slot_reply(
                 data,
                 &irc,
                 redemption.event.broadcaster_user_login,
@@ -113,75 +115,57 @@ pub async fn execute_reward(
             )
             .await?;
         }
+        RewardData::SpotifySkip(_) => {
+            let res = spotify::skip_track(&redemption.event.broadcaster_user_id, pool).await;
+            reply::send_spotify_reply(
+                SpotifyAction::Skip,
+                res,
+                &irc,
+                redemption.event.broadcaster_user_login,
+                redemption.event.user_login,
+            )
+            .await?;
+        }
+        RewardData::SpotifyPlay(opts) => {
+            let res = spotify::get_track_uri_from_input(
+                &redemption.event.user_input,
+                &redemption.event.broadcaster_user_id,
+                &opts,
+                pool,
+            )
+            .and_then(|track| async {
+                spotify::play_track(&redemption.event.broadcaster_user_id, track, pool).await
+            })
+            .await;
+            reply::send_spotify_reply(
+                SpotifyAction::Play,
+                res,
+                &irc,
+                redemption.event.broadcaster_user_login,
+                redemption.event.user_login,
+            )
+            .await?;
+        }
+        RewardData::SpotifyQueue(opts) => {
+            let res = spotify::get_track_uri_from_input(
+                &redemption.event.user_input,
+                &redemption.event.broadcaster_user_id,
+                &opts,
+                pool,
+            )
+            .and_then(|track| async {
+                spotify::queue_track(&redemption.event.broadcaster_user_id, track, pool).await
+            })
+            .await;
+            reply::send_spotify_reply(
+                SpotifyAction::Queue,
+                res,
+                &irc,
+                redemption.event.broadcaster_user_login,
+                redemption.event.user_login,
+            )
+            .await?;
+        }
     }
-    Ok(())
-}
-
-async fn send_emote_reply(
-    data: AnyResult<(Option<String>, String)>,
-    irc: &Arc<Addr<IrcActor>>,
-    broadcaster: String,
-    user: String,
-) -> AnyResult<()> {
-    match data {
-        Ok((Some(removed), added)) => {
-            irc.send(SayMessage(
-                broadcaster,
-                format!("@{} ☑ Added {} - 🗑 Removed {}", user, added, removed),
-            ))
-            .await??;
-        }
-        Ok((None, added)) => {
-            irc.send(SayMessage(
-                broadcaster,
-                format!("@{} ☑ Added {}", user, added),
-            ))
-            .await??;
-        }
-        Err(e) => {
-            irc.send(SayMessage(broadcaster, format!("@{} ⚠ {}", user, e)))
-                .await??;
-
-            return Err(e);
-        }
-    };
-    Ok(())
-}
-
-async fn send_slot_reply(
-    data: AnyResult<(String, usize)>,
-    irc: &Arc<Addr<IrcActor>>,
-    broadcaster: String,
-    user: String,
-) -> AnyResult<()> {
-    match data {
-        Ok((added, remaining)) if remaining > 1 => {
-            irc.send(SayMessage(
-                broadcaster,
-                format!("@{} ☑ Added {} - 🔳 {} slots open", user, added, remaining),
-            ))
-            .await??;
-        }
-        Ok((added, remaining)) if remaining == 1 => {
-            irc.send(SayMessage(
-                broadcaster,
-                format!("@{} ☑ Added {} - 🔳 {} slot open", user, added, remaining),
-            ))
-            .await??;
-        }
-        Ok((added, _)) => {
-            irc.send(SayMessage(
-                broadcaster,
-                format!("@{} ☑ Added {} - 0 slots open - 🔒 closing", user, added),
-            ))
-            .await??;
-        }
-        Err(e) => {
-            irc.send(SayMessage(broadcaster, format!("@{} ⚠ {}", user, e)))
-                .await??;
-
-            return Err(e);
-        }
-    };
     Ok(())
 }

@@ -24,7 +24,7 @@ use twitch_api2::twitch_oauth2::{
 
 #[derive(Debug, derive_more::Display, Default)]
 #[display(fmt = "Error during oauth authorization")]
-struct OAuthError(Option<String>);
+pub struct OAuthError(pub Option<String>);
 
 impl error::ResponseError for OAuthError {
     fn error_response(&self) -> BaseHttpResponse<Body> {

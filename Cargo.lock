@@ -1927,6 +1927,7 @@ dependencies = [
  "jsonwebtoken",
  "lazy_static",
  "log",
+ "percent-encoding",
  "rand 0.8.3",
  "regex",
  "reqwest",

@@ -1,4 +1,4 @@
-import { InputReward, InternalCustomReward, LogEntry, Reward, TwitchReward, TwitchUser } from './types';
+import { Connections, InputReward, InternalCustomReward, LogEntry, Reward, TwitchReward, TwitchUser } from './types';
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
@@ -28,6 +28,18 @@ class HttpClient extends BaseClient {
 
   getBroadcasters() {
     return this.get<TwitchUser[]>('editors', 'broadcasters');
+  }
+
+  getConnections() {
+    return this.get<Connections>('connections');
+  }
+
+  removeConnection(name: 'spotify') {
+    return this.delete('connections', name);
+  }
+
+  getSpotifyUrl() {
+    return this.get<string>('connections', 'spotify-auth-url');
   }
 
   async getRewards(id: string): Promise<Reward[]> {

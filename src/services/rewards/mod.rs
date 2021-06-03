@@ -9,6 +9,7 @@ use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::SayMessage;
 
 pub mod execute;
+mod reply;
 pub mod save;
 pub mod verify;
 
