@@ -75,7 +75,7 @@ function TSEValid(opts: unknown): boolean {
 }
 
 function bttvSlotValid(opts: unknown): boolean {
-  if (typeof opts !== 'object') return false;
+  if (typeof opts !== 'object' || opts === null) return false;
   return (
     typeof (opts as BttvSlotRewardData).slots === 'number' &&
     typeof (opts as BttvSlotRewardData).expiration === 'string'
@@ -83,7 +83,7 @@ function bttvSlotValid(opts: unknown): boolean {
 }
 
 function spotifyPlayValid(opts: unknown): boolean {
-  if (typeof opts !== 'object') return false;
+  if (typeof opts !== 'object' || opts === null) return false;
   return typeof (opts as SpotifyPlayOptions).allow_explicit === 'boolean';
 }
 
