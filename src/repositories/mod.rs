@@ -1,4 +1,5 @@
 mod auth;
+mod connections;
 mod editors;
 mod eventsub;
 mod logs;
@@ -7,6 +8,7 @@ mod user;
 
 use crate::guards::eventsub::EventsubGuard;
 use crate::repositories::auth::init_auth_routes;
+use crate::repositories::connections::init_connection_routes;
 use crate::repositories::editors::init_editor_routes;
 use crate::repositories::eventsub::init_eventsub_routes;
 use crate::repositories::logs::init_log_routes;
@@ -21,6 +23,7 @@ pub fn init_repositories(config: &mut web::ServiceConfig) {
         .service(web::scope("/users").configure(init_user_routes))
         .service(web::scope("/editors").configure(init_editor_routes))
         .service(web::scope("/logs").configure(init_log_routes))
+        .service(web::scope("/connections").configure(init_connection_routes))
         .service(
             web::scope("/eventsub")
                 .wrap(EventsubGuard)
