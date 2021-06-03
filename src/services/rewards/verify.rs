@@ -4,6 +4,7 @@ use twitch_api2::twitch_oauth2::UserToken;
 
 use crate::models::reward::RewardData;
 use crate::services::ffz::is_editor_in;
+use crate::services::spotify::rewards as spotify;
 use crate::services::twitch::requests::get_user;
 use crate::services::{bttv, rewards};
 
@@ -38,6 +39,9 @@ pub async fn verify_reward(
             }
 
             rewards::get_duration(&slot.expiration)?;
+        }
+        RewardData::SpotifySkip(_) | RewardData::SpotifyQueue(_) | RewardData::SpotifyPlay(_) => {
+            spotify::get_spotify_token(broadcaster_id, pool).await?;
         }
     };
     Ok(())

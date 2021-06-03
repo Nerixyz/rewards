@@ -22,8 +22,21 @@ impl JwtClaims {
         }
     }
 
+    ///
+    /// Creates a new short lived token (for the `state` in oauth)
+    pub fn new_short(user_id: String) -> Self {
+        Self {
+            exp: (OffsetDateTime::now_utc() + Duration::hours(2)).unix_timestamp() as usize,
+            user_id,
+        }
+    }
+
     pub fn user_id(&self) -> &str {
         &self.user_id
+    }
+
+    pub fn into_user_id(self) -> String {
+        self.user_id
     }
 
     pub async fn get_user(&self, pool: &PgPool) -> Result<User> {
