@@ -1,5 +1,5 @@
 import { VRewardModel } from './model-conversion';
-import { BttvSlotRewardData, RewardDataMap } from './types';
+import { BttvSlotRewardData, RewardDataMap, SpotifyPlayOptions } from './types';
 interface StaticData<K extends keyof RewardDataMap> {
   display: string;
   inputRequired: boolean;
@@ -46,6 +46,28 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
       expiration: '2d',
     },
   },
+  SpotifySkip: {
+    display: 'Skip Spotify Track',
+    inputRequired: false,
+    validOptions: opts => opts === null,
+    defaultOptions: null,
+  },
+  SpotifyPlay: {
+    display: 'Play Spotify Track',
+    inputRequired: true,
+    validOptions: spotifyPlayValid,
+    defaultOptions: {
+      allow_explicit: false,
+    },
+  },
+  SpotifyQueue: {
+    display: 'Queue Spotify Track',
+    inputRequired: true,
+    validOptions: spotifyPlayValid,
+    defaultOptions: {
+      allow_explicit: false,
+    },
+  },
 };
 
 function TSEValid(opts: unknown): boolean {
@@ -58,6 +80,11 @@ function bttvSlotValid(opts: unknown): boolean {
     typeof (opts as BttvSlotRewardData).slots === 'number' &&
     typeof (opts as BttvSlotRewardData).expiration === 'string'
   );
+}
+
+function spotifyPlayValid(opts: unknown): boolean {
+  if (typeof opts !== 'object') return false;
+  return typeof (opts as SpotifyPlayOptions).allow_explicit === 'boolean';
 }
 
 export const RewardTypes = Object.entries(StaticRewardData).map(([key, { display }]) => ({ value: key, display }));

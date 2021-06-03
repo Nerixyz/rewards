@@ -6,6 +6,7 @@ const FailedAuth = () => import('./routes/FailedAuth.vue');
 const RewardsDashboard = () => import('./routes/RewardsDashboard.vue');
 const EditorsDashboard = () => import('./routes/EditorsDashboard.vue');
 const BroadcasterDashboard = () => import('./routes/BroadcasterDashboard.vue');
+const ConnectionsDashboard = () => import('./routes/ConnectionsDashboard.vue');
 const LogViewer = () => import('./routes/LogViewer.vue');
 
 const router = createRouter({
@@ -31,6 +32,7 @@ const router = createRouter({
     },
     { name: 'Editors', path: '/editors', component: EditorsDashboard },
     { name: 'Broadcasters', path: '/broadcasters', component: BroadcasterDashboard },
+    { name: 'Connections', path: '/connections', component: ConnectionsDashboard },
     {
       name: 'Logs',
       path: '/rewards/logs/:id?',

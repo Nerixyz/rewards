@@ -50,7 +50,6 @@
             border border-gray-900 border-opacity-20
             rounded-md
             shadow-lg
-            max-h-60
           "
         >
           <ListboxOption

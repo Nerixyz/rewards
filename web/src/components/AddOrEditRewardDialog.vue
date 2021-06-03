@@ -35,6 +35,10 @@
             @update:warn="updateRewardWarning"
           />
           <BttvSlotSettings v-else-if="rewardState.action.type === 'BttvSlot'" v-model="rewardState.action.data" />
+          <SpotifyPlayOptions
+            v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(rewardState.action.type)"
+            v-model="rewardState.action.data"
+          />
         </div>
       </div>
       <DialogButtons>
@@ -65,10 +69,12 @@ import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from './core/CLoader.vue';
 import BttvSlotSettings from './rewards/BttvSlotSettings.vue';
 import TickIcon from './icons/TickIcon.vue';
+import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
   components: {
+    SpotifyPlayOptions,
     TickIcon,
     BttvSlotSettings,
     CLoader,
