@@ -2,8 +2,6 @@
 
 This is an application that manages custom Twitch rewards.
 
-The priorities for the project are _P1_ .. _Px_ where _P1_ is the most important.
-
 # Web Interface
 
 ## Editors and Broadcasters
