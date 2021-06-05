@@ -1,11 +1,6 @@
 use actix::Message;
 use anyhow::Error as AnyError;
 use derive_more::Display;
-use twitch_irc::message::PrivmsgMessage;
-
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct ChatMessage(pub PrivmsgMessage);
 
 #[derive(Message)]
 #[rtype(result = "()")]
