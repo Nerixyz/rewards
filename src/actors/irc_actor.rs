@@ -1,11 +1,11 @@
 use crate::actors::db_actor::DbActor;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::actors::messages::irc_messages::{
-    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
-    TimeoutMessage, WhisperMessage,
+    JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage, TimeoutMessage,
+    WhisperMessage,
 };
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
-use actix::{Actor, Addr, Context, Handler, ResponseFuture};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use std::fmt::{Debug, Formatter};
@@ -13,7 +13,6 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::watch::{channel, Receiver, Sender};
 use tokio::task;
-use tokio::task::JoinHandle;
 use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
 use twitch_irc::message::{NoticeMessage, ServerMessage};
 use twitch_irc::{ClientConfig, TCPTransport, TwitchIRCClient};
@@ -126,14 +125,6 @@ impl Handler<JoinAllMessage> for IrcActor {
         for channel in msg.0 {
             self.client.join(channel)
         }
-    }
-}
-
-impl Handler<ChatMessage> for IrcActor {
-    type Result = ();
-    // do nothing for now
-    fn handle(&mut self, _msg: ChatMessage, _ctx: &mut Self::Context) -> Self::Result {
-        // println!("{:?}", msg.0);
     }
 }
 
