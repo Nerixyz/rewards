@@ -55,7 +55,6 @@ type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {
     client: IrcClient,
     incoming: Option<UnboundedReceiver<ServerMessage>>,
-    listener: Option<JoinHandle<()>>,
     notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
     notice_rx: Receiver<Option<NoticeChannelMessage>>,
 }
@@ -73,7 +72,6 @@ impl IrcActor {
         let (notice_tx, notice_rx) = channel(None);
 
         Self {
-            listener: None,
             incoming: Some(incoming),
             client,
             notice_tx: Some(notice_tx),
@@ -85,24 +83,23 @@ impl IrcActor {
 impl Actor for IrcActor {
     type Context = Context<Self>;
 
-    fn started(&mut self, _ctx: &mut Self::Context) {
+    fn started(&mut self, ctx: &mut Self::Context) {
         let mut incoming = self.incoming.take().expect("This was set in Self:new");
         let tx = self.notice_tx.take().expect("This was set in Self::new");
 
-        self.listener = Some(task::spawn(async move {
-            while let Some(message) = incoming.recv().await {
-                match message {
-                    ServerMessage::Notice(notice) => tx.send(Some((Instant::now(), notice))).ok(),
-                    _ => None,
-                };
+        ctx.spawn(
+            async move {
+                while let Some(message) = incoming.recv().await {
+                    match message {
+                        ServerMessage::Notice(notice) => {
+                            tx.send(Some((Instant::now(), notice))).ok()
+                        }
+                        _ => None,
+                    };
+                }
             }
-        }));
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        if let Some(listener) = &self.listener {
-            listener.abort();
-        }
+            .into_actor(self),
+        );
     }
 }
 
