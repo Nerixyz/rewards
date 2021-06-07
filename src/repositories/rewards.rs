@@ -1,4 +1,5 @@
 use crate::models::reward::{Reward, RewardData};
+use crate::services::errors;
 use crate::services::jwt::JwtClaims;
 use crate::services::rewards::save::save_reward;
 use crate::services::rewards::verify::verify_reward;
@@ -7,7 +8,7 @@ use crate::services::twitch::requests::{
     create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
     update_reward,
 };
-use actix_web::{delete, error, get, patch, put, web, HttpResponse, Result};
+use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};
@@ -51,7 +52,7 @@ async fn create(
 
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
-        .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+        .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
 
@@ -73,7 +74,7 @@ async fn create(
             log::warn!("Could not delete invalid reward: {}", e);
         }
 
-        return Err(error::ErrorBadRequest(format!(
+        return Err(errors::ErrorBadRequest(format!(
             "Your reward could not be saved: {}",
             e
         )));
@@ -108,13 +109,13 @@ async fn update(
 
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
-        .map_err(|e| error::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+        .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     // check this before it's actually saved
     if let Err(e) = save_reward(&body.data, &reward_id, &broadcaster_id, &pool).await {
         log::warn!("Could not save reward: {}", e);
 
-        return Err(error::ErrorBadRequest(format!(
+        return Err(errors::ErrorBadRequest(format!(
             "Your reward could not be saved: {}",
             e
         )));

@@ -1,11 +1,11 @@
 use crate::models::user::User;
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use sqlx::PgPool;
 
 pub struct Editor;
 
 impl Editor {
-    pub async fn get_editors(broadcaster_id: &str, pool: &PgPool) -> Result<Vec<String>, SqlError> {
+    pub async fn get_editors(broadcaster_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
         let editors = sqlx::query_scalar!(
             // language=PostgreSQL
             r#"
@@ -21,7 +21,7 @@ impl Editor {
         Ok(editors)
     }
 
-    pub async fn get_broadcasters(editor_id: &str, pool: &PgPool) -> Result<Vec<String>, SqlError> {
+    pub async fn get_broadcasters(editor_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
         let broadcasters = sqlx::query_scalar!(
             // language=PostgreSQL
             r#"
@@ -41,7 +41,7 @@ impl Editor {
         editor_id: &str,
         broadcaster_id: &str,
         pool: &PgPool,
-    ) -> Result<User, SqlError> {
+    ) -> SqlResult<User> {
         let user = sqlx::query_as!(
             User,
             // language=PostgreSQL
@@ -64,7 +64,7 @@ impl Editor {
         broadcaster_id: &str,
         editor_name: &str,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         let _ = sqlx::query!(
             // language=PostgreSQL
             r#"
@@ -85,7 +85,7 @@ impl Editor {
         broadcaster_id: &str,
         editor_name: &str,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         let _ = sqlx::query!(
             // language=PostgreSQL

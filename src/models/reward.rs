@@ -1,5 +1,5 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use futures::Stream;
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ impl Reward {
         }
     }
 
-    pub async fn get_by_id(id: &str, pool: &PgPool) -> Result<Reward, SqlError> {
+    pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<Reward> {
         // language=PostgreSQL
         let reward: Self = sqlx::query_as!(
             Reward,
@@ -76,7 +76,7 @@ impl Reward {
         Ok(reward)
     }
 
-    pub async fn get_all_for_user(user_id: &str, pool: &PgPool) -> Result<Vec<Reward>, SqlError> {
+    pub async fn get_all_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<Reward>> {
         // language=PostgreSQL
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
@@ -93,7 +93,7 @@ impl Reward {
         Ok(rewards)
     }
 
-    pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn create(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -109,7 +109,7 @@ impl Reward {
         Ok(())
     }
 
-    pub async fn update(&self, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -124,7 +124,7 @@ impl Reward {
         Ok(())
     }
 
-    pub async fn delete(id: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn delete(id: &str, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!("DELETE FROM rewards WHERE id = $1", id)

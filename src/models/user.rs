@@ -1,5 +1,5 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use sqlx::{types::Json, FromRow, PgPool};
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
@@ -22,7 +22,7 @@ pub struct UserBttvData {
 }
 
 impl User {
-    pub async fn get_by_id(id: &str, pool: &PgPool) -> Result<User, SqlError> {
+    pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<User> {
         // language=PostgreSQL
         let user: User = sqlx::query_as!(User, "SELECT id, access_token, refresh_token, scopes, name, eventsub_id FROM users WHERE id = $1", id)
             .fetch_one(pool)
@@ -31,7 +31,7 @@ impl User {
         Ok(user)
     }
 
-    pub async fn get_all(pool: &PgPool) -> Result<Vec<User>, SqlError> {
+    pub async fn get_all(pool: &PgPool) -> SqlResult<Vec<User>> {
         // language=PostgreSQL
         let users = sqlx::query_as!(
             User,
@@ -43,7 +43,7 @@ impl User {
         Ok(users)
     }
 
-    pub async fn get_all_names(pool: &PgPool) -> Result<Vec<String>, SqlError> {
+    pub async fn get_all_names(pool: &PgPool) -> SqlResult<Vec<String>> {
         let names = sqlx::query_scalar!(
             // language=PostgreSQL
             r#"
@@ -57,7 +57,7 @@ impl User {
         Ok(names)
     }
 
-    pub async fn get_all_non_subscribers(pool: &PgPool) -> Result<Vec<String>, SqlError> {
+    pub async fn get_all_non_subscribers(pool: &PgPool) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
         let ids = sqlx::query_scalar!("SELECT id FROM users WHERE eventsub_id IS null")
             .fetch_all(pool)
@@ -66,7 +66,7 @@ impl User {
         Ok(ids)
     }
 
-    pub async fn get_bttv_data(user_id: &str, pool: &PgPool) -> Result<UserBttvData, SqlError> {
+    pub async fn get_bttv_data(user_id: &str, pool: &PgPool) -> SqlResult<UserBttvData> {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             UserBttvData,
@@ -87,7 +87,7 @@ impl User {
         user_id: &str,
         history: Vec<String>,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             r#"
@@ -102,7 +102,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn get_ffz_history(user_id: &str, pool: &PgPool) -> Result<Vec<usize>, SqlError> {
+    pub async fn get_ffz_history(user_id: &str, pool: &PgPool) -> SqlResult<Vec<usize>> {
         // language=PostgreSQL
         let history = sqlx::query_scalar!(
             r#"
@@ -122,7 +122,7 @@ impl User {
         user_id: &str,
         history: Vec<usize>,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             r#"
@@ -137,7 +137,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn create(&self, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn create(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -166,7 +166,7 @@ impl User {
         access_token: &str,
         refresh_token: &str,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -186,7 +186,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn set_bttv_id(user_id: &str, bttv_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn set_bttv_id(user_id: &str, bttv_id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query_scalar!(
             "UPDATE users SET bttv_id = $2 WHERE id = $1",
@@ -199,7 +199,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn delete(id: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn delete(id: &str, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -215,11 +215,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn set_eventsub_id(
-        user_id: &str,
-        eventsub_id: &str,
-        pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    pub async fn set_eventsub_id(user_id: &str, eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             r#"
@@ -235,7 +231,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn clear_eventsub_id(eventsub_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn clear_eventsub_id(eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             r#"
@@ -252,7 +248,7 @@ impl User {
     pub async fn clear_eventsub_for_user(
         user_id: &str,
         pool: &PgPool,
-    ) -> Result<Option<String>, SqlError> {
+    ) -> SqlResult<Option<String>> {
         // language=PostgreSQL
         let old_id = sqlx::query_scalar!(
             r#"

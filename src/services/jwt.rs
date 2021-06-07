@@ -1,6 +1,7 @@
 use crate::constants::JWT_BASE64_SECRET;
 use crate::models::user::User;
-use actix_web::{error, Result};
+use crate::services::errors;
+use actix_web::Result;
 use jsonwebtoken::{
     decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
 };
@@ -42,7 +43,7 @@ impl JwtClaims {
     pub async fn get_user(&self, pool: &PgPool) -> Result<User> {
         User::get_by_id(self.user_id(), pool)
             .await
-            .map_err(|_| error::ErrorUnauthorized(""))
+            .map_err(|_| errors::ErrorUnauthorized("Bad token"))
     }
 }
 

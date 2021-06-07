@@ -1,6 +1,7 @@
+use crate::services::errors;
 use crate::services::jwt::{decode_jwt, JwtClaims};
 use actix_web::dev::Payload;
-use actix_web::{error, http::header, Error, FromRequest, HttpRequest, Result};
+use actix_web::{http::header, Error, FromRequest, HttpRequest, Result};
 use futures_util::future::{err, ready, Ready};
 
 impl FromRequest for JwtClaims {
@@ -14,7 +15,7 @@ impl FromRequest for JwtClaims {
             .get(header::AUTHORIZATION)
             .map(|h| h.to_str().ok())
             .flatten()
-            .ok_or_else(|| error::ErrorUnauthorized(""));
+            .ok_or_else(|| errors::ErrorUnauthorized("No header"));
 
         let auth = match auth {
             Ok(auth) => auth,
@@ -22,17 +23,17 @@ impl FromRequest for JwtClaims {
         };
 
         if auth.len() <= 7 {
-            return err(error::ErrorUnauthorized(""));
+            return err(errors::ErrorUnauthorized("Bad header value"));
         }
 
         let (head, token) = auth.split_at(7);
         if head != "Bearer " {
-            return err(error::ErrorUnauthorized(""));
+            return err(errors::ErrorUnauthorized("Bad header value"));
         }
 
         ready(
             decode_jwt(token)
-                .map_err(|_| error::ErrorUnauthorized(""))
+                .map_err(|_| errors::ErrorUnauthorized("Bad token"))
                 .map(|t| t.claims),
         )
     }

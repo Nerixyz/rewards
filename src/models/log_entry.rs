@@ -1,4 +1,4 @@
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
@@ -10,7 +10,7 @@ pub struct LogEntry {
 }
 
 impl LogEntry {
-    pub async fn get_for_user(id: &str, pool: &PgPool) -> Result<Vec<Self>, SqlError> {
+    pub async fn get_for_user(id: &str, pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let logs = sqlx::query_as!(
             Self,
@@ -23,7 +23,7 @@ impl LogEntry {
         Ok(logs)
     }
 
-    pub async fn create(id: &str, content: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn create(id: &str, content: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"INSERT INTO logs (user_id, date, content) VALUES ($1, $2, $3)"#,

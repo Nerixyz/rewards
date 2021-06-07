@@ -1,4 +1,4 @@
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, PgPool};
 
@@ -27,7 +27,7 @@ impl Slot {
         reward_id: &str,
         platform: SlotPlatform,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"INSERT INTO slots (user_id, reward_id, platform) VALUES ($1, $2, $3)"#,
@@ -45,7 +45,7 @@ impl Slot {
         user_id: &str,
         reward_id: &str,
         pool: &PgPool,
-    ) -> Result<Vec<Self>, SqlError> {
+    ) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let available = sqlx::query_as!(
             Self,
@@ -65,7 +65,7 @@ impl Slot {
         user_id: &str,
         reward_id: &str,
         pool: &PgPool,
-    ) -> Result<Vec<Self>, SqlError> {
+    ) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let all = sqlx::query_as!(
             Self,
@@ -81,7 +81,7 @@ impl Slot {
         Ok(all)
     }
 
-    pub async fn get_pending(pool: &PgPool) -> Result<Vec<Self>, SqlError> {
+    pub async fn get_pending(pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let pending = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
@@ -91,7 +91,7 @@ impl Slot {
         Ok(pending)
     }
 
-    pub async fn update(&self, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"
@@ -107,7 +107,7 @@ impl Slot {
         Ok(())
     }
 
-    pub async fn clear(id: i32, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn clear(id: i32, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"
@@ -121,7 +121,7 @@ impl Slot {
         Ok(())
     }
 
-    pub async fn remove(id: i32, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn remove(id: i32, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"

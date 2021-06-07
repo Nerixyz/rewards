@@ -1,6 +1,6 @@
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::models::config::ConfigEntry;
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use actix::{Actor, Context, Handler, ResponseFuture};
 use sqlx::PgPool;
 use twitch_irc::login::UserAccessToken;
@@ -20,7 +20,7 @@ impl Actor for DbActor {
 }
 
 impl Handler<GetToken> for DbActor {
-    type Result = ResponseFuture<Result<UserAccessToken, SqlError>>;
+    type Result = ResponseFuture<SqlResult<UserAccessToken>>;
 
     fn handle(&mut self, _msg: GetToken, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
@@ -29,7 +29,7 @@ impl Handler<GetToken> for DbActor {
 }
 
 impl Handler<SaveToken> for DbActor {
-    type Result = ResponseFuture<Result<(), SqlError>>;
+    type Result = ResponseFuture<SqlResult<()>>;
 
     fn handle(&mut self, msg: SaveToken, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
