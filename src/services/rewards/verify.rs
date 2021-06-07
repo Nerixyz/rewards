@@ -40,6 +40,18 @@ pub async fn verify_reward(
 
             rewards::get_duration(&slot.expiration)?;
         }
+        RewardData::FfzSlot(slot) => {
+            let user = get_user(broadcaster_id.to_string(), token).await?;
+            if !is_editor_in(&user.login).await {
+                return Err(AnyError::msg("RewardMore isn't an editor for the user"));
+            }
+
+            if slot.slots > 50 {
+                return Err(AnyError::msg("50 slots is the max"));
+            }
+
+            rewards::get_duration(&slot.expiration)?;
+        }
         RewardData::SpotifySkip(_) | RewardData::SpotifyQueue(_) | RewardData::SpotifyPlay(_) => {
             spotify::get_spotify_token(broadcaster_id, pool).await?;
         }

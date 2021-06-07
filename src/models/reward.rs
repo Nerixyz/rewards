@@ -26,14 +26,15 @@ pub enum RewardData {
     EmoteOnly(String),
     BttvSwap(()),
     FfzSwap(()),
-    BttvSlot(BttvSlotRewardData),
+    BttvSlot(SlotRewardData),
+    FfzSlot(SlotRewardData),
     SpotifySkip(()),
     SpotifyQueue(SpotifyPlayOptions),
     SpotifyPlay(SpotifyPlayOptions),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BttvSlotRewardData {
+pub struct SlotRewardData {
     pub slots: usize,
     pub expiration: String,
 }

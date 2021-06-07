@@ -17,6 +17,17 @@ impl TokenRefresher {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    async fn refresh(pool: &PgPool) {
+        log_err!(
+            refresh_twitch_users(&pool).await,
+            "Failed to refresh twitch users"
+        );
+        log_err!(
+            refresh_spotify_tokens(&pool).await,
+            "Failed to refresh spotify tokens"
+        );
+    }
 }
 
 impl Actor for TokenRefresher {
@@ -25,20 +36,10 @@ impl Actor for TokenRefresher {
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(40 * 60), |this, ctx| {
             let pool = this.pool.clone();
-            ctx.spawn(
-                async move {
-                    log_err!(
-                        refresh_twitch_users(&pool).await,
-                        "Failed to refresh twitch users"
-                    );
-                    log_err!(
-                        refresh_spotify_tokens(&pool).await,
-                        "Failed to refresh spotify tokens"
-                    );
-                }
-                .into_actor(this),
-            );
+            ctx.spawn(async move { Self::refresh(&pool).await }.into_actor(this));
         });
+        let pool = self.pool.clone();
+        ctx.spawn(async move { Self::refresh(&pool).await }.into_actor(self));
     }
 }
 

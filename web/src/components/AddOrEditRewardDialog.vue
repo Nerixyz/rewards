@@ -34,7 +34,7 @@
             v-model="rewardState.action.data"
             @update:warn="updateRewardWarning"
           />
-          <BttvSlotSettings v-else-if="rewardState.action.type === 'BttvSlot'" v-model="rewardState.action.data" />
+          <EmoteSlotSettings v-else-if="['BttvSlot', 'FfzSlot'].includes(rewardState.action.type)" v-model="rewardState.action.data" />
           <SpotifyPlayOptions
             v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"
@@ -67,16 +67,16 @@ import { Reward } from '../api/types';
 import TSESettings from './rewards/TSESettings.vue';
 import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from './core/CLoader.vue';
-import BttvSlotSettings from './rewards/BttvSlotSettings.vue';
 import TickIcon from './icons/TickIcon.vue';
 import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
+import EmoteSlotSettings from './rewards/EmoteSlotSettings.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
   components: {
+    EmoteSlotSettings,
     SpotifyPlayOptions,
     TickIcon,
-    BttvSlotSettings,
     CLoader,
     TSESettings,
     CDropdown,

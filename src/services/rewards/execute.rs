@@ -10,11 +10,13 @@ use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, TimeoutMessage};
 use crate::models::reward::{Reward, RewardData};
 use crate::models::user::User;
-use crate::services::bttv::{slots, swap};
-use crate::services::rewards::reply;
+use crate::services::emotes::bttv::BttvEmotes;
+use crate::services::emotes::execute::{execute_slot, execute_swap};
+use crate::services::emotes::ffz::FfzEmotes;
+use crate::services::rewards;
 use crate::services::rewards::reply::SpotifyAction;
+use crate::services::rewards::{extract_bttv_id, extract_ffz_id, reply};
 use crate::services::spotify::rewards as spotify;
-use crate::services::{ffz, rewards};
 use futures::TryFutureExt;
 
 /// This doesn't update the reward-redemption on twitch!
@@ -51,69 +53,18 @@ pub async fn execute_reward(
             .await?
         }
         RewardData::BttvSwap(_) => {
-            let emote_id = rewards::extract_id(
-                rewards::extract_bttv_id,
-                &redemption.event.user_input,
-                &irc,
-                redemption.event.broadcaster_user_login.clone(),
-                redemption.event.user_login.clone(),
-            )
-            .await?;
-            log::info!("Adding BTTV emote {} in {}", emote_id, broadcaster.name);
-            let data = swap::swap_or_add_emote(&broadcaster.id, emote_id, pool).await;
-            reply::send_emote_reply(
-                data,
-                &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
-            )
-            .await?;
+            execute_swap::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, pool, &irc).await?;
         }
         RewardData::FfzSwap(_) => {
-            let emote_id = rewards::extract_id(
-                rewards::extract_ffz_id,
-                &redemption.event.user_input,
-                &irc,
-                redemption.event.broadcaster_user_login.clone(),
-                redemption.event.user_login.clone(),
-            )
-            .await?;
-            log::info!("Adding FFZ emote {} in {}", emote_id, broadcaster.name);
-            let data = ffz::swap_or_add_emote(&broadcaster.id, emote_id, pool).await;
-            reply::send_emote_reply(
-                data,
-                &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
-            )
-            .await?;
+            execute_swap::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, pool, &irc).await?;
         }
         RewardData::BttvSlot(slot) => {
-            let emote_id = rewards::extract_id(
-                rewards::extract_bttv_id,
-                &redemption.event.user_input,
-                &irc,
-                redemption.event.broadcaster_user_login.clone(),
-                redemption.event.user_login.clone(),
-            )
-            .await?;
-            log::info!("Adding BTTV emote {} in {}", emote_id, broadcaster.name);
-            let data = slots::add_emote(
-                &broadcaster.id,
-                &redemption.event.reward.id,
-                slot,
-                emote_id,
-                &redemption.event.user_login,
-                pool,
-            )
-            .await;
-            reply::send_slot_reply(
-                data,
-                &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
-            )
-            .await?;
+            execute_slot::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, slot, pool, &irc)
+                .await?;
+        }
+        RewardData::FfzSlot(slot) => {
+            execute_slot::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, slot, pool, &irc)
+                .await?;
         }
         RewardData::SpotifySkip(_) => {
             let res = spotify::skip_track(&redemption.event.broadcaster_user_id, pool).await;

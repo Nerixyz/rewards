@@ -29,6 +29,12 @@ pub struct BttvEmote {
     pub code: String,
 }
 
+impl PartialEq for BttvEmote {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id || self.code == other.code
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]

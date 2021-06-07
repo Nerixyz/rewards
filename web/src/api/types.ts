@@ -90,13 +90,14 @@ export interface RewardDataMap {
   EmoteOnly: string;
   BttvSwap: null;
   FfzSwap: null;
-  BttvSlot: BttvSlotRewardData;
+  BttvSlot: SlotRewardData;
+  FfzSlot: SlotRewardData;
   SpotifySkip: null;
   SpotifyPlay: SpotifyPlayOptions;
   SpotifyQueue: SpotifyPlayOptions;
 }
 
-export interface BttvSlotRewardData {
+export interface SlotRewardData {
   slots: number;
   expiration: string;
 }

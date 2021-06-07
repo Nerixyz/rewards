@@ -62,7 +62,10 @@ async fn twitch_callback(
     let query = query.into_inner();
     let (code, scope) = match (query.code, query.scope) {
         (Some(code), Some(scope)) => (code, scope),
-        _ => return Err(OAuthError(query.error_description.or(query.error)).into()),
+        _ => {
+            log::info!("{:?} {:?}", query.error, query.error_description);
+            return Err(OAuthError(query.error_description.or(query.error)).into());
+        }
     };
 
     let mut builder = UserTokenBuilder::new(

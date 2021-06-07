@@ -6,15 +6,15 @@
 <script lang="ts">
 import { defineComponent, PropType, reactive, toRefs, watch } from 'vue';
 import CSlider from '../core/CSlider.vue';
-import { BttvSlotRewardData } from '../../api/types';
+import { SlotRewardData } from '../../api/types';
 import TextField from '../core/TextField.vue';
 
 export default defineComponent({
-  name: 'BttvSlotSettings',
+  name: 'EmoteSlotSettings',
   components: { CSlider, TextField },
   props: {
     modelValue: {
-      type: Object as PropType<BttvSlotRewardData>,
+      type: Object as PropType<SlotRewardData>,
       required: true,
     },
   },

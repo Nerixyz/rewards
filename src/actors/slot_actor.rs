@@ -1,11 +1,13 @@
 use crate::log_err;
-use crate::models::bttv_slot::BttvSlot;
 use crate::models::log_entry::LogEntry;
+use crate::models::slot::{Slot, SlotPlatform};
 use crate::models::user::User;
-use crate::services::bttv::get_or_fetch_id;
-use crate::services::bttv::requests::{delete_shared_emote, get_emote};
+use crate::services::emotes::bttv::BttvEmotes;
+use crate::services::emotes::ffz::FfzEmotes;
+use crate::services::emotes::EmoteRW;
 use crate::services::twitch::requests::update_reward;
 use actix::{Actor, AsyncContext, Context, WrapFuture};
+use anyhow::Result as AnyResult;
 use sqlx::PgPool;
 use std::time::Duration;
 use twitch_api2::helix::points::UpdateCustomRewardBody;
@@ -20,8 +22,25 @@ impl SlotActor {
         Self { pool }
     }
 
+    async fn delete_emote(
+        platform: &SlotPlatform,
+        broadcaster_id: &str,
+        id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<String> {
+        match platform {
+            SlotPlatform::Bttv => {
+                BttvEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+            }
+            SlotPlatform::Ffz => {
+                FfzEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+            }
+            SlotPlatform::SevenTv => todo!(),
+        }
+    }
+
     async fn queue_rewards(pool: PgPool) {
-        let pending = BttvSlot::get_pending(&pool).await;
+        let pending = Slot::get_pending(&pool).await;
         let pending = match pending {
             Ok(p) => p,
             Err(e) => {
@@ -45,33 +64,23 @@ impl SlotActor {
                 }
             };
 
-            let bttv_id = match get_or_fetch_id(&p.user_id, &pool).await {
-                Ok(id) => id,
-                Err(e) => {
-                    log::warn!("No user-id? pending={:?} error={}", p, e);
-                    continue;
-                }
-            };
-
-            let (bttv_response, sql_response, internal_user, emote_data) = futures::future::join4(
-                delete_shared_emote(emote_id, &bttv_id),
-                BttvSlot::clear(p.id, &pool),
+            let (sql_response, internal_user, emote) = futures::future::join3(
+                Slot::clear(p.id, &pool),
                 User::get_by_id(&p.user_id, &pool),
-                get_emote(emote_id),
+                Self::delete_emote(&p.platform, &p.user_id, emote_id, &pool),
             )
             .await;
-            log_err!(bttv_response, "Could not delete {:?} error={}", p);
             log_err!(
                 sql_response,
                 "Could not clear pending slot {:?} error={}",
                 p
             );
-            match emote_data {
+            match emote {
                 Ok(emote) => {
                     log_err!(
                         LogEntry::create(
                             &p.user_id,
-                            &format!("[bttv::slots] Deleted {}", emote.code),
+                            &format!("[slots::{:?}] Deleted {}", p.platform, emote),
                             &pool
                         )
                         .await,
@@ -79,11 +88,15 @@ impl SlotActor {
                     );
                 }
                 Err(e) => {
-                    log::warn!("Error requesting bttv-emote data: {}", e);
+                    log::warn!(
+                        "Could not delete emote or emote data is gone: saved={:?} error={}",
+                        p,
+                        e
+                    );
                     log_err!(
                         LogEntry::create(
                             &p.user_id,
-                            &format!("bttv::slots Deleted {} - no emote data available", emote_id),
+                            &format!("[slots::{:?}] Deleted {} - no emote data available or could not delete on platform", p.platform, emote_id),
                             &pool
                         )
                         .await,
