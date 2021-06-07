@@ -1,10 +1,11 @@
 use crate::models::spotify::SpotifyData;
-use crate::repositories::auth::OAuthError;
+use crate::services::errors;
+use crate::services::errors::redirect_error::RedirectError;
 use crate::services::jwt::{decode_jwt, JwtClaims};
 use crate::services::spotify::auth::{get_auth_url, SpotifyAuthResponse};
 use crate::services::spotify::requests::get_token;
 use actix_web::{
-    delete, error, get,
+    delete, get,
     web::{self, ServiceConfig},
     HttpResponse, Result,
 };
@@ -32,18 +33,21 @@ async fn spotify_callback(
 ) -> Result<HttpResponse> {
     let (code, claims) = match query.into_inner() {
         SpotifyAuthResponse::Success { code, state } => {
-            let claims = decode_jwt(&state).map_err(|_| OAuthError::default())?;
+            let claims = decode_jwt(&state)
+                .map_err(|_| RedirectError::new("/failed-auth", Some("Invalid state")))?;
             (code, claims.claims)
         }
         SpotifyAuthResponse::Error { error, .. } => {
-            return Err(OAuthError(Some(error)).into());
+            return Err(RedirectError::new("/failed-auth", Some(error)).into());
         }
     };
 
-    let auth_data = get_token(&code).await.map_err(|_| OAuthError::default())?;
+    let auth_data = get_token(&code)
+        .await
+        .map_err(|_| RedirectError::new("/failed-auth", Some("Invalid code")))?;
     SpotifyData::add(claims.user_id(), &auth_data, &pool)
         .await
-        .map_err(|_| OAuthError::default())?;
+        .map_err(|_| RedirectError::new("/failed-auth", Some("DB-Error")))?;
 
     Ok(HttpResponse::Found()
         .insert_header(("location", "/connections"))
@@ -55,7 +59,7 @@ async fn spotify_auth(claims: JwtClaims) -> Result<HttpResponse> {
     let url = get_auth_url(claims.into_user_id()).map_err(|e| {
         log::warn!("Error creating auth-url: {}", e);
 
-        error::ErrorInternalServerError("Could not serialize")
+        errors::ErrorInternalServerError("Could not serialize")
     })?;
 
     Ok(HttpResponse::Ok().body(url))

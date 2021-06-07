@@ -3,14 +3,13 @@ use crate::actors::messages::irc_messages::{JoinMessage, PartMessage};
 use crate::constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::reward::Reward;
 use crate::models::user::User;
+use crate::services::errors::redirect_error::RedirectError;
 use crate::services::eventsub::{register_eventsub_for_id, unregister_eventsub_for_id};
 use crate::services::jwt::{encode_jwt, JwtClaims};
 use crate::services::twitch::requests::delete_reward;
 use actix::Addr;
-use actix_web::body::Body;
 use actix_web::cookie::CookieBuilder;
-use actix_web::http::{header, StatusCode};
-use actix_web::{delete, error, get, web, BaseHttpResponse, HttpResponse, Result};
+use actix_web::{delete, get, web, HttpResponse, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -21,27 +20,6 @@ use twitch_api2::twitch_oauth2::tokens::UserTokenBuilder;
 use twitch_api2::twitch_oauth2::{
     AppAccessToken, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TwitchToken, UserToken,
 };
-
-#[derive(Debug, derive_more::Display, Default)]
-#[display(fmt = "Error during oauth authorization")]
-pub struct OAuthError(pub Option<String>);
-
-impl error::ResponseError for OAuthError {
-    fn error_response(&self) -> BaseHttpResponse<Body> {
-        // HttpResponse::MovedPermanently().append_header((header::LOCATION, "/failed-auth")).finish().into_body();
-
-        let mut resp = BaseHttpResponse::new(StatusCode::FOUND);
-        resp.headers_mut().insert(
-            header::LOCATION,
-            match &self.0 {
-                Some(error) => header::HeaderValue::from_str(&format!("/failed-auth#{}", error))
-                    .unwrap_or_else(|_| header::HeaderValue::from_static("/failed-auth")),
-                None => header::HeaderValue::from_static("/failed-auth"),
-            },
-        );
-        resp.set_body(Body::None)
-    }
-}
 
 #[derive(Deserialize)]
 #[non_exhaustive]
@@ -64,7 +42,11 @@ async fn twitch_callback(
         (Some(code), Some(scope)) => (code, scope),
         _ => {
             log::info!("{:?} {:?}", query.error, query.error_description);
-            return Err(OAuthError(query.error_description.or(query.error)).into());
+            return Err(RedirectError::new(
+                "/failed-auth",
+                query.error_description.or(query.error),
+            )
+            .into());
         }
     };
 
@@ -81,9 +63,11 @@ async fn twitch_callback(
     let user_token = builder
         .get_user_token(reqwest_http_client, "", &code)
         .await
-        .map_err(|_| OAuthError(Some("Could not get token".to_string())))?;
+        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not get token")))?;
 
-    let refresh_token = user_token.refresh_token.ok_or_else(OAuthError::default)?;
+    let refresh_token = user_token
+        .refresh_token
+        .ok_or_else(|| RedirectError::<&str, &str>::simple("/failed-auth"))?;
 
     let user = User {
         id: user_token.user_id.clone(),
@@ -96,7 +80,7 @@ async fn twitch_callback(
 
     user.create(&pool)
         .await
-        .map_err(|_| OAuthError::default())?;
+        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not create user")))?;
 
     // register and save the id into the database
     register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool).await?;
@@ -107,7 +91,7 @@ async fn twitch_callback(
     irc.do_send(JoinMessage(user.name));
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone()))
-        .map_err(|_| OAuthError::default())?;
+        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not encode")))?;
     Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(

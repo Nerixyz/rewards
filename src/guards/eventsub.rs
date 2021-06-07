@@ -1,11 +1,12 @@
 use crate::constants::EVENTSUB_BASE64_SECRET;
+use crate::services::errors;
 use actix_web::dev::Payload;
 use actix_web::error::PayloadError;
 use actix_web::http::HeaderValue;
 use actix_web::web::{Bytes, BytesMut};
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
-    error, Error, HttpMessage,
+    Error, HttpMessage,
 };
 use chrono::{DateTime, Duration, Utc};
 use futures::future::{ok, Ready};
@@ -75,7 +76,7 @@ where
             let (id_header, timestamp_header, signature_header) =
                 match (id_header, timestamp_header, signature_header) {
                     (Some(id), Some(timestamp), Some(signature)) => (id, timestamp, signature),
-                    _ => return Err(error::ErrorUnauthorized("Unauthorized")),
+                    _ => return Err(errors::ErrorUnauthorized("Unauthorized")),
                 };
             let (timestamp, signature) = match (
                 timestamp_header
@@ -84,13 +85,13 @@ where
                 signature_header.to_str(),
             ) {
                 (Ok(Ok(ts)), Ok(sig)) => (ts, sig.to_string()),
-                _ => return Err(error::ErrorUnauthorized("Bad header")),
+                _ => return Err(errors::ErrorUnauthorized("Bad header")),
             };
             if signature.len() <= 7 {
-                return Err(error::ErrorUnauthorized("Bad signature"));
+                return Err(errors::ErrorUnauthorized("Bad signature"));
             }
             if Utc::now() - timestamp > Duration::minutes(10) {
-                return Err(error::ErrorUnauthorized("Ancient message LuL"));
+                return Err(errors::ErrorUnauthorized("Ancient message LuL"));
             }
 
             let mut mac = HmacSha256::new_from_slice(EVENTSUB_BASE64_SECRET.as_bytes())
@@ -102,7 +103,7 @@ where
             while let Some(chunk) = stream.next().await {
                 // 10Mb
                 if body.len() >= 10_000_000 {
-                    return Err(error::ErrorImATeapot("yeah no, that's too much"));
+                    return Err(errors::ErrorImATeapot("yeah no, that's too much"));
                 }
                 body.extend_from_slice(&chunk?);
             }
@@ -111,7 +112,7 @@ where
             let bytes = mac.finalize().into_bytes();
 
             if hex::encode(bytes) != signature[7..] {
-                return Err(error::ErrorUnauthorized("Bad signature"));
+                return Err(errors::ErrorUnauthorized("Bad signature"));
             }
 
             let stream = async_stream::stream! {
