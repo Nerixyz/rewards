@@ -1,5 +1,5 @@
 import { VRewardModel } from './model-conversion';
-import { BttvSlotRewardData, RewardDataMap, SpotifyPlayOptions } from './types';
+import { SlotRewardData, RewardDataMap, SpotifyPlayOptions } from './types';
 interface StaticData<K extends keyof RewardDataMap> {
   display: string;
   inputRequired: boolean;
@@ -40,7 +40,16 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   BttvSlot: {
     display: 'Bttv Slots',
     inputRequired: true,
-    validOptions: bttvSlotValid,
+    validOptions: emoteSlotValid,
+    defaultOptions: {
+      slots: 2,
+      expiration: '2d',
+    },
+  },
+  FfzSlot: {
+    display: 'Ffz Slots',
+    inputRequired: true,
+    validOptions: emoteSlotValid,
     defaultOptions: {
       slots: 2,
       expiration: '2d',
@@ -74,11 +83,11 @@ function TSEValid(opts: unknown): boolean {
   return typeof opts === 'string';
 }
 
-function bttvSlotValid(opts: unknown): boolean {
+function emoteSlotValid(opts: unknown): boolean {
   if (typeof opts !== 'object' || opts === null) return false;
   return (
-    typeof (opts as BttvSlotRewardData).slots === 'number' &&
-    typeof (opts as BttvSlotRewardData).expiration === 'string'
+    typeof (opts as SlotRewardData).slots === 'number' &&
+    typeof (opts as SlotRewardData).expiration === 'string'
   );
 }
 
