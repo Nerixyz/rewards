@@ -3,6 +3,7 @@ pub mod execute;
 pub mod ffz;
 pub mod slots;
 pub mod swap;
+pub mod seven_tv;
 
 use crate::models::slot::SlotPlatform;
 use anyhow::Result as AnyResult;

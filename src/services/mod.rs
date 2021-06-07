@@ -8,3 +8,4 @@ pub mod rewards;
 pub mod spotify;
 pub mod sql;
 pub mod twitch;
+pub mod seven_tv;
