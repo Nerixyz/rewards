@@ -1,4 +1,6 @@
-use actix_web::{error, http::StatusCode};
+use crate::services::errors::json_error::JsonError;
+use actix_web::dev::Body;
+use actix_web::{error, http::StatusCode, BaseHttpResponse};
 use derive_more::Display;
 use twitch_api2::helix::{
     ClientRequestError, CreateRequestError, HelixRequestDeleteError, HelixRequestGetError,
@@ -34,6 +36,10 @@ impl error::ResponseError for TwitchApiError {
             Self::Response(status, _) => *status,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+
+    fn error_response(&self) -> BaseHttpResponse<Body> {
+        JsonError::new(format!("{}", self), self.status_code()).error_response()
     }
 }
 
