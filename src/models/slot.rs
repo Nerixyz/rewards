@@ -3,21 +3,37 @@ use chrono::{DateTime, Utc};
 use sqlx::{FromRow, PgPool};
 
 #[derive(FromRow, Debug)]
-pub struct BttvSlot {
+pub struct Slot {
     pub id: i32,
     pub user_id: String,
     pub reward_id: String,
     pub emote_id: Option<String>,
     pub expires: Option<DateTime<Utc>>,
+    pub platform: SlotPlatform,
 }
 
-impl BttvSlot {
-    pub async fn create(user_id: &str, reward_id: &str, pool: &PgPool) -> Result<(), SqlError> {
+#[derive(sqlx::Type, Debug)]
+#[sqlx(type_name = "slot_platform", rename_all = "snake_case")]
+pub enum SlotPlatform {
+    Bttv,
+    Ffz,
+    #[sqlx(rename = "7tv")]
+    SevenTv,
+}
+
+impl Slot {
+    pub async fn create(
+        user_id: &str,
+        reward_id: &str,
+        platform: SlotPlatform,
+        pool: &PgPool,
+    ) -> Result<(), SqlError> {
         // language=PostgreSQL
         sqlx::query!(
-            r#"INSERT INTO bttv_slots (user_id, reward_id) VALUES ($1, $2)"#,
+            r#"INSERT INTO slots (user_id, reward_id, platform) VALUES ($1, $2, $3)"#,
             user_id,
-            reward_id
+            reward_id,
+            platform as _,
         )
         .execute(pool)
         .await?;
@@ -34,7 +50,7 @@ impl BttvSlot {
         let available = sqlx::query_as!(
             Self,
             r#"
-            SELECT * FROM bttv_slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
             WHERE reward_id = $1 and user_id = $2 and emote_id is null and expires is null
         "#,
             reward_id,
@@ -54,7 +70,7 @@ impl BttvSlot {
         let all = sqlx::query_as!(
             Self,
             r#"
-            SELECT * FROM bttv_slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
             WHERE reward_id = $1 and user_id = $2
         "#,
             reward_id,
@@ -68,7 +84,7 @@ impl BttvSlot {
     pub async fn get_pending(pool: &PgPool) -> Result<Vec<Self>, SqlError> {
         // language=PostgreSQL
         let pending = sqlx::query_as!(Self, r#"
-            SELECT * FROM bttv_slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
             WHERE emote_id is not null AND expires is not null AND expires < (now() + '1 minute'::interval)
         "#).fetch_all(pool).await?;
 
@@ -79,7 +95,7 @@ impl BttvSlot {
         // language=PostgreSQL
         sqlx::query!(
             r#"
-            UPDATE bttv_slots SET emote_id = $2, expires = $3 WHERE id = $1
+            UPDATE slots SET emote_id = $2, expires = $3 WHERE id = $1
         "#,
             self.id,
             self.emote_id,
@@ -95,7 +111,7 @@ impl BttvSlot {
         // language=PostgreSQL
         sqlx::query!(
             r#"
-            UPDATE bttv_slots SET emote_id = null, expires = null WHERE id = $1
+            UPDATE slots SET emote_id = null, expires = null WHERE id = $1
         "#,
             id
         )
@@ -109,7 +125,7 @@ impl BttvSlot {
         // language=PostgreSQL
         sqlx::query!(
             r#"
-            DELETE FROM bttv_slots WHERE id = $1
+            DELETE FROM slots WHERE id = $1
         "#,
             id
         )

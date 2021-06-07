@@ -1,30 +1,35 @@
 use crate::log_err;
-use crate::models::bttv_slot::BttvSlot;
 use crate::models::log_entry::LogEntry;
-use crate::models::reward::BttvSlotRewardData;
+use crate::models::reward::SlotRewardData;
+use crate::models::slot::Slot;
 use crate::models::user::User;
-use crate::services::bttv::requests::{delete_shared_emote, get_user};
-use crate::services::bttv::{self, get_user_limits, prepare_add_emote};
+use crate::services::emotes::{Emote, EmoteId, EmoteRW};
 use crate::services::twitch::requests::update_reward;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::{Duration, Utc};
 use futures::TryFutureExt;
 use sqlx::PgPool;
 use std::cmp::Ordering;
+use std::fmt::Display;
 use twitch_api2::helix::points::UpdateCustomRewardBody;
 use twitch_api2::twitch_oauth2::UserToken;
 
-pub async fn adjust_size(
-    user_id: &str,
-    bttv_id: &str,
+pub async fn adjust_size<RW, I, E, EI>(
+    broadcaster_id: &str,
+    platform_id: &I,
     reward_id: &str,
     n_slots: usize,
     pool: &PgPool,
-) -> AnyResult<()> {
+) -> AnyResult<()>
+where
+    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
+    EI: EmoteId,
+    E: Emote<EI>,
+{
     if n_slots == 0 {
         return Err(AnyError::msg("You can't have 0 slots"));
     }
-    let mut current = BttvSlot::get_all_slots(user_id, reward_id, pool).await?;
+    let mut current = Slot::get_all_slots(broadcaster_id, reward_id, pool).await?;
 
     match current.len() {
         n_current_emotes if n_current_emotes > n_slots => {
@@ -36,14 +41,16 @@ pub async fn adjust_size(
             });
 
             let n_to_delete = current.len() - n_slots;
-            let to_delete: Vec<BttvSlot> = current.into_iter().take(n_to_delete).collect();
+            let to_delete: Vec<Slot> = current.into_iter().take(n_to_delete).collect();
             for emote in to_delete.iter().filter(|e| e.emote_id.is_some()) {
-                if let Err(e) = delete_shared_emote(
-                    emote
-                        .emote_id
-                        .as_ref()
-                        .ok_or_else(|| AnyError::msg("never"))?,
-                    bttv_id,
+                if let Err(e) = RW::remove_emote(
+                    platform_id,
+                    &EI::from_db(
+                        emote
+                            .emote_id
+                            .as_ref()
+                            .ok_or_else(|| AnyError::msg("never"))?,
+                    )?,
                 )
                 .await
                 {
@@ -52,41 +59,42 @@ pub async fn adjust_size(
             }
             for row in to_delete {
                 // no WHERE in $1 saj
-                BttvSlot::remove(row.id, &pool).await?
+                Slot::remove(row.id, &pool).await?
             }
         }
         n_current_emotes if n_current_emotes < n_slots => {
             // create slots
-            let (bttv_limits, shared_emotes, available_slots) = futures::future::try_join3(
-                get_user_limits(bttv_id),
-                get_user(bttv_id),
-                BttvSlot::get_available_slots(user_id, reward_id, pool).map_err(|e| {
+            let (env, available_slots) = futures::future::try_join(
+                RW::get_emote_env_data(broadcaster_id, platform_id),
+                Slot::get_available_slots(broadcaster_id, reward_id, pool).map_err(|e| {
                     log::warn!("Could not get slots {}", e);
                     AnyError::msg("Internal error")
                 }),
             )
             .await?;
 
-            let current_free = bttv_limits.shared_emotes - shared_emotes.shared_emotes.len();
+            let current_free = env.max_emotes - env.current_emotes;
             let known_free = available_slots.len();
 
             if current_free <= known_free {
                 // something else changed - too few slots
                 return Err(AnyError::msg(format!(
-                    "There are {} free slots on bttv, {} slots are known to be available",
-                    current_free, known_free
+                    "There are {} free slots on {:?}, {} slots are known to be available",
+                    current_free,
+                    RW::platform(),
+                    known_free
                 )));
             }
 
             let actually_free = current_free - known_free;
             let needed_slots = n_slots - current.len();
             if actually_free < needed_slots {
-                return Err(AnyError::msg(format!("There are {} free slots on bttv (actually {} because {} are already uses as slots here) but I need {}",
-                                                 current_free, actually_free, known_free, needed_slots)));
+                return Err(AnyError::msg(format!("There are {} free slots on {:?} (actually {} because {} are already uses as slots here) but I need {}",
+                                                 current_free, RW::platform(), actually_free, known_free, needed_slots)));
             }
 
             for _ in 0..needed_slots {
-                BttvSlot::create(user_id, reward_id, pool).await?;
+                Slot::create(broadcaster_id, reward_id, RW::platform(), pool).await?;
             }
         }
         _ => (),
@@ -95,15 +103,20 @@ pub async fn adjust_size(
     Ok(())
 }
 
-pub async fn add_emote(
-    user_id: &str,
+pub async fn add_slot_emote<RW, I, E, EI>(
+    broadcaster_id: &str,
     reward_id: &str,
-    data: BttvSlotRewardData,
+    slot_data: SlotRewardData,
     emote_id: &str,
     redeemed_user_login: &str,
     pool: &PgPool,
-) -> AnyResult<(String, usize)> {
-    let available_slots = BttvSlot::get_available_slots(user_id, reward_id, pool)
+) -> AnyResult<(String, usize)>
+where
+    RW: EmoteRW<PlatformId = I, EmoteId = EI, Emote = E>,
+    E: Emote<EI>,
+    EI: Display,
+{
+    let available_slots = Slot::get_available_slots(broadcaster_id, reward_id, pool)
         .await
         .map_err(|e| {
             log::warn!("Could not query: {}", e);
@@ -114,23 +127,22 @@ pub async fn add_emote(
         .into_iter()
         .next()
         .ok_or_else(|| AnyError::msg("No free slot is available!"))?;
-    let (_this_user, bttv_user, user_limits, emote_data) =
-        prepare_add_emote(user_id, emote_id, pool).await?;
+    let emote_data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
 
-    if bttv_user.shared_emotes.len() >= user_limits.shared_emotes {
+    if emote_data.current_emotes >= emote_data.max_emotes {
         return Err(AnyError::msg("There's no free slot!"));
     }
 
-    bttv::requests::add_shared_emote(emote_id, &bttv_user.id)
+    RW::add_emote(&emote_data.platform_id, emote_data.emote.id())
         .await
         .map_err(|e| {
             log::warn!("Could not add: {}", e);
             AnyError::msg("Couldn't add emote")
         })?;
 
-    let expiration = humantime::parse_duration(&data.expiration)
+    let expiration = humantime::parse_duration(&slot_data.expiration)
         .map_err(|_| AnyError::msg("No expiration set!"))?;
-    slot.emote_id = Some(emote_id.to_string());
+    slot.emote_id = Some(emote_data.emote.id().to_string());
     slot.expires = Some(
         Utc::now()
             + Duration::from_std(expiration).map_err(|e| {
@@ -148,7 +160,7 @@ pub async fn add_emote(
     if n_available == 1 {
         log::info!("Disabling {} because all slots are filled", reward_id);
 
-        let this_user = User::get_by_id(user_id, pool).await.map_err(|e| {
+        let this_user = User::get_by_id(broadcaster_id, pool).await.map_err(|e| {
             log::warn!("Could not get user: {}", e);
             AnyError::msg("Internal error")
         })?;
@@ -169,12 +181,15 @@ pub async fn add_emote(
         );
     }
 
+    let name = emote_data.emote.name();
+    // TODO: log::info
     log_err!(
         LogEntry::create(
-            user_id,
+            broadcaster_id,
             &format!(
-                "[bttv::slots] Added {}; slots-open={}; expires={:?}; redeemed={}; slot_id={}",
-                emote_data.code,
+                "[slots::{:?}] Added {}; slots-open={}; expires={:?}; redeemed={}; slot_id={}",
+                RW::platform(),
+                name,
                 n_available - 1,
                 slot.expires.map(|exp| exp.to_string()),
                 redeemed_user_login,
@@ -185,5 +200,5 @@ pub async fn add_emote(
         .await,
         "Could not create log-entry"
     );
-    Ok((emote_data.code, n_available - 1))
+    Ok((name, n_available - 1))
 }

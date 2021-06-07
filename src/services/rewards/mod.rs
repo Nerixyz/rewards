@@ -1,38 +1,11 @@
-use std::sync::Arc;
-
-use actix::Addr;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
 use regex::Regex;
-
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::SayMessage;
 
 pub mod execute;
 mod reply;
 pub mod save;
 pub mod verify;
-
-async fn extract_id<'a, F>(
-    extractor: F,
-    input: &'a str,
-    irc: &Arc<Addr<IrcActor>>,
-    broadcaster: String,
-    user: String,
-) -> AnyResult<&'a str>
-where
-    F: FnOnce(&'a str) -> AnyResult<&'a str>,
-{
-    match extractor(input) {
-        Ok(id) => Ok(id),
-        Err(e) => {
-            irc.send(SayMessage(broadcaster, format!("@{} ⚠ {}", user, e)))
-                .await??;
-
-            Err(e)
-        }
-    }
-}
 
 fn extract_username(str: &str) -> AnyResult<String> {
     lazy_static! {

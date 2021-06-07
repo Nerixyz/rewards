@@ -5,12 +5,19 @@ use regex::{Captures, Regex};
 use reqwest::IntoUrl;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::collections::HashMap;
+use std::fmt::Display;
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct FfzEmote {
     pub id: usize,
     pub name: String,
+}
+
+impl PartialEq for FfzEmote {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id || self.name == other.name
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -53,7 +60,7 @@ struct FfzUserReply {
     user: FfzUser,
 }
 
-pub async fn get_emote(id: &str) -> AnyResult<FfzEmote> {
+pub async fn get_emote<T: Display>(id: T) -> AnyResult<FfzEmote> {
     ffz_get_json::<FfzEmoteReply, _>(format!("https://api.frankerfacez.com/v1/emote/{}", id))
         .await
         .map(|e| e.emote)
