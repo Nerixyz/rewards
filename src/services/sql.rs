@@ -17,6 +17,7 @@ impl From<sqlx::Error> for SqlError {
     fn from(e: Error) -> Self {
         match e {
             Error::RowNotFound | Error::TypeNotFound { .. } | Error::ColumnNotFound(_) => {
+                log::warn!("NotFound sql-error: {}", e);
                 Self::NotFound
             }
             _ => {
