@@ -1,4 +1,4 @@
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
 use twitch_irc::login::UserAccessToken;
@@ -16,7 +16,7 @@ pub enum ConfigValue {
 }
 
 impl ConfigEntry {
-    pub async fn update(&self, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
@@ -31,7 +31,7 @@ impl ConfigEntry {
         Ok(())
     }
 
-    pub async fn update_user_token(pool: &PgPool, token: UserAccessToken) -> Result<(), SqlError> {
+    pub async fn update_user_token(pool: &PgPool, token: UserAccessToken) -> SqlResult<()> {
         Self {
             key: "user_token".to_string(),
             value: Json(ConfigValue::UserToken(token)),
@@ -40,7 +40,7 @@ impl ConfigEntry {
         .await
     }
 
-    async fn get(key: &str, pool: &PgPool) -> Result<ConfigEntry, SqlError> {
+    async fn get(key: &str, pool: &PgPool) -> SqlResult<ConfigEntry> {
         // language=PostgreSQL
         let entry: Self = sqlx::query_as!(
             ConfigEntry,
@@ -57,7 +57,7 @@ impl ConfigEntry {
         Ok(entry)
     }
 
-    pub async fn get_user_token(pool: &PgPool) -> Result<UserAccessToken, SqlError> {
+    pub async fn get_user_token(pool: &PgPool) -> SqlResult<UserAccessToken> {
         let entry = Self::get("user_token", pool).await?;
 
         match entry.value.0 {

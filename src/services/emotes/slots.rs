@@ -100,6 +100,20 @@ where
         _ => (),
     };
 
+    // update reward status
+    let token = User::get_by_id(broadcaster_id, pool).await?.into();
+    update_reward(
+        broadcaster_id,
+        reward_id.to_string(),
+        UpdateCustomRewardBody::builder()
+            .is_paused(Some(
+                Slot::get_n_available_slots(broadcaster_id, reward_id, pool).await? <= 0,
+            ))
+            .build(),
+        &token,
+    )
+    .await?;
+
     Ok(())
 }
 

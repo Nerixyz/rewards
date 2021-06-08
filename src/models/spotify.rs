@@ -1,5 +1,5 @@
 use crate::services::spotify::responses::{AccessTokenResponse, RefreshTokenResponse};
-use crate::services::sql::SqlError;
+use crate::services::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 
 #[derive(FromRow)]
@@ -10,7 +10,7 @@ pub struct SpotifyData {
 }
 
 impl SpotifyData {
-    pub async fn get_by_id(id: &str, pool: &PgPool) -> Result<Option<Self>, SqlError> {
+    pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
         let data = sqlx::query_as!(Self, r#"SELECT * FROM spotify WHERE user_id=$1"#, id)
             .fetch_optional(pool)
@@ -19,7 +19,7 @@ impl SpotifyData {
         Ok(data)
     }
 
-    pub async fn get_all(pool: &PgPool) -> Result<Vec<Self>, SqlError> {
+    pub async fn get_all(pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let data = sqlx::query_as!(Self, r#"SELECT * FROM spotify"#)
             .fetch_all(pool)
@@ -28,7 +28,7 @@ impl SpotifyData {
         Ok(data)
     }
 
-    pub async fn add(id: &str, token: &AccessTokenResponse, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn add(id: &str, token: &AccessTokenResponse, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"
@@ -48,7 +48,7 @@ impl SpotifyData {
         id: &str,
         token: &RefreshTokenResponse,
         pool: &PgPool,
-    ) -> Result<(), SqlError> {
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"
@@ -65,7 +65,7 @@ impl SpotifyData {
         Ok(())
     }
 
-    pub async fn remove_for_id(id: &str, pool: &PgPool) -> Result<(), SqlError> {
+    pub async fn remove_for_id(id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(r#"DELETE FROM spotify WHERE user_id = $1"#, id,)
             .execute(pool)
