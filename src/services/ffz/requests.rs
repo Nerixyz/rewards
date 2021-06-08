@@ -1,25 +1,31 @@
 use crate::constants::FFZ_SESSION;
 use anyhow::{Error as AnyError, Result as AnyResult};
+use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
-use reqwest::{IntoUrl, Url, Response};
+use reqwest::cookie::Jar;
+use reqwest::Client;
+use reqwest::{IntoUrl, Response, Url};
 use serde::{de::DeserializeOwned, Deserialize};
 use std::collections::HashMap;
 use std::fmt::Display;
-use reqwest::Client;
 use std::sync::Arc;
-use reqwest::cookie::Jar;
-use futures::TryFutureExt;
 
 lazy_static! {
     static ref FFZ_CLIENT: Client = Client::builder()
-        .user_agent(format!("RewardMore/{} github.com/Nerixyz/rewards", env!("CARGO_PKG_VERSION")))
+        .user_agent(format!(
+            "RewardMore/{} github.com/Nerixyz/rewards",
+            env!("CARGO_PKG_VERSION")
+        ))
         .cookie_store(true)
         .cookie_provider(Arc::new({
             let jar = Jar::default();
 
             let url = "https://frankerfacez.com".parse::<Url>().unwrap();
-            jar.add_cookie_str(&format!("session={}; Domain=frankerfacez.com", FFZ_SESSION), &url);
+            jar.add_cookie_str(
+                &format!("session={}; Domain=frankerfacez.com", FFZ_SESSION),
+                &url,
+            );
 
             jar
         }))
@@ -167,22 +173,14 @@ where
     T: DeserializeOwned,
     U: IntoUrl,
 {
-    Ok(FFZ_CLIENT
-        .get(url)
-        .send()
-        .and_then(Response::json)
-        .await?)
+    Ok(FFZ_CLIENT.get(url).send().and_then(Response::json).await?)
 }
 
 async fn ffz_get_text<U>(url: U) -> AnyResult<String>
 where
     U: IntoUrl,
 {
-    Ok(FFZ_CLIENT
-        .get(url)
-        .send()
-        .and_then(Response::text)
-        .await?)
+    Ok(FFZ_CLIENT.get(url).send().and_then(Response::text).await?)
 }
 
 async fn ffz_get_text_auth<U>(url: U, referer: &str) -> AnyResult<String>
