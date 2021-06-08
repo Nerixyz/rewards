@@ -1,8 +1,25 @@
 use crate::constants::BTTV_JWT;
 use anyhow::Result as AnyResult;
-use reqwest::IntoUrl;
+use reqwest::{IntoUrl, Response};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
+use lazy_static::lazy_static;
+use reqwest::Client;
+use reqwest::header::{HeaderMap, AUTHORIZATION};
+use futures::TryFutureExt;
+
+lazy_static! {
+    static ref BTTV_CLIENT: Client = Client::builder()
+        .user_agent(format!("RewardMore/{} github.com/Nerixyz/rewards", env!("CARGO_PKG_VERSION")))
+        .default_headers({
+            let mut map = HeaderMap::with_capacity(1);
+            map.insert(AUTHORIZATION, format!("Bearer {}", BTTV_JWT).parse().unwrap());
+            map
+        })
+        .build()
+        .unwrap();
+}
+
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -89,12 +106,10 @@ where
     T: DeserializeOwned,
     U: IntoUrl,
 {
-    Ok(reqwest::Client::new()
+    Ok(BTTV_CLIENT
         .get(url)
-        .header("Authorization", format!("Bearer {}", BTTV_JWT))
         .send()
-        .await?
-        .json()
+        .and_then(Response::json)
         .await?)
 }
 
@@ -102,12 +117,10 @@ async fn bttv_delete<U>(url: U) -> AnyResult<String>
 where
     U: IntoUrl,
 {
-    Ok(reqwest::Client::new()
+    Ok(BTTV_CLIENT
         .delete(url)
-        .header("Authorization", format!("Bearer {}", BTTV_JWT))
         .send()
-        .await?
-        .text()
+        .and_then(Response::text)
         .await?)
 }
 
@@ -115,11 +128,9 @@ async fn bttv_put<U>(url: U) -> AnyResult<String>
 where
     U: IntoUrl,
 {
-    Ok(reqwest::Client::new()
+    Ok(BTTV_CLIENT
         .put(url)
-        .header("Authorization", format!("Bearer {}", BTTV_JWT))
         .send()
-        .await?
-        .text()
+        .and_then(Response::text)
         .await?)
 }
