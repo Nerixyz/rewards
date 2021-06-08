@@ -96,7 +96,13 @@ async fn main() -> std::io::Result<()> {
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(Logger::default())
-            .service(web::scope("/api/v1").configure(init_repositories))
+            .service(
+                web::scope("/api/v1")
+                    .configure(init_repositories)
+                    .default_service(
+                        web::resource("").route(web::route().to(HttpResponse::NotFound)),
+                    ),
+            )
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(
                 web::resource("")
