@@ -4,10 +4,23 @@ use crate::services::spotify::responses::{
     AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
+use futures::TryFutureExt;
+use lazy_static::lazy_static;
 use percent_encoding::{AsciiSet, CONTROLS};
-use reqwest::{IntoUrl, StatusCode};
+use reqwest::Client;
+use reqwest::{IntoUrl, Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+
+lazy_static! {
+    static ref SPOTIFY_CLIENT: Client = Client::builder()
+        .user_agent(format!(
+            "RewardMore/{} github.com/Nerixyz/rewards",
+            env!("CARGO_PKG_VERSION")
+        ))
+        .build()
+        .unwrap();
+}
 
 #[derive(Serialize)]
 struct TokenRequest<'a> {
@@ -39,7 +52,7 @@ struct SearchQuery<'a> {
 }
 
 pub async fn get_token(code: &str) -> AnyResult<AccessTokenResponse> {
-    Ok(reqwest::Client::default()
+    Ok(SPOTIFY_CLIENT
         .post("https://accounts.spotify.com/api/token")
         .form(&TokenRequest {
             grant_type: "authorization_code",
@@ -54,12 +67,11 @@ pub async fn get_token(code: &str) -> AnyResult<AccessTokenResponse> {
             ),
         )
         .send()
-        .await?
-        .json()
+        .and_then(Response::json)
         .await?)
 }
 pub async fn refresh_token(refresh_token: &str) -> AnyResult<RefreshTokenResponse> {
-    Ok(reqwest::Client::default()
+    Ok(SPOTIFY_CLIENT
         .post("https://accounts.spotify.com/api/token")
         .form(&RefreshRequest {
             grant_type: "refresh_token",
@@ -73,8 +85,7 @@ pub async fn refresh_token(refresh_token: &str) -> AnyResult<RefreshTokenRespons
             ),
         )
         .send()
-        .await?
-        .json()
+        .and_then(Response::json)
         .await?)
 }
 
@@ -133,7 +144,7 @@ pub async fn search_track(q: &str, auth_token: &str) -> AnyResult<SearchResponse
 }
 
 async fn post204<U: IntoUrl>(url: U, auth_token: &str) -> AnyResult<()> {
-    let response = reqwest::Client::default()
+    let response = SPOTIFY_CLIENT
         .post(url)
         .json(&serde_json::Value::Null)
         .header("Authorization", format!("Bearer {}", auth_token))
@@ -150,7 +161,7 @@ async fn post204<U: IntoUrl>(url: U, auth_token: &str) -> AnyResult<()> {
 }
 
 async fn put204<U: IntoUrl, T: Serialize>(url: U, body: &T, auth_token: &str) -> AnyResult<()> {
-    let response = reqwest::Client::default()
+    let response = SPOTIFY_CLIENT
         .put(url)
         .json(body)
         .header("Authorization", format!("Bearer {}", auth_token))
@@ -171,11 +182,10 @@ where
     U: IntoUrl,
     T: DeserializeOwned,
 {
-    Ok(reqwest::Client::default()
+    Ok(SPOTIFY_CLIENT
         .get(url)
         .header("Authorization", format!("Bearer {}", auth_token))
         .send()
-        .await?
-        .json()
+        .and_then(Response::json)
         .await?)
 }
