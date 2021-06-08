@@ -11,6 +11,9 @@ use crate::services::eventsub::{
 };
 use actix::Actor;
 use actix_files::NamedFile;
+use actix_web::dev::Service;
+use actix_web::http::header::USER_AGENT;
+use actix_web::http::HeaderValue;
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
@@ -96,6 +99,30 @@ async fn main() -> std::io::Result<()> {
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(Logger::default())
+            .wrap_fn(|req, srv| {
+                let fut = if req
+                    .headers()
+                    .get(USER_AGENT)
+                    .map(|ua: &HeaderValue| {
+                        ua.to_str()
+                            .map(|ua| ua.contains("paloaltonetworks.com"))
+                            .ok()
+                    })
+                    .flatten()
+                    .unwrap_or(false)
+                {
+                    None
+                } else {
+                    Some(srv.call(req))
+                };
+                async {
+                    if let Some(fut) = fut {
+                        fut.await
+                    } else {
+                        Err(actix_web::error::ErrorImATeapot("No, I don't think so"))
+                    }
+                }
+            })
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
