@@ -2,10 +2,30 @@ use crate::constants::FFZ_SESSION;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
-use reqwest::IntoUrl;
+use reqwest::{IntoUrl, Url, Response};
 use serde::{de::DeserializeOwned, Deserialize};
 use std::collections::HashMap;
 use std::fmt::Display;
+use reqwest::Client;
+use std::sync::Arc;
+use reqwest::cookie::Jar;
+use futures::TryFutureExt;
+
+lazy_static! {
+    static ref FFZ_CLIENT: Client = Client::builder()
+        .user_agent(format!("RewardMore/{} github.com/Nerixyz/rewards", env!("CARGO_PKG_VERSION")))
+        .cookie_store(true)
+        .cookie_provider(Arc::new({
+            let jar = Jar::default();
+
+            let url = "https://frankerfacez.com".parse::<Url>().unwrap();
+            jar.add_cookie_str(&format!("session={}; Domain=frankerfacez.com", FFZ_SESSION), &url);
+
+            jar
+        }))
+        .build()
+        .unwrap();
+}
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
@@ -147,13 +167,10 @@ where
     T: DeserializeOwned,
     U: IntoUrl,
 {
-    Ok(reqwest::Client::new()
+    Ok(FFZ_CLIENT
         .get(url)
-        .header("Cookie", format!("session={}", FFZ_SESSION))
-        .header("Accept", "application/json")
         .send()
-        .await?
-        .json()
+        .and_then(Response::json)
         .await?)
 }
 
@@ -161,12 +178,10 @@ async fn ffz_get_text<U>(url: U) -> AnyResult<String>
 where
     U: IntoUrl,
 {
-    Ok(reqwest::Client::new()
+    Ok(FFZ_CLIENT
         .get(url)
-        .header("Cookie", format!("session={}", FFZ_SESSION))
         .send()
-        .await?
-        .text()
+        .and_then(Response::text)
         .await?)
 }
 
@@ -174,17 +189,13 @@ async fn ffz_get_text_auth<U>(url: U, referer: &str) -> AnyResult<String>
 where
     U: IntoUrl,
 {
-    Ok(reqwest::Client::builder()
-        .cookie_store(true)
-        .build()?
+    Ok(FFZ_CLIENT
         .get(url)
-        .header("Cookie", format!("session={}", FFZ_SESSION))
         .header(
             "Referer",
             format!("https://www.frankerfacez.com/emoticon/{}", referer),
         )
         .send()
-        .await?
-        .text()
+        .and_then(Response::text)
         .await?)
 }
