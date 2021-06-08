@@ -12,12 +12,12 @@ use crate::services::eventsub::{
 use actix::Actor;
 use actix_files::NamedFile;
 use actix_web::dev::Service;
+use actix_web::http::header::USER_AGENT;
 use actix_web::http::HeaderValue;
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
-use reqwest::header::USER_AGENT;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
