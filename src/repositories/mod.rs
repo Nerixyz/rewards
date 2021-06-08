@@ -14,7 +14,7 @@ use crate::repositories::eventsub::init_eventsub_routes;
 use crate::repositories::logs::init_log_routes;
 use crate::repositories::rewards::init_rewards_routes;
 use crate::repositories::user::init_user_routes;
-use actix_web::web;
+use actix_web::{web, HttpResponse};
 
 pub fn init_repositories(config: &mut web::ServiceConfig) {
     config
@@ -28,5 +28,7 @@ pub fn init_repositories(config: &mut web::ServiceConfig) {
             web::scope("/eventsub")
                 .wrap(EventsubGuard)
                 .configure(init_eventsub_routes),
-        );
+        ).service(
+        web::resource("")
+            .route(web::get().to(HttpResponse::NotFound)));
 }
