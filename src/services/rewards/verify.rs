@@ -58,3 +58,11 @@ pub async fn verify_reward(
     };
     Ok(())
 }
+
+pub fn verify_live_delay(delay: &Option<String>) -> AnyResult<()> {
+    if let Some(delay) = delay {
+        humantime::parse_duration(delay)
+            .map_err(|e| AnyError::msg(format!("Could not parse duration: {}", e)))?;
+    }
+    Ok(())
+}

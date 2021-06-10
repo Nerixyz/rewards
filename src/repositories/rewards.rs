@@ -2,7 +2,7 @@ use crate::models::reward::{Reward, RewardData};
 use crate::services::errors;
 use crate::services::jwt::JwtClaims;
 use crate::services::rewards::save::save_reward;
-use crate::services::rewards::verify::verify_reward;
+use crate::services::rewards::verify::{verify_live_delay, verify_reward};
 use crate::services::sql::get_user_or_editor;
 use crate::services::twitch::requests::{
     create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
@@ -17,18 +17,21 @@ use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCus
 struct CreateRewardBody {
     pub twitch: CreateCustomRewardBody,
     pub data: RewardData,
+    pub live_delay: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 struct UpdateRewardBody {
     pub twitch: UpdateCustomRewardBody,
     pub data: RewardData,
+    pub live_delay: Option<String>,
 }
 
 #[derive(Serialize)]
 struct CustomRewardResponse {
     twitch: CustomReward,
     data: RewardData,
+    live_delay: Option<String>,
 }
 
 #[put("/{broadcaster_id}")]
@@ -50,13 +53,15 @@ async fn create(
         body
     );
 
+    verify_live_delay(&body.live_delay)
+        .map_err(|e| errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e)))?;
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
         .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
 
-    let db_reward = Reward::from_response(&reward, body.data.clone());
+    let db_reward = Reward::from_response(&reward, body.data.clone(), body.live_delay);
     db_reward.create(&pool).await?;
 
     if let Err(e) = save_reward(&body.data, &reward.id, &broadcaster_id, &pool).await {
@@ -83,6 +88,7 @@ async fn create(
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
         twitch: reward,
         data: db_reward.data.0,
+        live_delay: db_reward.live_delay,
     }))
 }
 
@@ -107,6 +113,8 @@ async fn update(
         body
     );
 
+    verify_live_delay(&body.live_delay)
+        .map_err(|e| errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e)))?;
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
         .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
@@ -122,12 +130,13 @@ async fn update(
     }
 
     let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;
-    let db_reward = Reward::from_response(&reward, body.data);
+    let db_reward = Reward::from_response(&reward, body.data, body.live_delay);
     db_reward.update(&pool).await?;
 
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
         twitch: reward,
         data: db_reward.data.0,
+        live_delay: db_reward.live_delay,
     }))
 }
 
