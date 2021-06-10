@@ -5,3 +5,4 @@ pub mod messages;
 pub mod pubsub_actor;
 pub mod slot_actor;
 pub mod token_refresher;
+pub mod chat_actor;
