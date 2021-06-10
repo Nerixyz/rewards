@@ -48,7 +48,10 @@ class HttpClient extends BaseClient {
     const map = new Map<string, Partial<Reward>>(response.twitch.map(r => [r.id, { twitch: r }]));
     for (const internal of response.data) {
       const el = map.get(internal.id);
-      if (el) el.data = internal.data;
+      if (el) {
+        el.data = internal.data;
+        el.live_delay = internal.live_delay || '';
+      }
     }
 
     return [...map.values()] as Reward[];

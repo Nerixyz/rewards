@@ -85,10 +85,7 @@ function TSEValid(opts: unknown): boolean {
 
 function emoteSlotValid(opts: unknown): boolean {
   if (typeof opts !== 'object' || opts === null) return false;
-  return (
-    typeof (opts as SlotRewardData).slots === 'number' &&
-    typeof (opts as SlotRewardData).expiration === 'string'
-  );
+  return typeof (opts as SlotRewardData).slots === 'number' && typeof (opts as SlotRewardData).expiration === 'string';
 }
 
 function spotifyPlayValid(opts: unknown): boolean {
@@ -111,5 +108,6 @@ export function defaultNewReward(): VRewardModel {
       type: 'Timeout',
       data: StaticRewardData.Timeout.defaultOptions,
     },
+    liveDelay: '',
   };
 }

@@ -25,6 +25,7 @@
           <TextField v-model="rewardState.usesPerStream" label="Uses per Stream" :warn="v$.usesPerStream.$invalid" />
           <TextField v-model="rewardState.usesPerUser" label="Uses per User" :warn="v$.usesPerUser.$invalid" />
           <TextField v-model="rewardState.cooldown" label="Cooldown" :warn="v$.cooldown.$invalid" />
+          <TextField v-model="rewardState.liveDelay" label="Live Delay" />
         </div>
         <div class="flex-grow w-full">
           <CDropdown v-model="rewardState.action.type" :options="RewardTypes" class="z-30 pb-5" />
@@ -34,7 +35,10 @@
             v-model="rewardState.action.data"
             @update:warn="updateRewardWarning"
           />
-          <EmoteSlotSettings v-else-if="['BttvSlot', 'FfzSlot'].includes(rewardState.action.type)" v-model="rewardState.action.data" />
+          <EmoteSlotSettings
+            v-else-if="['BttvSlot', 'FfzSlot'].includes(rewardState.action.type)"
+            v-model="rewardState.action.data"
+          />
           <SpotifyPlayOptions
             v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"

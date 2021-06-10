@@ -110,16 +110,19 @@ export interface InternalCustomReward {
   id: string;
   user_id: string;
   data: RewardData;
+  live_delay?: string;
 }
 
 export interface Reward {
   twitch: TwitchReward;
   data: RewardData;
+  live_delay?: string;
 }
 
 export interface InputReward {
   twitch: TwitchInputReward;
   data: RewardData;
+  live_delay?: string;
 }
 
 export interface LogEntry {
