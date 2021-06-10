@@ -1,3 +1,4 @@
+use crate::actors::chat_actor::ChatActor;
 use crate::actors::db_actor::DbActor;
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::live_actor::LiveActor;
@@ -34,6 +35,7 @@ use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 
 mod actors;
+mod chat;
 mod constants;
 mod extractors;
 mod guards;
@@ -61,8 +63,10 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Starting Db, Irc and Slot-Actor");
 
+    let chat_actor = ChatActor::new(pool.clone()).start();
+
     let db_actor = DbActor::new(pool.clone()).start();
-    let irc_actor = IrcActor::new(db_actor.clone()).start();
+    let irc_actor = IrcActor::new(db_actor.clone(), chat_actor.recipient()).start();
     let _slot_actor = SlotActor::new(pool.clone()).start();
 
     log::info!("Joining all channels");

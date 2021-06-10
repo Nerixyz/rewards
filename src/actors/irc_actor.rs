@@ -1,11 +1,19 @@
 use crate::actors::db_actor::DbActor;
+use crate::actors::messages::chat_messages::ExecuteCommandMessage;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::actors::messages::irc_messages::{
-    JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage, TimeoutMessage,
-    WhisperMessage,
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
+    TimeoutMessage, WhisperMessage,
 };
+use crate::chat::command::ChatCommand;
+use crate::chat::commands::ping::Ping;
+use crate::chat::parse::opt_next_space;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
-use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
+use crate::log_err;
+use actix::{
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
+    ResponseFuture, WrapFuture,
+};
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use std::fmt::{Debug, Formatter};
@@ -56,10 +64,14 @@ pub struct IrcActor {
     incoming: Option<UnboundedReceiver<ServerMessage>>,
     notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
     notice_rx: Receiver<Option<NoticeChannelMessage>>,
+
+    executor: Recipient<ExecuteCommandMessage>,
+    last_message: Option<String>,
+    last_cmd: Instant,
 }
 
 impl IrcActor {
-    pub fn new(db: Addr<DbActor>) -> Self {
+    pub fn new(db: Addr<DbActor>, executor: Recipient<ExecuteCommandMessage>) -> Self {
         let config = ClientConfig::new_simple(IrcCredentials::new(
             TWITCH_CLIENT_USER_LOGIN.to_string(),
             TWITCH_CLIENT_ID.to_string(),
@@ -75,6 +87,10 @@ impl IrcActor {
             client,
             notice_tx: Some(notice_tx),
             notice_rx,
+
+            executor,
+            last_message: None,
+            last_cmd: Instant::now(),
         }
     }
 }
@@ -85,15 +101,19 @@ impl Actor for IrcActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         let mut incoming = self.incoming.take().expect("This was set in Self:new");
         let tx = self.notice_tx.take().expect("This was set in Self::new");
+        let addr = ctx.address();
 
         ctx.spawn(
             async move {
                 while let Some(message) = incoming.recv().await {
                     match message {
                         ServerMessage::Notice(notice) => {
-                            tx.send(Some((Instant::now(), notice))).ok()
+                            tx.send(Some((Instant::now(), notice))).ok();
                         }
-                        _ => None,
+                        ServerMessage::Privmsg(privmsg) => {
+                            addr.do_send(ChatMessage(privmsg));
+                        }
+                        _ => (),
                     };
                 }
             }
@@ -148,8 +168,15 @@ impl Handler<WhisperMessage> for IrcActor {
 impl Handler<SayMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
 
-    fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, mut msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
+
+        if self.last_message.as_ref() == Some(&msg.1) {
+            log::info!("eq");
+            msg.1.push('\u{180d}');
+        }
+        self.last_message = Some(msg.1.clone());
+
         log::info!("Send message login={}; message={}", msg.0, msg.1);
         Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
     }
@@ -242,5 +269,45 @@ impl Handler<TimedModeMessage> for IrcActor {
                 log::warn!("Could not leave {}: {:?}", msg.mode, e);
             }
         });
+    }
+}
+
+impl Handler<ChatMessage> for IrcActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
+        if !msg.0.message_text.starts_with("::")
+            || msg.0.message_text.len() < 2
+            || Instant::now().duration_since(self.last_cmd) < Duration::from_millis(2500)
+        {
+            return;
+        }
+        self.last_cmd = Instant::now();
+        let (command, args) = opt_next_space(&msg.0.message_text[2..]);
+        let executor = match command {
+            "ping" | "bing" => Ping::parse(args),
+            _ => return,
+        };
+        match executor {
+            Ok(ex) => {
+                self.executor
+                    .send(ExecuteCommandMessage {
+                        executor: Box::new(ex),
+                        raw: msg.0,
+                        addr: ctx.address().recipient(),
+                    })
+                    .into_actor(self)
+                    .map(|res, _, _| {
+                        log_err!(res, "Could not deliver");
+                    })
+                    .spawn(ctx);
+            }
+            Err(e) => {
+                ctx.notify(SayMessage(
+                    msg.0.channel_login,
+                    format!("@{}, ⚠ {}", msg.0.sender.login, e),
+                ));
+            }
+        }
     }
 }
