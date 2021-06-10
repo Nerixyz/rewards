@@ -1,3 +1,4 @@
+use crate::actors::chat_actor::ChatActor;
 use crate::actors::db_actor::DbActor;
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::live_actor::LiveActor;
@@ -32,16 +33,15 @@ use twitch_api2::pubsub::video_playback::VideoPlaybackById;
 use twitch_api2::pubsub::{listen_command, Topics};
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
-use crate::actors::chat_actor::ChatActor;
 
 mod actors;
+mod chat;
 mod constants;
 mod extractors;
 mod guards;
 mod models;
 mod repositories;
 mod services;
-mod chat;
 
 async fn web_index() -> std::io::Result<NamedFile> {
     NamedFile::open("web/dist/index.html")

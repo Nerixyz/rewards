@@ -1,9 +1,20 @@
 use crate::actors::db_actor::DbActor;
+use crate::actors::messages::chat_messages::ExecuteCommandMessage;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage, TimeoutMessage, WhisperMessage, ChatMessage};
+use crate::actors::messages::irc_messages::{
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
+    TimeoutMessage, WhisperMessage,
+};
+use crate::chat::command::ChatCommand;
+use crate::chat::commands::ping::Ping;
+use crate::chat::parse::opt_next_space;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
-use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, WrapFuture, Recipient, ContextFutureSpawner, ActorFutureExt};
-use anyhow::{Error as AnyError};
+use crate::log_err;
+use actix::{
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
+    ResponseFuture, WrapFuture,
+};
+use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use std::fmt::{Debug, Formatter};
 use std::time::{Duration, Instant};
@@ -13,11 +24,6 @@ use tokio::task;
 use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
 use twitch_irc::message::{NoticeMessage, ServerMessage};
 use twitch_irc::{ClientConfig, TCPTransport, TwitchIRCClient};
-use crate::chat::parse::opt_next_space;
-use crate::chat::commands::ping::Ping;
-use crate::chat::command::ChatCommand;
-use crate::actors::messages::chat_messages::ExecuteCommandMessage;
-use crate::log_err;
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
 type IrcClient = TwitchIRCClient<TCPTransport, IrcCredentials>;
@@ -270,7 +276,10 @@ impl Handler<ChatMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
-        if !msg.0.message_text.starts_with("::") || msg.0.message_text.len() < 2 || Instant::now().duration_since(self.last_cmd) < Duration::from_millis(2500) {
+        if !msg.0.message_text.starts_with("::")
+            || msg.0.message_text.len() < 2
+            || Instant::now().duration_since(self.last_cmd) < Duration::from_millis(2500)
+        {
             return;
         }
         self.last_cmd = Instant::now();
@@ -281,16 +290,23 @@ impl Handler<ChatMessage> for IrcActor {
         };
         match executor {
             Ok(ex) => {
-                self.executor.send(ExecuteCommandMessage {
-                    executor: Box::new(ex),
-                    raw: msg.0,
-                    addr: ctx.address().recipient()
-                }).into_actor(self).map(|res, _, _| {
-                    log_err!(res, "Could not deliver");
-                }).spawn(ctx);
+                self.executor
+                    .send(ExecuteCommandMessage {
+                        executor: Box::new(ex),
+                        raw: msg.0,
+                        addr: ctx.address().recipient(),
+                    })
+                    .into_actor(self)
+                    .map(|res, _, _| {
+                        log_err!(res, "Could not deliver");
+                    })
+                    .spawn(ctx);
             }
             Err(e) => {
-                ctx.notify(SayMessage(msg.0.channel_login, format!("@{}, ⚠ {}", msg.0.sender.login, e)));
+                ctx.notify(SayMessage(
+                    msg.0.channel_login,
+                    format!("@{}, ⚠ {}", msg.0.sender.login, e),
+                ));
             }
         }
     }

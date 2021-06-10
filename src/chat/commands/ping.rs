@@ -1,8 +1,8 @@
 use crate::chat::command::ChatCommand;
-use sqlx::PgPool;
 use anyhow::Result as AnyResult;
-use twitch_irc::message::PrivmsgMessage;
 use async_trait::async_trait;
+use sqlx::PgPool;
+use twitch_irc::message::PrivmsgMessage;
 
 pub struct Ping;
 

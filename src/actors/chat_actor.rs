@@ -1,17 +1,15 @@
-use sqlx::PgPool;
-use actix::{Actor, Handler, Context, WrapFuture, ContextFutureSpawner};
 use crate::actors::messages::chat_messages::ExecuteCommandMessage;
 use crate::actors::messages::irc_messages::SayMessage;
+use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
+use sqlx::PgPool;
 
-pub struct  ChatActor {
-    pool: PgPool
+pub struct ChatActor {
+    pool: PgPool,
 }
 
 impl ChatActor {
     pub fn new(pool: PgPool) -> Self {
-        Self {
-            pool
-        }
+        Self { pool }
     }
 }
 
@@ -29,7 +27,7 @@ impl Handler<ExecuteCommandMessage> for ChatActor {
             let sender = msg.raw.sender.login.clone();
             let message = match msg.executor.execute(msg.raw, &pool).await {
                 Ok(res) => SayMessage(broadcaster, res),
-                Err(e) => SayMessage(broadcaster, format!("@{}, ⚠ {}", sender, e))
+                Err(e) => SayMessage(broadcaster, format!("@{}, ⚠ {}", sender, e)),
             };
 
             match msg.addr.send(message).await {
@@ -37,7 +35,7 @@ impl Handler<ExecuteCommandMessage> for ChatActor {
                 _ => log::warn!("Could not send"),
             };
         }
-            .into_actor(self)
-            .spawn(ctx);
+        .into_actor(self)
+        .spawn(ctx);
     }
 }
