@@ -40,6 +40,7 @@ mod guards;
 mod models;
 mod repositories;
 mod services;
+mod chat;
 
 async fn web_index() -> std::io::Result<NamedFile> {
     NamedFile::open("web/dist/index.html")
