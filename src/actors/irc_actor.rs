@@ -6,6 +6,7 @@ use crate::actors::messages::irc_messages::{
     TimeoutMessage, WhisperMessage,
 };
 use crate::chat::command::ChatCommand;
+use crate::chat::commands::emote_info::EmoteInfo;
 use crate::chat::commands::ping::Ping;
 use crate::chat::parse::opt_next_space;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
@@ -14,7 +15,7 @@ use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
     ResponseFuture, WrapFuture,
 };
-use anyhow::Error as AnyError;
+use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use std::fmt::{Debug, Formatter};
 use std::time::{Duration, Instant};
@@ -278,21 +279,23 @@ impl Handler<ChatMessage> for IrcActor {
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
         if !msg.0.message_text.starts_with("::")
             || msg.0.message_text.len() < 2
-            || Instant::now().duration_since(self.last_cmd) < Duration::from_millis(2500)
+            || Instant::now().duration_since(self.last_cmd) < Duration::from_secs(5)
         {
             return;
         }
         self.last_cmd = Instant::now();
         let (command, args) = opt_next_space(&msg.0.message_text[2..]);
-        let executor = match command {
+        let executor: AnyResult<Box<dyn ChatCommand + Send>> = match command.to_lowercase().as_str()
+        {
             "ping" | "bing" => Ping::parse(args),
+            "emote" | "emoteinfo" | "ei" => EmoteInfo::parse(args),
             _ => return,
         };
         match executor {
             Ok(ex) => {
                 self.executor
                     .send(ExecuteCommandMessage {
-                        executor: Box::new(ex),
+                        executor: ex,
                         raw: msg.0,
                         addr: ctx.address().recipient(),
                     })

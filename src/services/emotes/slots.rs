@@ -157,13 +157,17 @@ where
     let expiration = humantime::parse_duration(&slot_data.expiration)
         .map_err(|_| AnyError::msg("No expiration set!"))?;
     slot.emote_id = Some(emote_data.emote.id().to_string());
+    let now = Utc::now();
     slot.expires = Some(
-        Utc::now()
-            + Duration::from_std(expiration).map_err(|e| {
-                log::warn!("Could not add duration: {}", e);
-                AnyError::msg("Could not add duration lole")
-            })?,
+        now + Duration::from_std(expiration).map_err(|e| {
+            log::warn!("Could not add duration: {}", e);
+            AnyError::msg("Could not add duration lole")
+        })?,
     );
+    let emote_name = emote_data.emote.name();
+    slot.name = Some(emote_name.clone());
+    slot.added_by = Some(redeemed_user_login.to_string());
+    slot.added_at = Some(now);
 
     slot.update(pool).await.map_err(|e| {
         log::warn!("Failed to update reward-slot: {}", e);
@@ -195,7 +199,6 @@ where
         );
     }
 
-    let name = emote_data.emote.name();
     // TODO: log::info
     log_err!(
         LogEntry::create(
@@ -203,7 +206,7 @@ where
             &format!(
                 "[slots::{:?}] Added {}; slots-open={}; expires={:?}; redeemed={}; slot_id={}",
                 RW::platform(),
-                name,
+                emote_name,
                 n_available - 1,
                 slot.expires.map(|exp| exp.to_string()),
                 redeemed_user_login,
@@ -214,5 +217,5 @@ where
         .await,
         "Could not create log-entry"
     );
-    Ok((name, n_available - 1))
+    Ok((emote_name, n_available - 1))
 }

@@ -12,7 +12,7 @@ impl ChatCommand for Ping {
         Ok(format!("@{}, Pong!", msg.sender.login))
     }
 
-    fn parse(_msg: Option<&str>) -> AnyResult<Self> {
-        Ok(Self)
+    fn parse(_msg: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>> {
+        Ok(Box::new(Self))
     }
 }
