@@ -10,6 +10,9 @@ pub struct Slot {
     pub emote_id: Option<String>,
     pub expires: Option<DateTime<Utc>>,
     pub platform: SlotPlatform,
+    pub name: Option<String>,
+    pub added_by: Option<String>,
+    pub added_at: Option<DateTime<Utc>>
 }
 
 #[derive(sqlx::Type, Debug)]
@@ -50,7 +53,7 @@ impl Slot {
         let available = sqlx::query_as!(
             Self,
             r#"
-            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE reward_id = $1 and user_id = $2 and emote_id is null and expires is null
         "#,
             reward_id,
@@ -89,7 +92,7 @@ impl Slot {
         let all = sqlx::query_as!(
             Self,
             r#"
-            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE reward_id = $1 and user_id = $2
         "#,
             reward_id,
@@ -103,22 +106,35 @@ impl Slot {
     pub async fn get_pending(pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let pending = sqlx::query_as!(Self, r#"
-            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _" FROM slots
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE emote_id is not null AND expires is not null AND expires < (now() + '1 minute'::interval)
         "#).fetch_all(pool).await?;
 
         Ok(pending)
     }
 
+    pub async fn get_slot_by_emote_name(name: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
+        // language=PostgreSQL
+        let slot = sqlx::query_as!(Self, r#"
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
+            WHERE name = $1
+        "#, name).fetch_optional(pool).await?;
+
+        Ok(slot)
+    }
+
     pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             r#"
-            UPDATE slots SET emote_id = $2, expires = $3 WHERE id = $1
+            UPDATE slots SET emote_id = $2, expires = $3, name = $4, added_by = $5, added_at = $6 WHERE id = $1
         "#,
             self.id,
             self.emote_id,
-            self.expires
+            self.expires,
+            self.name,
+            self.added_by,
+            self.added_at,
         )
         .execute(pool)
         .await?;
@@ -130,7 +146,7 @@ impl Slot {
         // language=PostgreSQL
         sqlx::query!(
             r#"
-            UPDATE slots SET emote_id = null, expires = null WHERE id = $1
+            UPDATE slots SET emote_id = null, expires = null, name = null, added_by = null, added_at = null WHERE id = $1
         "#,
             id
         )
