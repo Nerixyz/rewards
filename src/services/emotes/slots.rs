@@ -159,11 +159,10 @@ where
     slot.emote_id = Some(emote_data.emote.id().to_string());
     let now = Utc::now();
     slot.expires = Some(
-        now
-            + Duration::from_std(expiration).map_err(|e| {
-                log::warn!("Could not add duration: {}", e);
-                AnyError::msg("Could not add duration lole")
-            })?,
+        now + Duration::from_std(expiration).map_err(|e| {
+            log::warn!("Could not add duration: {}", e);
+            AnyError::msg("Could not add duration lole")
+        })?,
     );
     let emote_name = emote_data.emote.name();
     slot.name = Some(emote_name.clone());

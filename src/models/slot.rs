@@ -12,7 +12,7 @@ pub struct Slot {
     pub platform: SlotPlatform,
     pub name: Option<String>,
     pub added_by: Option<String>,
-    pub added_at: Option<DateTime<Utc>>
+    pub added_at: Option<DateTime<Utc>>,
 }
 
 #[derive(sqlx::Type, Debug)]
@@ -117,7 +117,7 @@ impl Slot {
         // language=PostgreSQL
         let slot = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
-            WHERE name = $1
+            WHERE lower(name) = lower($1)
         "#, name).fetch_optional(pool).await?;
 
         Ok(slot)
