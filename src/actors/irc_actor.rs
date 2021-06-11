@@ -288,6 +288,7 @@ impl Handler<ChatMessage> for IrcActor {
         let executor: AnyResult<Box<dyn ChatCommand + Send>> = match command.to_lowercase().as_str()
         {
             "ping" | "bing" => Ping::parse(args),
+            "emote" | "emoteinfo" | "ei" => EmoteInfo::parse(args),
             _ => return,
         };
         match executor {
