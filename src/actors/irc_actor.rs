@@ -279,7 +279,7 @@ impl Handler<ChatMessage> for IrcActor {
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
         if !msg.0.message_text.starts_with("::")
             || msg.0.message_text.len() < 2
-            || Instant::now().duration_since(self.last_cmd) < Duration::from_millis(2500)
+            || Instant::now().duration_since(self.last_cmd) < Duration::from_secs(5)
         {
             return;
         }
