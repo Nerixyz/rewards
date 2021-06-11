@@ -113,12 +113,12 @@ impl Slot {
         Ok(pending)
     }
 
-    pub async fn get_slot_by_emote_name(name: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
+    pub async fn get_slot_by_emote_name(user_id: &str, name: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
         let slot = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
-            WHERE lower(name) = lower($1)
-        "#, name).fetch_optional(pool).await?;
+            WHERE user_id = $1 AND lower(name) = lower($2)
+        "#, user_id, name).fetch_optional(pool).await?;
 
         Ok(slot)
     }

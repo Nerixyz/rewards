@@ -13,7 +13,7 @@ pub struct EmoteInfo(String);
 #[async_trait]
 impl ChatCommand for EmoteInfo {
     async fn execute(&mut self, msg: PrivmsgMessage, pool: &PgPool) -> AnyResult<String> {
-        let slot = Slot::get_slot_by_emote_name(&self.0, pool)
+        let slot = Slot::get_slot_by_emote_name(&msg.channel_id, &self.0, pool)
             .await
             .map_err(|_| AnyError::msg("Internal Error"))?
             .ok_or_else(|| AnyError::msg("No such emote"))?;
