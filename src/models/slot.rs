@@ -24,6 +24,12 @@ pub enum SlotPlatform {
     SevenTv,
 }
 
+#[derive(FromRow)]
+pub struct SlotOccupation {
+    pub total: Option<i64>,
+    pub available: Option<i64>,
+}
+
 impl Slot {
     pub async fn create(
         user_id: &str,
@@ -113,7 +119,11 @@ impl Slot {
         Ok(pending)
     }
 
-    pub async fn get_slot_by_emote_name(user_id: &str, name: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
+    pub async fn get_slot_by_emote_name(
+        user_id: &str,
+        name: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
         let slot = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
@@ -121,6 +131,20 @@ impl Slot {
         "#, user_id, name).fetch_optional(pool).await?;
 
         Ok(slot)
+    }
+
+    pub async fn get_occupation(user_id: &str, pool: &PgPool) -> SqlResult<SlotOccupation> {
+        // language=PostgreSQL
+        let occupation = sqlx::query_as!(SlotOccupation,
+            r#"
+            SELECT count(*) as available, (SELECT count(*) FROM slots WHERE user_id = $1) as total FROM slots
+            WHERE user_id = $1 and emote_id is null and expires is null
+        "#,
+            user_id
+        )
+            .fetch_one(pool)
+            .await?;
+        Ok(occupation)
     }
 
     pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
