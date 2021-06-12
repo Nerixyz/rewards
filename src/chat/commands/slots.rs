@@ -14,7 +14,7 @@ impl ChatCommand for SlotsCommand {
             .await
             .map_err(|_| AnyError::msg("Some kind of internal error"))?;
         Ok(format!(
-            "@{}, There are {} of {} slots available in this channel",
+            "@{}, There are {} of {} slots free in this channel",
             msg.sender.login,
             occupation.available.unwrap_or(0),
             occupation.total.unwrap_or(0)
