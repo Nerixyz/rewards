@@ -9,12 +9,14 @@ use crate::chat::parse::opt_next_space;
 use crate::chat::try_parse_command;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
 use crate::log_err;
+use crate::models::timed_mode::TimedMode;
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
     ResponseFuture, WrapFuture,
 };
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
+use sqlx::PgPool;
 use std::fmt::{Debug, Formatter};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -60,6 +62,8 @@ impl TokenStorage for PgTokenStorage {
 type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {
     client: IrcClient,
+    pool: PgPool,
+
     incoming: Option<UnboundedReceiver<ServerMessage>>,
     notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
     notice_rx: Receiver<Option<NoticeChannelMessage>>,
@@ -70,7 +74,11 @@ pub struct IrcActor {
 }
 
 impl IrcActor {
-    pub fn new(db: Addr<DbActor>, executor: Recipient<ExecuteCommandMessage>) -> Self {
+    pub fn new(
+        db: Addr<DbActor>,
+        pool: PgPool,
+        executor: Recipient<ExecuteCommandMessage>,
+    ) -> Self {
         let config = ClientConfig::new_simple(IrcCredentials::new(
             TWITCH_CLIENT_USER_LOGIN.to_string(),
             TWITCH_CLIENT_ID.to_string(),
@@ -82,8 +90,10 @@ impl IrcActor {
         let (notice_tx, notice_rx) = channel(None);
 
         Self {
-            incoming: Some(incoming),
             client,
+            pool,
+
+            incoming: Some(incoming),
             notice_tx: Some(notice_tx),
             notice_rx,
 
@@ -245,6 +255,7 @@ impl Handler<TimedModeMessage> for IrcActor {
 
     fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
+        let pool = self.pool.clone();
         task::spawn(async move {
             log::info!(
                 "{} in {} for {:?}s",
@@ -252,6 +263,16 @@ impl Handler<TimedModeMessage> for IrcActor {
                 msg.broadcaster,
                 msg.duration
             );
+
+            let mode_id = TimedMode::create_mode(
+                &msg.broadcaster_id,
+                msg.mode,
+                std::time::Duration::from_secs(msg.duration),
+                &pool,
+            )
+            .await
+            .unwrap_or(0);
+
             if let Err(e) = client
                 .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await
@@ -267,6 +288,11 @@ impl Handler<TimedModeMessage> for IrcActor {
             {
                 log::warn!("Could not leave {}: {:?}", msg.mode, e);
             }
+
+            log_err!(
+                TimedMode::delete_mode(mode_id, &pool).await,
+                "Failed to delete timed mode"
+            );
         });
     }
 }

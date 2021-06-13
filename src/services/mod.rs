@@ -8,4 +8,5 @@ pub mod jwt;
 pub mod rewards;
 pub mod spotify;
 pub mod sql;
+pub mod timed_mode;
 pub mod twitch;
