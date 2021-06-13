@@ -13,6 +13,7 @@ use crate::repositories::init_repositories;
 use crate::services::eventsub::{
     clear_invalid_rewards, clear_unfulfilled_redemptions, register_eventsub_for_all_unregistered,
 };
+use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_files::NamedFile;
 use actix_web::dev::Service;
@@ -66,7 +67,7 @@ async fn main() -> std::io::Result<()> {
     let chat_actor = ChatActor::new(pool.clone()).start();
 
     let db_actor = DbActor::new(pool.clone()).start();
-    let irc_actor = IrcActor::new(db_actor.clone(), chat_actor.recipient()).start();
+    let irc_actor = IrcActor::new(db_actor.clone(), pool.clone(), chat_actor.recipient()).start();
     let _slot_actor = SlotActor::new(pool.clone()).start();
 
     log::info!("Joining all channels");
@@ -103,10 +104,15 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not register eventsub FeelsMan");
 
     let clear_pool = pool.clone();
+    let clear_irc = irc_actor.clone();
     actix::spawn(async move {
-        if let Err(e) = clear_unfulfilled_redemptions(&clear_pool).await {
-            log::warn!("Failed to clear redemptions: {}", e);
-        }
+        let (redemptions, timed_mode) = futures::future::join(
+            clear_unfulfilled_redemptions(&clear_pool),
+            resolve_timed_modes(clear_irc, &clear_pool),
+        )
+        .await;
+        log_err!(redemptions, "Failed to clear redemptions");
+        log_err!(timed_mode, "Could not clear timed modes");
     });
 
     HttpServer::new(move || {

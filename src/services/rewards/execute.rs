@@ -7,8 +7,9 @@ use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
 use twitch_api2::eventsub::NotificationPayload;
 
 use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::{TimedMode, TimedModeMessage, TimeoutMessage};
+use crate::actors::messages::irc_messages::{TimedModeMessage, TimeoutMessage};
 use crate::models::reward::{Reward, RewardData};
+use crate::models::timed_mode;
 use crate::models::user::User;
 use crate::services::emotes::bttv::BttvEmotes;
 use crate::services::emotes::execute::{execute_slot, execute_swap};
@@ -40,7 +41,8 @@ pub async fn execute_reward(
             irc.send(TimedModeMessage {
                 duration: rewards::get_duration(&duration)?,
                 broadcaster: broadcaster.name,
-                mode: TimedMode::Emote,
+                broadcaster_id: broadcaster.id,
+                mode: timed_mode::Mode::Emoteonly,
             })
             .await?
         }
@@ -48,7 +50,8 @@ pub async fn execute_reward(
             irc.send(TimedModeMessage {
                 duration: rewards::get_duration(&duration)?,
                 broadcaster: broadcaster.name,
-                mode: TimedMode::Sub,
+                broadcaster_id: broadcaster.id,
+                mode: timed_mode::Mode::Subonly,
             })
             .await?
         }
