@@ -192,10 +192,10 @@ impl Handler<LiveMessage> for LiveActor {
             .into_actor(self)
             .map(|res, _this, ctx| match res {
                 Ok(to_queue) => {
-                    log::info!("Unpausing {} rewards", to_queue.len());
                     for info in to_queue {
                         ctx.run_later(info.run_in, |this, ctx| {
                             let pool = this.pool.clone();
+                            log::info!("Unpausing id={}", info.reward_id);
                             ctx.spawn(
                                 async move {
                                     log_err!(
