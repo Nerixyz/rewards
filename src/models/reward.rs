@@ -31,8 +31,8 @@ pub struct LiveReward {
 pub struct LiveRewardAT {
     pub id: String,
     pub user_id: String,
-    pub live_delay: Option<String>,
-    pub access_token: Option<String>,
+    pub live_delay: String,
+    pub access_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -157,7 +157,7 @@ impl Reward {
         let rewards = sqlx::query_as!(
             LiveRewardAT,
             r#"
-            SELECT rewards.id, user_id, live_delay, access_token
+            SELECT rewards.id as "id!", user_id as "user_id!", live_delay as "live_delay!", access_token as "access_token!"
             FROM rewards
             LEFT JOIN users u on u.id = rewards.user_id
             WHERE live_delay is not null AND unpause_at is not null
@@ -283,30 +283,24 @@ impl TryFrom<RewardToUpdate> for (String, UserToken) {
     }
 }
 
-impl TryFrom<LiveRewardAT> for (LiveReward, UserToken) {
-    type Error = ();
-
-    fn try_from(reward: LiveRewardAT) -> Result<Self, Self::Error> {
-        if let Some(access_token) = reward.access_token {
-            Ok((
-                LiveReward {
-                    id: reward.id,
-                    user_id: reward.user_id.clone(),
-                    live_delay: reward.live_delay,
-                },
-                UserToken::from_existing_unchecked(
-                    AccessToken::new(access_token),
-                    None,
-                    ClientId::new(TWITCH_CLIENT_ID.to_string()),
-                    None,
-                    String::new(),
-                    reward.user_id,
-                    None,
-                    None,
-                ),
-            ))
-        } else {
-            Err(())
-        }
+impl From<LiveRewardAT> for (LiveReward, UserToken) {
+    fn from(reward: LiveRewardAT) -> Self {
+        (
+            LiveReward {
+                id: reward.id,
+                user_id: reward.user_id.clone(),
+                live_delay: Some(reward.live_delay),
+            },
+            UserToken::from_existing_unchecked(
+                AccessToken::new(reward.access_token),
+                None,
+                ClientId::new(TWITCH_CLIENT_ID.to_string()),
+                None,
+                String::new(),
+                reward.user_id,
+                None,
+                None,
+            ),
+        )
     }
 }

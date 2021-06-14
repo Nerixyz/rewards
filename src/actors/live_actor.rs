@@ -13,7 +13,7 @@ use chrono::Utc;
 use futures::future::TryFutureExt;
 use futures::stream::{self, StreamExt};
 use sqlx::PgPool;
-use std::convert::TryInto;
+
 use twitch_api2::helix::points::UpdateCustomRewardBody;
 use twitch_api2::twitch_oauth2::UserToken;
 
@@ -146,22 +146,21 @@ impl LiveActor {
         log::info!("Clearing {} live-delay rewards", rewards.len());
 
         for reward in rewards {
-            if let Ok((reward, user_token)) = reward.try_into() {
-                log_err!(
-                    futures::future::try_join(
-                        Reward::set_unpause_at(&reward.id, None, pool).map_err(AnyError::from),
-                        update_reward(
-                            &reward.user_id,
-                            reward.id.clone(),
-                            UpdateCustomRewardBody::builder().is_paused(false).build(),
-                            &user_token
-                        )
-                        .map_err(AnyError::from)
+            let (reward, user_token) = reward.into();
+            log_err!(
+                futures::future::try_join(
+                    Reward::set_unpause_at(&reward.id, None, pool).map_err(AnyError::from),
+                    update_reward(
+                        &reward.user_id,
+                        reward.id.clone(),
+                        UpdateCustomRewardBody::builder().is_paused(false).build(),
+                        &user_token
                     )
-                    .await,
-                    "Could not update reward"
-                );
-            }
+                    .map_err(AnyError::from)
+                )
+                .await,
+                "Could not update reward"
+            );
         }
 
         Ok(())
