@@ -29,7 +29,7 @@ derive_more = "0.99.14"
 serde_qs = "0.8.3"
 itertools = "0.10.0"
 deadpool-postgres = "0.7.0"
-sqlx = { version = "0.5.2", features = ["postgres", "runtime-actix-native-tls", "macros", "json", "chrono"] }
+sqlx = { version = "0.5.5", features = ["postgres", "runtime-actix-native-tls", "macros", "json", "chrono"] }
 futures = "0.3"
 sha2 = "0.9.5"
 hmac = "0.11.0"
