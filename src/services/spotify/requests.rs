@@ -117,7 +117,14 @@ pub async fn play_track(uri: &str, auth_token: &str) -> AnyResult<()> {
 }
 
 pub async fn get_player(auth_token: &str) -> AnyResult<PlayerResponse> {
-    get("https://api.spotify.com/v1/me/player", auth_token).await
+    maybe_get("https://api.spotify.com/v1/me/player", auth_token)
+        .await
+        .map(|maybe| {
+            maybe.unwrap_or(PlayerResponse {
+                item: None,
+                is_playing: false,
+            })
+        })
 }
 
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
@@ -188,4 +195,29 @@ where
         .send()
         .and_then(Response::json)
         .await?)
+}
+
+async fn maybe_get<U, T>(url: U, auth_token: &str) -> AnyResult<Option<T>>
+where
+    U: IntoUrl,
+    T: DeserializeOwned,
+{
+    Ok(SPOTIFY_CLIENT
+        .get(url)
+        .header("Authorization", format!("Bearer {}", auth_token))
+        .send()
+        .map_err(AnyError::from)
+        .and_then(maybe_json)
+        .await?)
+}
+
+async fn maybe_json<T>(res: Response) -> AnyResult<Option<T>>
+where
+    T: DeserializeOwned,
+{
+    match res.status() {
+        StatusCode::NO_CONTENT => Ok(None),
+        StatusCode::OK => Ok(Some(res.json().await?)),
+        status => Err(AnyError::msg(format!("Bad status: {}", status))),
+    }
 }
