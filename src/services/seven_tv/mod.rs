@@ -38,11 +38,9 @@ pub async fn verify_user(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Strin
             .await
             .map_err(|_| AnyError::msg("The user hasn't registered on seventv yet"))?
     };
-    let editors = get_user_editors(&seventv_id)
-        .await
-        .map_err(|_| AnyError::msg("7TV error"))?;
+    let editors = get_user_editors(&seventv_id).await?;
 
-    if editors.iter().any(|e| e.name == TWITCH_CLIENT_USER_LOGIN) {
+    if editors.iter().any(|e| e.login == TWITCH_CLIENT_USER_LOGIN) {
         Ok(seventv_id)
     } else {
         Err(AnyError::msg("RewardMore isn't an editor for the user"))

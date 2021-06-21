@@ -1,9 +1,10 @@
 use crate::models::reward::RewardData;
-use crate::services::bttv;
 use crate::services::emotes::bttv::BttvEmotes;
 use crate::services::emotes::ffz::FfzEmotes;
+use crate::services::emotes::seven_tv::SevenTvEmotes;
 use crate::services::emotes::slots;
 use crate::services::ffz;
+use crate::services::{bttv, seven_tv};
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
 
@@ -31,6 +32,17 @@ pub async fn save_reward(
             slots::adjust_size::<FfzEmotes, _, _, _>(
                 broadcaster_id,
                 &ffz_id,
+                reward_id,
+                slot.slots,
+                pool,
+            )
+            .await?;
+        }
+        RewardData::SevenTvSlot(slot) => {
+            let sid = seven_tv::get_or_fetch_id(broadcaster_id, pool).await?;
+            slots::adjust_size::<SevenTvEmotes, _, _, _>(
+                broadcaster_id,
+                &sid,
                 reward_id,
                 slot.slots,
                 pool,

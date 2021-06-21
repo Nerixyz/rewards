@@ -56,7 +56,7 @@ pub struct SevenUserOnlyEditors {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct OnlyName {
-    pub name: String,
+    pub login: String,
 }
 
 #[derive(Deserialize, Debug)]

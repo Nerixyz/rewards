@@ -1,6 +1,6 @@
 use crate::models::slot::SlotPlatform;
 use crate::models::user::User;
-use crate::services::emotes::{EmoteEnvData, EmoteInitialData, EmoteRW};
+use crate::services::emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW};
 use crate::services::seven_tv::{fetch_save_seventv_id, get_or_fetch_id, requests as seven_tv};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
@@ -9,6 +9,16 @@ use sqlx::PgPool;
 
 pub struct SevenTvEmotes {
     _private: (),
+}
+
+impl Emote<String> for seven_tv::SevenEmote {
+    fn id(&self) -> &String {
+        &self.id
+    }
+
+    fn name(self) -> String {
+        self.name
+    }
 }
 
 #[async_trait]
