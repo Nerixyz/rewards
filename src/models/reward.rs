@@ -1,6 +1,7 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::services::sql::SqlResult;
 use actix_web::{HttpRequest, HttpResponse, Responder};
+use chrono::{DateTime, Utc};
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
@@ -16,6 +17,22 @@ pub struct Reward {
     pub id: String,
     pub user_id: String,
     pub data: Json<RewardData>,
+    pub live_delay: Option<String>,
+}
+
+#[derive(FromRow)]
+pub struct LiveReward {
+    pub id: String,
+    pub user_id: String,
+    pub live_delay: Option<String>,
+}
+
+#[derive(FromRow)]
+pub struct LiveRewardAT {
+    pub id: String,
+    pub user_id: String,
+    pub live_delay: String,
+    pub access_token: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -51,11 +68,16 @@ impl Responder for Reward {
 }
 
 impl Reward {
-    pub fn from_response(res: &CreateCustomRewardResponse, data: RewardData) -> Self {
+    pub fn from_response(
+        res: &CreateCustomRewardResponse,
+        data: RewardData,
+        live_delay: Option<String>,
+    ) -> Self {
         Self {
             user_id: res.broadcaster_id.clone(),
             data: Json(data),
             id: res.id.clone(),
+            live_delay,
         }
     }
 
@@ -64,7 +86,7 @@ impl Reward {
         let reward: Self = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>"
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
             FROM rewards
             WHERE id = $1
             "#,
@@ -81,7 +103,7 @@ impl Reward {
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>"
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
             FROM rewards
             WHERE user_id = $1
             "#,
@@ -93,14 +115,69 @@ impl Reward {
         Ok(rewards)
     }
 
+    pub async fn get_all_live_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<LiveReward>> {
+        // language=PostgreSQL
+        let rewards = sqlx::query_as!(
+            LiveReward,
+            r#"
+            SELECT id, user_id, live_delay
+            FROM rewards
+            WHERE user_id = $1 AND live_delay is not null
+            "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rewards)
+    }
+
+    pub async fn get_all_pending_live_for_user(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<LiveReward>> {
+        // language=PostgreSQL
+        let rewards = sqlx::query_as!(
+            LiveReward,
+            r#"
+            SELECT id, user_id, live_delay
+            FROM rewards
+            WHERE user_id = $1 AND live_delay is not null AND unpause_at is not null
+            "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rewards)
+    }
+
+    pub async fn get_all_pending_live(pool: &PgPool) -> SqlResult<Vec<LiveRewardAT>> {
+        // language=PostgreSQL
+        let rewards = sqlx::query_as!(
+            LiveRewardAT,
+            r#"
+            SELECT rewards.id as "id!", user_id as "user_id!", live_delay as "live_delay!", access_token as "access_token!"
+            FROM rewards
+            LEFT JOIN users u on u.id = rewards.user_id
+            WHERE live_delay is not null AND unpause_at is not null
+            "#
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rewards)
+    }
+
     pub async fn create(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            "INSERT INTO rewards (id, user_id, data) VALUES ($1, $2, $3)",
+            "INSERT INTO rewards (id, user_id, data, live_delay) VALUES ($1, $2, $3, $4)",
             self.id,
             self.user_id,
-            Json(&self.data) as _
+            Json(&self.data) as _,
+            self.live_delay
         )
         .execute(&mut tx)
         .await?;
@@ -113,9 +190,29 @@ impl Reward {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            "UPDATE rewards SET data=$2 WHERE id=$1",
+            "UPDATE rewards SET data=$2, live_delay = $3 WHERE id=$1",
             self.id,
-            Json(self.data.clone()) as _
+            Json(self.data.clone()) as _,
+            self.live_delay
+        )
+        .execute(&mut tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn set_unpause_at(
+        id: &str,
+        unpause_at: Option<DateTime<Utc>>,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        let mut tx = pool.begin().await?;
+        // language=PostgreSQL
+        let _ = sqlx::query!(
+            "UPDATE rewards SET unpause_at = $2 WHERE id=$1",
+            id,
+            unpause_at
         )
         .execute(&mut tx)
         .await?;
@@ -183,5 +280,27 @@ impl TryFrom<RewardToUpdate> for (String, UserToken) {
         } else {
             Err(())
         }
+    }
+}
+
+impl From<LiveRewardAT> for (LiveReward, UserToken) {
+    fn from(reward: LiveRewardAT) -> Self {
+        (
+            LiveReward {
+                id: reward.id,
+                user_id: reward.user_id.clone(),
+                live_delay: Some(reward.live_delay),
+            },
+            UserToken::from_existing_unchecked(
+                AccessToken::new(reward.access_token),
+                None,
+                ClientId::new(TWITCH_CLIENT_ID.to_string()),
+                None,
+                String::new(),
+                reward.user_id,
+                None,
+                None,
+            ),
+        )
     }
 }

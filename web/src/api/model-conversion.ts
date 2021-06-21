@@ -11,6 +11,8 @@ export interface VRewardModel {
   cooldown: string;
   color: string;
 
+  liveDelay: string;
+
   action: RewardData;
 }
 
@@ -22,6 +24,7 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
   model.prompt = reward.twitch.prompt;
   model.color = reward.twitch.background_color;
+
   model.action = {
     type: reward.data.type,
     data:
@@ -31,6 +34,8 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
           }
         : reward.data.data,
   };
+
+  model.liveDelay = reward.live_delay ?? '';
 }
 
 export function toInputReward(vmodel: VRewardModel): InputReward {
@@ -64,6 +69,7 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
             }
           : vmodel.action.data,
     },
+    live_delay: vmodel.liveDelay.trim() || undefined,
   };
 }
 

@@ -1,13 +1,23 @@
 use crate::actors::db_actor::DbActor;
+use crate::actors::messages::chat_messages::ExecuteCommandMessage;
 use crate::actors::messages::db_messages::{GetToken, SaveToken};
 use crate::actors::messages::irc_messages::{
-    JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage, TimeoutMessage,
-    WhisperMessage,
+    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
+    TimeoutMessage, WhisperMessage,
 };
+use crate::chat::parse::opt_next_space;
+use crate::chat::try_parse_command;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
-use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
+use crate::log_err;
+use crate::models::timed_mode::TimedMode;
+use actix::{
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
+    ResponseFuture, WrapFuture,
+};
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
+use sqlx::PgPool;
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -53,13 +63,23 @@ impl TokenStorage for PgTokenStorage {
 type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {
     client: IrcClient,
+    pool: PgPool,
+
     incoming: Option<UnboundedReceiver<ServerMessage>>,
     notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
     notice_rx: Receiver<Option<NoticeChannelMessage>>,
+
+    executor: Recipient<ExecuteCommandMessage>,
+    last_message: Option<String>,
+    command_cooldown: HashMap<String, Instant>,
 }
 
 impl IrcActor {
-    pub fn new(db: Addr<DbActor>) -> Self {
+    pub fn new(
+        db: Addr<DbActor>,
+        pool: PgPool,
+        executor: Recipient<ExecuteCommandMessage>,
+    ) -> Self {
         let config = ClientConfig::new_simple(IrcCredentials::new(
             TWITCH_CLIENT_USER_LOGIN.to_string(),
             TWITCH_CLIENT_ID.to_string(),
@@ -71,10 +91,32 @@ impl IrcActor {
         let (notice_tx, notice_rx) = channel(None);
 
         Self {
-            incoming: Some(incoming),
             client,
+            pool,
+
+            incoming: Some(incoming),
             notice_tx: Some(notice_tx),
             notice_rx,
+
+            executor,
+            last_message: None,
+            command_cooldown: HashMap::new(),
+        }
+    }
+
+    /// Returns true if there's _no_ cooldown for the channel.
+    fn check_update_cooldown(&mut self, login: &str) -> bool {
+        let now = Instant::now();
+        if let Some(v) = self.command_cooldown.get_mut(login) {
+            if now.duration_since(*v) < Duration::from_secs(4) {
+                false
+            } else {
+                *v = now;
+                true
+            }
+        } else {
+            self.command_cooldown.insert(login.to_string(), now);
+            true
         }
     }
 }
@@ -85,15 +127,19 @@ impl Actor for IrcActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         let mut incoming = self.incoming.take().expect("This was set in Self:new");
         let tx = self.notice_tx.take().expect("This was set in Self::new");
+        let addr = ctx.address();
 
         ctx.spawn(
             async move {
                 while let Some(message) = incoming.recv().await {
                     match message {
                         ServerMessage::Notice(notice) => {
-                            tx.send(Some((Instant::now(), notice))).ok()
+                            tx.send(Some((Instant::now(), notice))).ok();
                         }
-                        _ => None,
+                        ServerMessage::Privmsg(privmsg) => {
+                            addr.do_send(ChatMessage(privmsg));
+                        }
+                        _ => (),
                     };
                 }
             }
@@ -114,6 +160,7 @@ impl Handler<PartMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
+        self.command_cooldown.remove(&msg.0);
         self.client.part(msg.0)
     }
 }
@@ -148,8 +195,15 @@ impl Handler<WhisperMessage> for IrcActor {
 impl Handler<SayMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
 
-    fn handle(&mut self, msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, mut msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
+
+        if self.last_message.as_ref() == Some(&msg.1) {
+            log::info!("eq");
+            msg.1.push('\u{180d}');
+        }
+        self.last_message = Some(msg.1.clone());
+
         log::info!("Send message login={}; message={}", msg.0, msg.1);
         Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
     }
@@ -219,6 +273,7 @@ impl Handler<TimedModeMessage> for IrcActor {
 
     fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
+        let pool = self.pool.clone();
         task::spawn(async move {
             log::info!(
                 "{} in {} for {:?}s",
@@ -226,6 +281,16 @@ impl Handler<TimedModeMessage> for IrcActor {
                 msg.broadcaster,
                 msg.duration
             );
+
+            let mode_id = TimedMode::create_mode(
+                &msg.broadcaster_id,
+                msg.mode,
+                std::time::Duration::from_secs(msg.duration),
+                &pool,
+            )
+            .await
+            .unwrap_or(0);
+
             if let Err(e) = client
                 .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
                 .await
@@ -241,6 +306,47 @@ impl Handler<TimedModeMessage> for IrcActor {
             {
                 log::warn!("Could not leave {}: {:?}", msg.mode, e);
             }
+
+            log_err!(
+                TimedMode::delete_mode(mode_id, &pool).await,
+                "Failed to delete timed mode"
+            );
         });
+    }
+}
+
+impl Handler<ChatMessage> for IrcActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
+        if !msg.0.message_text.starts_with("::")
+            || msg.0.message_text.len() < 2
+            || !self.check_update_cooldown(&msg.0.channel_login)
+        {
+            return;
+        }
+        let (command, args) = opt_next_space(&msg.0.message_text[2..]);
+        match try_parse_command(command, args) {
+            Some(Ok(ex)) => {
+                self.executor
+                    .send(ExecuteCommandMessage {
+                        executor: ex,
+                        raw: msg.0,
+                        addr: ctx.address().recipient(),
+                    })
+                    .into_actor(self)
+                    .map(|res, _, _| {
+                        log_err!(res, "Could not deliver");
+                    })
+                    .spawn(ctx);
+            }
+            Some(Err(e)) => {
+                ctx.notify(SayMessage(
+                    msg.0.channel_login,
+                    format!("@{}, ⚠ {}", msg.0.sender.login, e),
+                ));
+            }
+            None => (),
+        }
     }
 }

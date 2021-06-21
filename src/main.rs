@@ -1,6 +1,10 @@
+use crate::actors::chat_actor::ChatActor;
 use crate::actors::db_actor::DbActor;
 use crate::actors::irc_actor::IrcActor;
+use crate::actors::live_actor::LiveActor;
 use crate::actors::messages::irc_messages::JoinAllMessage;
+use crate::actors::messages::pubsub_messages::SubAllMessage;
+use crate::actors::pubsub_actor::PubSubActor;
 use crate::actors::slot_actor::SlotActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
@@ -9,6 +13,7 @@ use crate::repositories::init_repositories;
 use crate::services::eventsub::{
     clear_invalid_rewards, clear_unfulfilled_redemptions, register_eventsub_for_all_unregistered,
 };
+use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_files::NamedFile;
 use actix_web::dev::Service;
@@ -18,15 +23,20 @@ use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
 use tokio::sync::Mutex;
 use twitch_api2::helix::Scope;
+use twitch_api2::pubsub::video_playback::VideoPlaybackById;
+use twitch_api2::pubsub::{listen_command, Topics};
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 
 mod actors;
+mod chat;
 mod constants;
 mod extractors;
 mod guards;
@@ -54,8 +64,10 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Starting Db, Irc and Slot-Actor");
 
+    let chat_actor = ChatActor::new(pool.clone()).start();
+
     let db_actor = DbActor::new(pool.clone()).start();
-    let irc_actor = IrcActor::new(db_actor.clone()).start();
+    let irc_actor = IrcActor::new(db_actor.clone(), pool.clone(), chat_actor.recipient()).start();
     let _slot_actor = SlotActor::new(pool.clone()).start();
 
     log::info!("Joining all channels");
@@ -72,6 +84,12 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not get app access token");
     let app_access_token = web::Data::new(Mutex::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
+    let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
+    let pubsub = PubSubActor::new(live_actor).start();
+    let initial_listens = make_initial_pubsub_listens(&pool)
+        .await
+        .expect("sql thingy");
+    pubsub.do_send(SubAllMessage(initial_listens));
 
     log::info!("Clearing old rewards");
 
@@ -86,31 +104,33 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not register eventsub FeelsMan");
 
     let clear_pool = pool.clone();
+    let clear_irc = irc_actor.clone();
     actix::spawn(async move {
-        if let Err(e) = clear_unfulfilled_redemptions(&clear_pool).await {
-            log::warn!("Failed to clear redemptions: {}", e);
-        }
+        let (redemptions, timed_mode) = futures::future::join(
+            clear_unfulfilled_redemptions(&clear_pool),
+            resolve_timed_modes(clear_irc, &clear_pool),
+        )
+        .await;
+        log_err!(redemptions, "Failed to clear redemptions");
+        log_err!(timed_mode, "Could not clear timed modes");
     });
 
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
             .data(irc_actor.clone())
+            .data(pubsub.clone())
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(Logger::default())
             .wrap_fn(|req, srv| {
-                let fut = if req
+                let header: &str = req
                     .headers()
                     .get(USER_AGENT)
-                    .map(|ua: &HeaderValue| {
-                        ua.to_str()
-                            .map(|ua| ua.contains("paloaltonetworks.com"))
-                            .ok()
-                    })
+                    .map(|ua: &HeaderValue| ua.to_str().ok())
                     .flatten()
-                    .unwrap_or(false)
-                {
+                    .unwrap_or("");
+                let fut = if header.contains("paloaltonetworks.com") {
                     None
                 } else {
                     Some(srv.call(req))
@@ -177,4 +197,27 @@ fn get_default_headers() -> DefaultHeaders {
     } else {
         headers
     }
+}
+
+async fn make_initial_pubsub_listens(pool: &PgPool) -> Result<Vec<String>, AnyError> {
+    let users = User::get_all(pool).await?;
+
+    Ok(users
+        .into_iter()
+        .filter_map(|user| {
+            let nonce = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(30)
+                .map(char::from)
+                .collect::<String>();
+            listen_command(
+                &[Topics::VideoPlaybackById(VideoPlaybackById {
+                    channel_id: user.id.parse().unwrap_or_default(),
+                })],
+                &user.access_token,
+                nonce.as_str(),
+            )
+            .ok()
+        })
+        .collect())
 }

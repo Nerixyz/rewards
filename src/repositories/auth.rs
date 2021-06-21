@@ -1,5 +1,7 @@
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::{JoinMessage, PartMessage};
+use crate::actors::messages::pubsub_messages::SubMessage;
+use crate::actors::pubsub_actor::PubSubActor;
 use crate::constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::reward::Reward;
 use crate::models::user::User;
@@ -11,10 +13,14 @@ use actix::Addr;
 use actix_web::cookie::CookieBuilder;
 use actix_web::{delete, get, web, HttpResponse, Result};
 use itertools::Itertools;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};
 use tokio::sync::Mutex;
+use twitch_api2::pubsub::video_playback::VideoPlaybackById;
+use twitch_api2::pubsub::{listen_command, Topics};
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::tokens::UserTokenBuilder;
 use twitch_api2::twitch_oauth2::{
@@ -34,6 +40,7 @@ struct TwitchCallbackQuery {
 async fn twitch_callback(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
+    pubsub: web::Data<Addr<PubSubActor>>,
     app_access_token: web::Data<Mutex<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
 ) -> Result<HttpResponse> {
@@ -89,6 +96,22 @@ async fn twitch_callback(
 
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
+    if let Ok(msg) = {
+        let nonce = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(30)
+            .map(char::from)
+            .collect::<String>();
+        listen_command(
+            &[Topics::VideoPlaybackById(VideoPlaybackById {
+                channel_id: user.id.parse().unwrap_or_default(),
+            })],
+            &user.access_token,
+            nonce.as_str(),
+        )
+    } {
+        pubsub.do_send(SubMessage(msg));
+    }
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone()))
         .map_err(|_| RedirectError::new("/failed-auth", Some("Could not encode")))?;

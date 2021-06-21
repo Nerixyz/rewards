@@ -1,6 +1,11 @@
+use crate::models::timed_mode::Mode;
 use actix::Message;
 use anyhow::Error as AnyError;
-use derive_more::Display;
+use twitch_irc::message::PrivmsgMessage;
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ChatMessage(pub PrivmsgMessage);
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -33,15 +38,8 @@ pub struct TimeoutMessage {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct TimedModeMessage {
-    pub mode: TimedMode,
+    pub mode: Mode,
     pub broadcaster: String,
+    pub broadcaster_id: String,
     pub duration: u64,
-}
-
-#[derive(Display)]
-pub enum TimedMode {
-    #[display(fmt = "emoteonly")]
-    Emote,
-    #[display(fmt = "subscribers")]
-    Sub,
 }
