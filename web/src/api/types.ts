@@ -90,8 +90,10 @@ export interface RewardDataMap {
   EmoteOnly: string;
   BttvSwap: null;
   FfzSwap: null;
+  SevenTvSwap: null;
   BttvSlot: SlotRewardData;
   FfzSlot: SlotRewardData;
+  SevenTvSlot: SlotRewardData;
   SpotifySkip: null;
   SpotifyPlay: SpotifyPlayOptions;
   SpotifyQueue: SpotifyPlayOptions;

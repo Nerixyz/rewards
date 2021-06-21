@@ -36,7 +36,7 @@
             @update:warn="updateRewardWarning"
           />
           <EmoteSlotSettings
-            v-else-if="['BttvSlot', 'FfzSlot'].includes(rewardState.action.type)"
+            v-else-if="['BttvSlot', 'FfzSlot', 'SevenTvSlot'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"
           />
           <SpotifyPlayOptions
