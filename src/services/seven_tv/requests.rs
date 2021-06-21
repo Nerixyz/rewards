@@ -33,6 +33,32 @@ pub struct SevenEmote {
     id: String
 }
 
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
+struct SevenUserResponse {
+    emote: SevenUser
+}
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
+pub struct SevenUser {
+    id: String,
+    login: String,
+    emote_ids: Vec<String>,
+    twitch_id: String,
+    emote_slots: usize,
+}
+
+pub async fn get_user(user_id: &str) -> AnyResult<SevenUser> {
+    let user = seven_tv_post::<GqlResponse<SevenUserResponse>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
+        query: "query getUser($id: String!) { user(id: $id) { id, login, emote_ids, twitch_id, emote_slots } }",
+        variables: HashMap::<_,_>::from_iter(IntoIter::new([("id", user_id)]))
+    }).await?;
+
+    Ok(user.data.user)
+}
+
 pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
     let emote = seven_tv_post::<GqlResponse<SevenEmoteResponse>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "query emoteQuery($id: String!){emote(id: $id){id,name, tags}}",
