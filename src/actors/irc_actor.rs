@@ -17,6 +17,7 @@ use actix::{
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -70,7 +71,7 @@ pub struct IrcActor {
 
     executor: Recipient<ExecuteCommandMessage>,
     last_message: Option<String>,
-    last_cmd: Instant,
+    command_cooldown: HashMap<String, Instant>,
 }
 
 impl IrcActor {
@@ -99,7 +100,23 @@ impl IrcActor {
 
             executor,
             last_message: None,
-            last_cmd: Instant::now(),
+            command_cooldown: HashMap::new(),
+        }
+    }
+
+    /// Returns true if there's _no_ cooldown for the channel.
+    fn check_update_cooldown(&mut self, login: &str) -> bool {
+        let now = Instant::now();
+        if let Some(v) = self.command_cooldown.get_mut(login) {
+            if now.duration_since(*v) < Duration::from_secs(4) {
+                false
+            } else {
+                *v = now;
+                true
+            }
+        } else {
+            self.command_cooldown.insert(login.to_string(), now);
+            true
         }
     }
 }
@@ -143,6 +160,7 @@ impl Handler<PartMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
+        self.command_cooldown.remove(&msg.0);
         self.client.part(msg.0)
     }
 }
@@ -303,11 +321,10 @@ impl Handler<ChatMessage> for IrcActor {
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
         if !msg.0.message_text.starts_with("::")
             || msg.0.message_text.len() < 2
-            || Instant::now().duration_since(self.last_cmd) < Duration::from_secs(5)
+            || !self.check_update_cooldown(&msg.0.channel_login)
         {
             return;
         }
-        self.last_cmd = Instant::now();
         let (command, args) = opt_next_space(&msg.0.message_text[2..]);
         match try_parse_command(command, args) {
             Some(Ok(ex)) => {
