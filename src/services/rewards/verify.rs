@@ -6,7 +6,7 @@ use crate::models::reward::RewardData;
 use crate::services::ffz::is_editor_in;
 use crate::services::spotify::rewards as spotify;
 use crate::services::twitch::requests::get_user;
-use crate::services::{bttv, rewards};
+use crate::services::{bttv, rewards, seven_tv};
 
 pub async fn verify_reward(
     reward: &RewardData,
@@ -31,6 +31,9 @@ pub async fn verify_reward(
                 return Err(AnyError::msg("RewardMore isn't an editor for the user"));
             }
         }
+        RewardData::SevenTvSwap(_) => {
+            seven_tv::verify_user(broadcaster_id, pool).await?;
+        }
         RewardData::BttvSlot(slot) => {
             bttv::verify_user(broadcaster_id, pool).await?;
 
@@ -48,6 +51,15 @@ pub async fn verify_reward(
 
             if slot.slots > 50 {
                 return Err(AnyError::msg("50 slots is the max"));
+            }
+
+            rewards::get_duration(&slot.expiration)?;
+        }
+        RewardData::SevenTvSlot(slot) => {
+            seven_tv::verify_user(broadcaster_id, pool).await?;
+
+            if slot.slots > 100 {
+                return Err(AnyError::msg("100 slots is the max"));
             }
 
             rewards::get_duration(&slot.expiration)?;

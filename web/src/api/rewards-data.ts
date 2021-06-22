@@ -37,6 +37,12 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
     validOptions: opts => opts === null,
     defaultOptions: null,
   },
+  SevenTvSwap: {
+    display: 'Add/Swap 7TV Emote',
+    inputRequired: true,
+    validOptions: opts => opts === null,
+    defaultOptions: null,
+  },
   BttvSlot: {
     display: 'Bttv Slots',
     inputRequired: true,
@@ -48,6 +54,15 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   },
   FfzSlot: {
     display: 'Ffz Slots',
+    inputRequired: true,
+    validOptions: emoteSlotValid,
+    defaultOptions: {
+      slots: 2,
+      expiration: '2d',
+    },
+  },
+  SevenTvSlot: {
+    display: '7TV Slots',
     inputRequired: true,
     validOptions: emoteSlotValid,
     defaultOptions: {

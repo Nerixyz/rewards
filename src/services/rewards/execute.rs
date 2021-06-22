@@ -14,9 +14,10 @@ use crate::models::user::User;
 use crate::services::emotes::bttv::BttvEmotes;
 use crate::services::emotes::execute::{execute_slot, execute_swap};
 use crate::services::emotes::ffz::FfzEmotes;
+use crate::services::emotes::seven_tv::SevenTvEmotes;
 use crate::services::rewards;
 use crate::services::rewards::reply::SpotifyAction;
-use crate::services::rewards::{extract_bttv_id, extract_ffz_id, reply};
+use crate::services::rewards::{extract_bttv_id, extract_ffz_id, extract_seventv_id, reply};
 use crate::services::spotify::rewards as spotify;
 use futures::TryFutureExt;
 
@@ -61,6 +62,10 @@ pub async fn execute_reward(
         RewardData::FfzSwap(_) => {
             execute_swap::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, pool, &irc).await?;
         }
+        RewardData::SevenTvSwap(_) => {
+            execute_swap::<SevenTvEmotes, _, _, _, _>(extract_seventv_id, redemption, pool, &irc)
+                .await?;
+        }
         RewardData::BttvSlot(slot) => {
             execute_slot::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, slot, pool, &irc)
                 .await?;
@@ -68,6 +73,16 @@ pub async fn execute_reward(
         RewardData::FfzSlot(slot) => {
             execute_slot::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, slot, pool, &irc)
                 .await?;
+        }
+        RewardData::SevenTvSlot(slot) => {
+            execute_slot::<SevenTvEmotes, _, _, _, _>(
+                extract_seventv_id,
+                redemption,
+                slot,
+                pool,
+                &irc,
+            )
+            .await?;
         }
         RewardData::SpotifySkip(_) => {
             let res = spotify::skip_track(&redemption.event.broadcaster_user_id, pool).await;

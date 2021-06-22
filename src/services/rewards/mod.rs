@@ -54,6 +54,19 @@ fn extract_ffz_id(str: &str) -> AnyResult<&str> {
         .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
+fn extract_seventv_id(str: &str) -> AnyResult<&str> {
+    lazy_static! {
+        static ref BTTV_REGEX: Regex =
+            Regex::new("(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )")
+                .expect("must compile");
+    }
+    BTTV_REGEX
+        .captures(str)
+        .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
+        .flatten()
+        .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
+}
+
 fn get_duration(duration: &str) -> AnyResult<u64> {
     let duration = duration.trim();
 

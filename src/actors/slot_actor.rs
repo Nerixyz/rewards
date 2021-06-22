@@ -4,6 +4,7 @@ use crate::models::slot::{Slot, SlotPlatform};
 use crate::models::user::User;
 use crate::services::emotes::bttv::BttvEmotes;
 use crate::services::emotes::ffz::FfzEmotes;
+use crate::services::emotes::seven_tv::SevenTvEmotes;
 use crate::services::emotes::EmoteRW;
 use crate::services::twitch::requests::update_reward;
 use actix::{Actor, AsyncContext, Context, WrapFuture};
@@ -35,7 +36,9 @@ impl SlotActor {
             SlotPlatform::Ffz => {
                 FfzEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
             }
-            SlotPlatform::SevenTv => todo!(),
+            SlotPlatform::SevenTv => {
+                SevenTvEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+            }
         }
     }
 

@@ -21,6 +21,14 @@ pub struct UserBttvData {
     pub bttv_history: Json<Vec<String>>,
 }
 
+#[derive(FromRow)]
+pub struct UserSevenTvData {
+    pub id: String,
+    pub name: String,
+    pub seventv_id: Option<String>,
+    pub seventv_history: Json<Vec<String>>,
+}
+
 impl User {
     pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<User> {
         // language=PostgreSQL
@@ -137,6 +145,42 @@ impl User {
         Ok(())
     }
 
+    pub async fn get_seventv_data(user_id: &str, pool: &PgPool) -> SqlResult<UserSevenTvData> {
+        // language=PostgreSQL
+        let data = sqlx::query_as!(
+            UserSevenTvData,
+            r#"
+            SELECT id, name, seventv_id, seventv_history as "seventv_history: Json<Vec<String>>"
+            FROM users
+            WHERE id = $1
+            "#,
+            user_id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(data)
+    }
+
+    pub async fn set_seventv_history(
+        user_id: &str,
+        history: Vec<String>,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        // language=PostgreSQL
+        let _ = sqlx::query!(
+            r#"
+            UPDATE users SET seventv_history = $2 WHERE id = $1
+            "#,
+            user_id,
+            Json(history) as _
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn create(&self, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
@@ -192,6 +236,19 @@ impl User {
             "UPDATE users SET bttv_id = $2 WHERE id = $1",
             user_id,
             bttv_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_seventv_id(user_id: &str, seventv_id: &str, pool: &PgPool) -> SqlResult<()> {
+        // language=PostgreSQL
+        let _ = sqlx::query_scalar!(
+            "UPDATE users SET seventv_id = $2 WHERE id = $1",
+            user_id,
+            seventv_id
         )
         .execute(pool)
         .await?;
