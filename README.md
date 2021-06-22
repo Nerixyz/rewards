@@ -36,9 +36,8 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Timeout user (set or random duration)
 * Enter Subonly-mode (set or random duration)
 * Enter Emoteonly-mode (set or random duration)
-* Swap/Add BTTV emotes (requires `RewardMore` to be an editor)
-* Swap/Add FFZ emotes (requires `RewardMore` to be an editor)
-* Add BTTV emotes to slots that expire after a set amount of time (+/- 2min)
+* Swap/Add BTTV/FFZ/7TV emotes (requires `RewardMore` to be an editor on each platform)
+* Add BTTV/FFZ/7TV emotes to slots that expire after a set amount of time (+/- 2min)
 * Skip a Spotify track
 * Play a Spotify track
 * Queue a Spotify track
