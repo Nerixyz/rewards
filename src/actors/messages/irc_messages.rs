@@ -31,7 +31,11 @@ pub struct JoinAllMessage(pub Vec<String>);
 #[rtype(result = "Result<(), AnyError>")]
 pub struct TimeoutMessage {
     pub broadcaster: String,
+    pub broadcaster_id: String,
+
     pub user: String,
+    pub user_id: String,
+
     pub duration: u64,
 }
 

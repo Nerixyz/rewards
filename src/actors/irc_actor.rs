@@ -5,6 +5,8 @@ use crate::actors::messages::irc_messages::{
     ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
     TimeoutMessage, WhisperMessage,
 };
+use crate::actors::messages::timeout_messages::{ChannelTimeoutMessage, RemoveTimeoutMessage};
+use crate::actors::timeout_actor::TimeoutActor;
 use crate::chat::parse::opt_next_space;
 use crate::chat::try_parse_command;
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
@@ -24,7 +26,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::watch::{channel, Receiver, Sender};
 use tokio::task;
 use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
-use twitch_irc::message::{NoticeMessage, ServerMessage};
+use twitch_irc::message::{ClearChatAction, ClearChatMessage, NoticeMessage, ServerMessage};
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
@@ -72,6 +74,8 @@ pub struct IrcActor {
     executor: Recipient<ExecuteCommandMessage>,
     last_message: Option<String>,
     command_cooldown: HashMap<String, Instant>,
+
+    timeout_handler: Addr<TimeoutActor>,
 }
 
 impl IrcActor {
@@ -79,6 +83,7 @@ impl IrcActor {
         db: Addr<DbActor>,
         pool: PgPool,
         executor: Recipient<ExecuteCommandMessage>,
+        timeout_handler: Addr<TimeoutActor>,
     ) -> Self {
         let config = ClientConfig::new_simple(IrcCredentials::new(
             TWITCH_CLIENT_USER_LOGIN.to_string(),
@@ -101,6 +106,8 @@ impl IrcActor {
             executor,
             last_message: None,
             command_cooldown: HashMap::new(),
+
+            timeout_handler,
         }
     }
 
@@ -128,6 +135,7 @@ impl Actor for IrcActor {
         let mut incoming = self.incoming.take().expect("This was set in Self:new");
         let tx = self.notice_tx.take().expect("This was set in Self::new");
         let addr = ctx.address();
+        let timeouter = self.timeout_handler.clone();
 
         ctx.spawn(
             async move {
@@ -138,6 +146,22 @@ impl Actor for IrcActor {
                         }
                         ServerMessage::Privmsg(privmsg) => {
                             addr.do_send(ChatMessage(privmsg));
+                        }
+                        ServerMessage::ClearChat(ClearChatMessage {
+                            action:
+                                ClearChatAction::UserTimedOut {
+                                    user_id,
+                                    timeout_length,
+                                    ..
+                                },
+                            channel_id,
+                            ..
+                        }) => {
+                            timeouter.do_send(ChannelTimeoutMessage {
+                                channel_id,
+                                user_id,
+                                duration: timeout_length,
+                            });
                         }
                         _ => (),
                     };
@@ -215,6 +239,7 @@ impl Handler<TimeoutMessage> for IrcActor {
     fn handle(&mut self, msg: TimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
         let mut rx = self.notice_rx.clone();
+        let timeout_handler = self.timeout_handler.clone();
         Box::pin(async move {
             log::info!(
                 "timeout in {} for {} for {:?}s",
@@ -248,7 +273,14 @@ impl Handler<TimeoutMessage> for IrcActor {
 
                 if let Some(id) = &notice.message_id {
                     match id.as_str() {
-                        "timeout_success" => return Ok(()),
+                        "timeout_success" => {
+                            timeout_handler.do_send(RemoveTimeoutMessage {
+                                channel_id: msg.broadcaster_id,
+                                user_id: msg.user_id,
+                                later: Duration::from_secs(5),
+                            });
+                            return Ok(());
+                        }
                         "usage_timeout"
                         | "timeout_no_timeout"
                         | "invalid_user"

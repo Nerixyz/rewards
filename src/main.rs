@@ -6,6 +6,7 @@ use crate::actors::messages::irc_messages::JoinAllMessage;
 use crate::actors::messages::pubsub_messages::SubAllMessage;
 use crate::actors::pubsub_actor::PubSubActor;
 use crate::actors::slot_actor::SlotActor;
+use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use crate::models::user::User;
@@ -66,8 +67,16 @@ async fn main() -> std::io::Result<()> {
 
     let chat_actor = ChatActor::new(pool.clone()).start();
 
+    let timeout_actor = TimeoutActor::new(pool.clone()).start();
+
     let db_actor = DbActor::new(pool.clone()).start();
-    let irc_actor = IrcActor::new(db_actor.clone(), pool.clone(), chat_actor.recipient()).start();
+    let irc_actor = IrcActor::new(
+        db_actor.clone(),
+        pool.clone(),
+        chat_actor.recipient(),
+        timeout_actor.clone(),
+    )
+    .start();
     let _slot_actor = SlotActor::new(pool.clone()).start();
 
     log::info!("Joining all channels");
@@ -119,6 +128,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .data(pool.clone())
             .data(irc_actor.clone())
+            .data(timeout_actor.clone())
             .data(pubsub.clone())
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())

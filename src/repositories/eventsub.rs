@@ -1,5 +1,6 @@
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::WhisperMessage;
+use crate::actors::timeout_actor::TimeoutActor;
 use crate::models::reward::Reward;
 use crate::models::user::User;
 use crate::services::rewards::execute::execute_reward;
@@ -11,15 +12,19 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
+use tokio::sync::Mutex;
 use twitch_api2::eventsub;
 use twitch_api2::eventsub::Payload;
 use twitch_api2::helix::points::CustomRewardRedemptionStatus;
+use twitch_api2::twitch_oauth2::AppAccessToken;
 
 #[post("/reward")]
 async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
+    app_token: web::Data<Mutex<AppAccessToken>>,
+    timeout_actor: web::Data<Addr<TimeoutActor>>,
 ) -> Result<HttpResponse> {
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => {
@@ -46,8 +51,16 @@ async fn reward_redemption(
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)
                 {
-                    let status = match execute_reward(redemption, reward, user, &*pool, irc.clone())
-                        .await
+                    let status = match execute_reward(
+                        redemption,
+                        reward,
+                        user,
+                        &*pool,
+                        irc.clone(),
+                        timeout_actor.into_inner(),
+                        app_token.into_inner(),
+                    )
+                    .await
                     {
                         Ok(_) => CustomRewardRedemptionStatus::Fulfilled,
                         Err(e) => {
