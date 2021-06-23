@@ -2,7 +2,7 @@ use crate::models::reward::RewardData;
 use crate::services::emotes::bttv::BttvEmotes;
 use crate::services::emotes::ffz::FfzEmotes;
 use crate::services::emotes::seven_tv::SevenTvEmotes;
-use crate::services::emotes::slots;
+use crate::services::emotes::{slots, swap};
 use crate::services::ffz;
 use crate::services::{bttv, seven_tv};
 use anyhow::Result as AnyResult;
@@ -15,6 +15,23 @@ pub async fn save_reward(
     pool: &PgPool,
 ) -> AnyResult<()> {
     match reward {
+        RewardData::BttvSwap(swap) => {
+            if let Some(limit) = &swap.limit {
+                swap::update_swap_limit::<BttvEmotes, _, _, _>(broadcaster_id, *limit, pool)
+                    .await?;
+            }
+        }
+        RewardData::FfzSwap(swap) => {
+            if let Some(limit) = &swap.limit {
+                swap::update_swap_limit::<FfzEmotes, _, _, _>(broadcaster_id, *limit, pool).await?;
+            }
+        }
+        RewardData::SevenTvSwap(swap) => {
+            if let Some(limit) = &swap.limit {
+                swap::update_swap_limit::<SevenTvEmotes, _, _, _>(broadcaster_id, *limit, pool)
+                    .await?;
+            }
+        }
         RewardData::BttvSlot(slot) => {
             let bttv_id = bttv::get_or_fetch_id(broadcaster_id, pool).await?;
 
