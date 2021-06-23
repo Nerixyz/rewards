@@ -25,10 +25,10 @@ use tokio::sync::watch::{channel, Receiver, Sender};
 use tokio::task;
 use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
 use twitch_irc::message::{NoticeMessage, ServerMessage};
-use twitch_irc::{ClientConfig, TCPTransport, TwitchIRCClient};
+use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
-type IrcClient = TwitchIRCClient<TCPTransport, IrcCredentials>;
+type IrcClient = TwitchIRCClient<SecureTCPTransport, IrcCredentials>;
 
 struct PgTokenStorage(Addr<DbActor>);
 
