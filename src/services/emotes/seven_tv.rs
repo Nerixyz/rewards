@@ -1,5 +1,5 @@
 use crate::models::slot::SlotPlatform;
-use crate::models::user::User;
+use crate::models::user::{User, UserSevenTvData};
 use crate::services::emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW};
 use crate::services::seven_tv::{fetch_save_seventv_id, get_or_fetch_id, requests as seven_tv};
 use anyhow::{Error as AnyError, Result as AnyResult};
@@ -9,6 +9,26 @@ use sqlx::PgPool;
 
 pub struct SevenTvEmotes {
     _private: (),
+}
+
+impl SevenTvEmotes {
+    async fn get_data_and_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(UserSevenTvData, String)> {
+        let this_user = User::get_seventv_data(broadcaster_id, pool)
+            .await
+            .map_err(|_| AnyError::msg("No internal user"))?;
+        let stv_id = if let Some(id) = &this_user.seventv_id {
+            id.to_string()
+        } else {
+            fetch_save_seventv_id(broadcaster_id, &this_user.name, pool)
+                .await
+                .map_err(|_| AnyError::msg("No such user"))?
+        };
+
+        Ok((this_user, stv_id))
+    }
 }
 
 impl Emote<String> for seven_tv::SevenEmote {
@@ -36,16 +56,7 @@ impl EmoteRW for SevenTvEmotes {
         emote_id: &str,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote, Self::EmoteId>> {
-        let this_user = User::get_seventv_data(broadcaster_id, pool)
-            .await
-            .map_err(|_| AnyError::msg("No internal user"))?;
-        let stv_id = if let Some(id) = &this_user.seventv_id {
-            id.to_string()
-        } else {
-            fetch_save_seventv_id(broadcaster_id, &this_user.name, pool)
-                .await
-                .map_err(|_| AnyError::msg("No such user"))?
-        };
+        let (this_user, stv_id) = Self::get_data_and_id(broadcaster_id, pool).await?;
 
         let (emote, stv_user) = futures::future::try_join(
             seven_tv::get_emote(emote_id).map_err(|_| AnyError::msg("This emote doesn't exist.")),
@@ -83,6 +94,15 @@ impl EmoteRW for SevenTvEmotes {
             max_emotes: user.emote_slots,
             current_emotes: user.emotes.len(),
         })
+    }
+
+    async fn get_history_and_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)> {
+        let (this_user, stv_id) = Self::get_data_and_id(broadcaster_id, pool).await?;
+
+        Ok((this_user.seventv_history.0, stv_id))
     }
 
     async fn get_emote_by_id(emote_id: &Self::EmoteId) -> AnyResult<Self::Emote> {

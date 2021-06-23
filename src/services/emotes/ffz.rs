@@ -116,6 +116,25 @@ impl EmoteRW for FfzEmotes {
         })
     }
 
+    async fn get_history_and_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)> {
+        let (room, history) = futures::future::try_join(
+            ffz::get_room(broadcaster_id).map_err(|e| {
+                log::warn!("err: {}", e);
+                AnyError::msg("No such ffz-room")
+            }),
+            User::get_ffz_history(broadcaster_id, pool).map_err(|e| {
+                log::warn!("err: {}", e);
+                AnyError::msg("No history?!")
+            }),
+        )
+        .await?;
+
+        Ok((history, room.room._id))
+    }
+
     async fn get_emote_by_id(emote_id: &usize) -> AnyResult<ffz::FfzEmote> {
         ffz::get_emote(emote_id).await
     }
