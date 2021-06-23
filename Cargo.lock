@@ -2693,11 +2693,10 @@ dependencies = [
 
 [[package]]
 name = "twitch-irc"
-version = "2.2.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86e95e780ffbe8ca564036a4d6b79831974aa055503b12a59a9d1adf5438950b"
+checksum = "e54cf6932e6dbe8f0af0ece6eeaed9a57af1bff66fceedf42cd78dec834b16d6"
 dependencies = [
- "async-stream",
  "async-trait",
  "bytes",
  "chrono",
@@ -2705,13 +2704,13 @@ dependencies = [
  "futures-util",
  "itertools",
  "log",
- "native-tls",
  "reqwest",
  "serde",
  "smallvec",
  "thiserror",
  "tokio",
  "tokio-native-tls",
+ "tokio-stream",
  "tokio-util",
 ]
 

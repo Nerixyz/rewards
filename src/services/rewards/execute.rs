@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
 use actix::Addr;
-use anyhow::Result as AnyResult;
+use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
 use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
 use twitch_api2::eventsub::NotificationPayload;
 
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::{TimedModeMessage, TimeoutMessage};
+use crate::actors::messages::timeout_messages::CheckValidTimeoutMessage;
+use crate::actors::timeout_actor::TimeoutActor;
 use crate::models::reward::{Reward, RewardData};
 use crate::models::timed_mode;
 use crate::models::user::User;
@@ -19,7 +21,10 @@ use crate::services::rewards;
 use crate::services::rewards::reply::SpotifyAction;
 use crate::services::rewards::{extract_bttv_id, extract_ffz_id, extract_seventv_id, reply};
 use crate::services::spotify::rewards as spotify;
+use crate::services::twitch::requests::get_user_by_login;
 use futures::TryFutureExt;
+use tokio::sync::Mutex;
+use twitch_api2::twitch_oauth2::AppAccessToken;
 
 /// This doesn't update the reward-redemption on twitch!
 pub async fn execute_reward(
@@ -28,13 +33,36 @@ pub async fn execute_reward(
     broadcaster: User,
     pool: &PgPool,
     irc: Arc<Addr<IrcActor>>,
+    timeout_handler: Arc<Addr<TimeoutActor>>,
+    app_token: Arc<Mutex<AppAccessToken>>,
 ) -> AnyResult<()> {
     match reward.data.0 {
         RewardData::Timeout(timeout) => {
+            // check timeout
+            let username = rewards::extract_username(&redemption.event.user_input)?.to_lowercase();
+            let user = get_user_by_login(username.clone(), &*app_token.lock().await)
+                .await
+                .map_err(|_| AnyError::msg("Could not get user"))?;
+
+            let ok_timeout = timeout_handler
+                .send(CheckValidTimeoutMessage {
+                    channel_id: redemption.event.broadcaster_user_id.clone(),
+                    user_id: user.id.clone(),
+                })
+                .await
+                .map_err(|_| AnyError::msg("Too much traffic"))?
+                .map_err(|_| AnyError::msg("Internal error"))?;
+
+            if !ok_timeout {
+                return Err(AnyError::msg("Can't timeout this user"));
+            }
+
             irc.send(TimeoutMessage {
                 user: rewards::extract_username(&redemption.event.user_input)?,
+                user_id: user.id,
                 duration: rewards::get_duration(&timeout)?,
                 broadcaster: broadcaster.name,
+                broadcaster_id: redemption.event.broadcaster_user_id,
             })
             .await??
         }

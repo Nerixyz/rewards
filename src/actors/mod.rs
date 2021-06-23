@@ -5,4 +5,5 @@ pub mod live_actor;
 pub mod messages;
 pub mod pubsub_actor;
 pub mod slot_actor;
+pub mod timeout_actor;
 pub mod token_refresher;

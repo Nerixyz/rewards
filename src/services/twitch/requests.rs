@@ -1,5 +1,6 @@
 use crate::services::twitch::errors::TwitchApiError;
 use crate::services::twitch::{HelixResult, RHelixClient};
+use twitch_api2::twitch_oauth2::TwitchToken;
 use twitch_api2::{
     helix::{
         points::{
@@ -122,7 +123,7 @@ pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
         .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()))
 }
 
-pub async fn get_user_by_login(login: String, token: &UserToken) -> HelixResult<User> {
+pub async fn get_user_by_login<T: TwitchToken>(login: String, token: &T) -> HelixResult<User> {
     let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
         .req_get(GetUsersRequest::builder().login(vec![login]).build(), token)
         .await?;

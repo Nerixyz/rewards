@@ -5,4 +5,5 @@ pub mod reward;
 pub mod slot;
 pub mod spotify;
 pub mod timed_mode;
+pub mod timeout;
 pub mod user;
