@@ -17,6 +17,7 @@ export default defineComponent({
     label: {
       type: String,
       required: false,
+      default: undefined,
     },
     modelValue: {
       type: Number,

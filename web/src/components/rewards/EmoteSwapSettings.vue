@@ -1,6 +1,6 @@
 <template>
-  <CSwitch :model-value="sliderEnabled" @update:model-value="updateSliderEnabled" label="Limit emotes" />
-  <CSlider class="mt-2" v-if="state.limit !== null" v-model="state.limit" :min="1" :max="20" />
+  <CSwitch :model-value="sliderEnabled" label="Limit emotes" @update:model-value="updateSliderEnabled" />
+  <CSlider v-if="state.limit !== null" v-model="state.limit" class="mt-2" :min="1" :max="20" />
 </template>
 
 <script lang="ts">
