@@ -139,6 +139,7 @@ where
                 break;
             }
         }
+        RW::save_history(broadcaster_id, data, pool).await?;
     }
     Ok(())
 }
