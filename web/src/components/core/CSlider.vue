@@ -1,6 +1,6 @@
 <template>
   <div class="w-full mb-2">
-    <span>{{ label }}</span>
+    <span v-if="label">{{ label }}</span>
     <div class="flex w-full gap-3 px-1">
       <input class="flex-grow" type="range" :value="value" :min="min" :max="max" :step="step" @input="onUpdate" />
       <span>{{ currentValueStr }}</span>
@@ -16,7 +16,7 @@ export default defineComponent({
   props: {
     label: {
       type: String,
-      required: true,
+      required: false,
     },
     modelValue: {
       type: Number,
