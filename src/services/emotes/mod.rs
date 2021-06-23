@@ -52,6 +52,10 @@ pub trait EmoteRW {
         broadcaster_id: &str,
         platform_id: &Self::PlatformId,
     ) -> AnyResult<EmoteEnvData>;
+    async fn get_history_and_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)>;
 
     async fn get_emote_by_id(emote_id: &Self::EmoteId) -> AnyResult<Self::Emote>;
     async fn remove_emote(

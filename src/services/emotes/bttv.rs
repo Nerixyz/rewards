@@ -1,5 +1,5 @@
 use crate::models::slot::SlotPlatform;
-use crate::models::user::User;
+use crate::models::user::{User, UserBttvData};
 use crate::services::bttv::{get_or_fetch_id, requests as bttv};
 use crate::services::emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW};
 use anyhow::{Error as AnyError, Result as AnyResult};
@@ -9,6 +9,26 @@ use sqlx::PgPool;
 
 pub struct BttvEmotes {
     _private: usize,
+}
+
+impl BttvEmotes {
+    async fn get_data_and_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(UserBttvData, String)> {
+        let this_user = User::get_bttv_data(broadcaster_id, pool)
+            .await
+            .map_err(|_| AnyError::msg("No internal user"))?;
+        let bttv_id = if let Some(id) = &this_user.bttv_id {
+            id.to_string()
+        } else {
+            fetch_save_bttv_id(broadcaster_id, pool)
+                .await
+                .map_err(|_| AnyError::msg("No such user"))?
+        };
+
+        Ok((this_user, bttv_id))
+    }
 }
 
 impl Emote<String> for bttv::BttvEmote {
@@ -42,16 +62,7 @@ impl EmoteRW for BttvEmotes {
         emote_id: &str,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<String, bttv::BttvEmote, String>> {
-        let this_user = User::get_bttv_data(broadcaster_id, pool)
-            .await
-            .map_err(|_| AnyError::msg("Internal Error."))?;
-        let bttv_id = if let Some(id) = &this_user.bttv_id {
-            id.clone()
-        } else {
-            fetch_save_bttv_id(broadcaster_id, pool)
-                .await
-                .map_err(|_| AnyError::msg("No such user."))?
-        };
+        let (this_user, bttv_id) = Self::get_data_and_id(broadcaster_id, pool).await?;
 
         // get the data in parallel
         let (bttv_user, user_limits, emote_data) = futures::future::try_join3(
@@ -99,6 +110,14 @@ impl EmoteRW for BttvEmotes {
             max_emotes: bttv_limits.shared_emotes,
             current_emotes: shared_emotes.shared_emotes.len(),
         })
+    }
+
+    async fn get_history_and_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)> {
+        let (this_user, id) = Self::get_data_and_id(broadcaster_id, pool).await?;
+        Ok((this_user.bttv_history.0, id))
     }
 
     async fn get_emote_by_id(emote_id: &String) -> AnyResult<bttv::BttvEmote> {

@@ -1,5 +1,5 @@
 import { VRewardModel } from './model-conversion';
-import { SlotRewardData, RewardDataMap, SpotifyPlayOptions } from './types';
+import { SlotRewardData, RewardDataMap, SpotifyPlayOptions, SwapRewardData } from './types';
 interface StaticData<K extends keyof RewardDataMap> {
   display: string;
   inputRequired: boolean;
@@ -28,20 +28,20 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   BttvSwap: {
     display: 'Add/Swap Bttv Emote',
     inputRequired: true,
-    validOptions: opts => opts === null,
-    defaultOptions: null,
+    validOptions: emoteSwapValid,
+    defaultOptions: { limit: null },
   },
   FfzSwap: {
     display: 'Add/Swap Ffz Emote',
     inputRequired: true,
-    validOptions: opts => opts === null,
-    defaultOptions: null,
+    validOptions: emoteSwapValid,
+    defaultOptions: { limit: null },
   },
   SevenTvSwap: {
     display: 'Add/Swap 7TV Emote',
     inputRequired: true,
-    validOptions: opts => opts === null,
-    defaultOptions: null,
+    validOptions: emoteSwapValid,
+    defaultOptions: { limit: null },
   },
   BttvSlot: {
     display: 'Bttv Slots',
@@ -101,6 +101,11 @@ function TSEValid(opts: unknown): boolean {
 function emoteSlotValid(opts: unknown): boolean {
   if (typeof opts !== 'object' || opts === null) return false;
   return typeof (opts as SlotRewardData).slots === 'number' && typeof (opts as SlotRewardData).expiration === 'string';
+}
+
+function emoteSwapValid(opts: unknown): boolean {
+  if (typeof opts !== 'object') return false;
+  return opts === null || typeof (opts as SwapRewardData).limit === 'number' || (opts as SwapRewardData).limit === null;
 }
 
 function spotifyPlayValid(opts: unknown): boolean {

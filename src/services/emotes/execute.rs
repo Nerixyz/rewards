@@ -1,6 +1,6 @@
 use crate::actors::irc_actor::IrcActor;
 use crate::actors::messages::irc_messages::SayMessage;
-use crate::models::reward::SlotRewardData;
+use crate::models::reward::{SlotRewardData, SwapRewardData};
 use crate::services::emotes::{slots, swap, Emote, EmoteRW};
 use actix::Addr;
 use anyhow::Result as AnyResult;
@@ -13,6 +13,7 @@ use twitch_api2::eventsub::NotificationPayload;
 pub async fn execute_swap<RW, F, I, E, EI>(
     extractor: F,
     redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
+    reward_data: SwapRewardData,
     pool: &PgPool,
     irc: &Arc<Addr<IrcActor>>,
 ) -> AnyResult<()>
@@ -44,6 +45,7 @@ where
     match swap::swap_or_add_emote::<RW, I, E, EI>(
         &redemption.event.broadcaster_user_id,
         platform_id,
+        reward_data,
         pool,
     )
     .await

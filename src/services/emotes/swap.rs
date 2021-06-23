@@ -1,3 +1,4 @@
+use crate::models::reward::SwapRewardData;
 use crate::services::emotes::{Emote, EmoteRW};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use rand::prelude::SliceRandom;
@@ -7,6 +8,7 @@ use std::fmt::Display;
 pub async fn swap_or_add_emote<RW, I, E, EI>(
     broadcaster_id: &str,
     emote_id: &str,
+    reward_data: SwapRewardData,
     pool: &PgPool,
 ) -> AnyResult<(Option<String>, String)>
 where
@@ -16,8 +18,13 @@ where
     E: Emote<EI>,
 {
     let data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
-    let (removed_emote, mut history) = if data.current_emotes >= data.max_emotes {
-        remove_last_emote::<RW, I, E, EI>(data.history, &data.platform_id, data.emotes).await?
+    let (removed_emote, mut history) = if data.current_emotes >= data.max_emotes
+        || reward_data
+            .limit
+            .map(|l| data.history.len() >= l as usize)
+            .unwrap_or(false)
+    {
+        remove_last_emote::<RW, I, E, EI>(data.history, &data.platform_id, &data.emotes).await?
     } else {
         (None, data.history)
     };
@@ -62,7 +69,7 @@ where
 pub async fn remove_last_emote<RW, I, E, EI>(
     mut history: Vec<EI>,
     platform_id: &I,
-    current_emotes: Vec<E>,
+    current_emotes: &[E],
 ) -> AnyResult<(Option<EI>, Vec<EI>)>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
@@ -102,4 +109,37 @@ where
     };
 
     Ok((Some(emote), history))
+}
+
+pub async fn update_swap_limit<RW, I, E, EI>(
+    broadcaster_id: &str,
+    limit: u8,
+    pool: &PgPool,
+) -> AnyResult<()>
+where
+    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
+    I: Display,
+    EI: Display + ToOwned<Owned = EI>,
+    E: Emote<EI>,
+{
+    let limit = limit as usize;
+    let (data, id) = RW::get_history_and_platform_id(broadcaster_id, pool).await?;
+    if data.len() > limit {
+        // remove the last emotes
+
+        // pretend like there are no current emotes.
+        let current_emotes = [];
+        let mut data = data;
+        loop {
+            data = remove_last_emote::<RW, _, _, _>(data, &id, &current_emotes)
+                .await?
+                .1;
+
+            if data.len() <= limit {
+                break;
+            }
+        }
+        RW::save_history(broadcaster_id, data, pool).await?;
+    }
+    Ok(())
 }

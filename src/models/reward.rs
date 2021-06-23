@@ -41,9 +41,9 @@ pub enum RewardData {
     Timeout(String),
     SubOnly(String),
     EmoteOnly(String),
-    BttvSwap(()),
-    FfzSwap(()),
-    SevenTvSwap(()),
+    BttvSwap(#[serde(default)] SwapRewardData),
+    FfzSwap(#[serde(default)] SwapRewardData),
+    SevenTvSwap(#[serde(default)] SwapRewardData),
     BttvSlot(SlotRewardData),
     FfzSlot(SlotRewardData),
     SevenTvSlot(SlotRewardData),
@@ -56,6 +56,11 @@ pub enum RewardData {
 pub struct SlotRewardData {
     pub slots: usize,
     pub expiration: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SwapRewardData {
+    pub limit: Option<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

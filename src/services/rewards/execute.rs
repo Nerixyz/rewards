@@ -56,15 +56,23 @@ pub async fn execute_reward(
             })
             .await?
         }
-        RewardData::BttvSwap(_) => {
-            execute_swap::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, pool, &irc).await?;
-        }
-        RewardData::FfzSwap(_) => {
-            execute_swap::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, pool, &irc).await?;
-        }
-        RewardData::SevenTvSwap(_) => {
-            execute_swap::<SevenTvEmotes, _, _, _, _>(extract_seventv_id, redemption, pool, &irc)
+        RewardData::BttvSwap(data) => {
+            execute_swap::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, data, pool, &irc)
                 .await?;
+        }
+        RewardData::FfzSwap(data) => {
+            execute_swap::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, data, pool, &irc)
+                .await?;
+        }
+        RewardData::SevenTvSwap(data) => {
+            execute_swap::<SevenTvEmotes, _, _, _, _>(
+                extract_seventv_id,
+                redemption,
+                data,
+                pool,
+                &irc,
+            )
+            .await?;
         }
         RewardData::BttvSlot(slot) => {
             execute_slot::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, slot, pool, &irc)

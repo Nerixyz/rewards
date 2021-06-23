@@ -39,6 +39,10 @@
             v-else-if="['BttvSlot', 'FfzSlot', 'SevenTvSlot'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"
           />
+          <EmoteSwapSettings
+            v-else-if="['BttvSwap', 'FfzSwap', 'SevenTvSwap'].includes(rewardState.action.type)"
+            v-model="rewardState.action.data"
+          />
           <SpotifyPlayOptions
             v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(rewardState.action.type)"
             v-model="rewardState.action.data"
@@ -74,10 +78,12 @@ import CLoader from './core/CLoader.vue';
 import TickIcon from './icons/TickIcon.vue';
 import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
 import EmoteSlotSettings from './rewards/EmoteSlotSettings.vue';
+import EmoteSwapSettings from './rewards/EmoteSwapSettings.vue';
 
 export default defineComponent({
   name: 'AddOrEditRewardDialog',
   components: {
+    EmoteSwapSettings,
     EmoteSlotSettings,
     SpotifyPlayOptions,
     TickIcon,

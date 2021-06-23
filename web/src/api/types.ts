@@ -88,9 +88,9 @@ export interface RewardDataMap {
   Timeout: string;
   SubOnly: string;
   EmoteOnly: string;
-  BttvSwap: null;
-  FfzSwap: null;
-  SevenTvSwap: null;
+  BttvSwap: SwapRewardData | null;
+  FfzSwap: SwapRewardData | null;
+  SevenTvSwap: SwapRewardData | null;
   BttvSlot: SlotRewardData;
   FfzSlot: SlotRewardData;
   SevenTvSlot: SlotRewardData;
@@ -102,6 +102,10 @@ export interface RewardDataMap {
 export interface SlotRewardData {
   slots: number;
   expiration: string;
+}
+
+export interface SwapRewardData {
+  limit: number | null;
 }
 
 export interface SpotifyPlayOptions {
