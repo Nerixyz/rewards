@@ -1,6 +1,6 @@
 # Rewards
 
-This is an application that manages custom Twitch rewards.
+This is an application that manages custom Twitch rewards. The current instance is hosted at [rewards.nerixyz.de](https://rewards.nerixyz.de/).
 
 # Web Interface
 
@@ -33,9 +33,9 @@ This would timeout the user for a random duration between `10m` and `1h`.
 
 ### Available Rewards
 
-* Timeout user (set or random duration)
-* Enter Subonly-mode (set or random duration)
-* Enter Emoteonly-mode (set or random duration)
+* Timeout user (constant or random duration - only if they're not yet timed out)
+* Enter Subonly-mode (constant or random duration)
+* Enter Emoteonly-mode (constant or random duration)
 * Swap/Add BTTV/FFZ/7TV emotes (requires `RewardMore` to be an editor on each platform)
 * Add BTTV/FFZ/7TV emotes to slots that expire after a set amount of time (+/- 2min)
 * Skip a Spotify track
