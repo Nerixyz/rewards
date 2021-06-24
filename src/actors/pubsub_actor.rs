@@ -402,10 +402,7 @@ impl Handler<ModMessage> for PubSubActor {
                     })
                     .into_actor(self)
                     .map(|res, _, _| {
-                        match res {
-                            Err(e) => log::warn!("Could not send remove timeout message: {}", e),
-                            _ => (),
-                        };
+                        log_err!(res, "Could not send remove timeout message");
                     }),
             );
         };
