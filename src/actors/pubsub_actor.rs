@@ -1,13 +1,21 @@
 use crate::actors::live_actor::LiveActor;
 use crate::actors::messages::live_messages::{LiveMessage, OfflineMessage};
 use crate::actors::messages::pubsub_messages::{
-    PongMessage, ReconnectMessage, SubAllMessage, SubMessage, VideoPlaybackMessage,
+    ModMessage, PongMessage, ReconnectMessage, SubAllMessage, SubMessage, VideoPlaybackMessage,
 };
+use crate::actors::messages::timeout_messages::RemoveTimeoutMessage;
+use crate::actors::timeout_actor::TimeoutActor;
+use crate::constants::TWITCH_CLIENT_USER_ID;
 use crate::log_err;
-use actix::{Actor, Addr, AsyncContext, Context, Handler, WrapFuture};
+use crate::models::config::ConfigEntry;
+use actix::{Actor, ActorFutureExt, Addr, AsyncContext, Context, Handler, WrapFuture};
+use anyhow::Result as AnyResult;
 use futures_util::stream::SplitSink;
 use futures_util::SinkExt;
 use futures_util::StreamExt;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
+use sqlx::PgPool;
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
@@ -15,21 +23,27 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio_tungstenite::{
     connect_async, tungstenite::protocol::Message, MaybeTlsStream, WebSocketStream,
 };
+use twitch_api2::pubsub::moderation::{
+    ChatModeratorActions, ChatModeratorActionsReply, ModerationActionCommand,
+};
 use twitch_api2::pubsub::video_playback::{VideoPlaybackById, VideoPlaybackReply};
-use twitch_api2::pubsub::{Response, TopicData};
+use twitch_api2::pubsub::{Response, TopicData, Topics};
 
 #[derive(Debug)]
 enum InternalPubSubMessage {
     Ping,
     Reconnect,
     /// This is already the listen command at the auth token is needed
-    Listen(String),
+    Listen((String, String)),
     /// This is already the listen command at the auth token is needed
-    ListenAll(Vec<String>),
+    ListenAll(Vec<(String, String)>),
 }
 
 pub struct PubSubActor {
+    pool: PgPool,
+
     live_addr: Addr<LiveActor>,
+    timeout_handler: Addr<TimeoutActor>,
 
     sender: UnboundedSender<InternalPubSubMessage>,
     receiver: Option<UnboundedReceiver<InternalPubSubMessage>>,
@@ -38,14 +52,63 @@ pub struct PubSubActor {
 }
 
 impl PubSubActor {
-    pub fn new(live_addr: Addr<LiveActor>) -> Self {
+    pub fn new(
+        pool: PgPool,
+        live_addr: Addr<LiveActor>,
+        timeout_handler: Addr<TimeoutActor>,
+    ) -> Self {
         let (sender, receiver) = mpsc::unbounded_channel();
         Self {
+            pool,
             live_addr,
+            timeout_handler,
+
             sender,
             receiver: Some(receiver),
             last_pong: None,
             last_ping: None,
+        }
+    }
+
+    pub async fn get_access_token_and_id(pool: &PgPool) -> AnyResult<(String, u32)> {
+        let conf = ConfigEntry::get_user_token(pool).await?;
+        Ok((conf.access_token, TWITCH_CLIENT_USER_ID.parse()?))
+    }
+
+    pub fn make_topics_for_channel(
+        channel_id: u32,
+        this_user_id: u32,
+        access_token: &str,
+    ) -> String {
+        let nonce = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(30)
+            .map(char::from)
+            .collect::<String>();
+        twitch_api2::pubsub::listen_command(
+            &[
+                Topics::VideoPlaybackById(VideoPlaybackById { channel_id }),
+                Topics::ChatModeratorActions(ChatModeratorActions {
+                    channel_id,
+                    user_id: this_user_id,
+                }),
+            ],
+            access_token,
+            Some(nonce.as_str()),
+        )
+        .unwrap_or_else(|_| "{}".to_string())
+    }
+
+    pub async fn hydrate_all(topics: &HashSet<String>, pool: &PgPool) -> Vec<String> {
+        match Self::get_access_token_and_id(&pool).await {
+            Ok((token, id)) => topics
+                .iter()
+                .map(|chan| Self::make_topics_for_channel(chan.parse().unwrap_or(0), id, &token))
+                .collect(),
+            Err(e) => {
+                log::error!("Could not get access token: {}", e);
+                vec![]
+            }
         }
     }
 }
@@ -59,6 +122,7 @@ impl Actor for PubSubActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         let addr = ctx.address();
         let mut receiver = self.receiver.take().expect("This was set in Self::new");
+        let pool = self.pool.clone();
 
         let (send_tx, mut send_rx) = mpsc::unbounded_channel();
 
@@ -73,7 +137,7 @@ impl Actor for PubSubActor {
                     Some(new_sender) = send_rx.recv() => {
                         // The client reconnected; update the sender and listen to the previous topics
                         sender = new_sender;
-                        for msg in topics.iter() {
+                        for msg in Self::hydrate_all(&topics, &pool).await {
                             log_err!(sender.send(Message::Text(msg.to_string())).await, "Could not listen to all");
                         }
                     },
@@ -88,13 +152,13 @@ impl Actor for PubSubActor {
                                 }).to_string();
                                 log_err!(sender.send(Message::Text(json)).await, "Could not send PING");
                             },
-                            InternalPubSubMessage::Listen(msg) => {
-                                topics.insert(msg.clone());
+                            InternalPubSubMessage::Listen((chan, msg)) => {
+                                topics.insert(chan);
                                 log_err!(sender.send(Message::Text(msg)).await, "Could not listen");
                             },
                             InternalPubSubMessage::ListenAll(msgs) => {
-                                for msg in msgs {
-                                    topics.insert(msg.clone());
+                                for (chan, msg) in msgs {
+                                    topics.insert(chan);
                                     log_err!(sender.send(Message::Text(msg)).await, "Could not listen to all");
                                 }
                             }
@@ -159,6 +223,19 @@ impl Actor for PubSubActor {
                                             *reply,
                                         ));
                                     }
+                                    Response::Message {
+                                        data:
+                                            TopicData::ChatModeratorActions {
+                                                reply,
+                                                topic: ChatModeratorActions { channel_id, .. },
+                                            },
+                                    } => {
+                                        if let ChatModeratorActionsReply::ModerationAction(act) =
+                                            *reply
+                                        {
+                                            addr.do_send(ModMessage(channel_id.to_string(), act));
+                                        };
+                                    }
                                     _ => {}
                                 }
                             }
@@ -204,23 +281,67 @@ impl Handler<PongMessage> for PubSubActor {
 impl Handler<SubMessage> for PubSubActor {
     type Result = ();
 
-    fn handle(&mut self, msg: SubMessage, _ctx: &mut Self::Context) -> Self::Result {
-        log_err!(
-            self.sender.send(InternalPubSubMessage::Listen(msg.0)),
-            "Could not send subscribe-message"
+    fn handle(&mut self, msg: SubMessage, ctx: &mut Self::Context) -> Self::Result {
+        let pool = self.pool.clone();
+        let sender = self.sender.clone();
+        ctx.spawn(
+            async move {
+                match Self::get_access_token_and_id(&pool).await {
+                    Ok((token, id)) => {
+                        let topic =
+                            Self::make_topics_for_channel(msg.0.parse().unwrap_or(0), id, &token);
+                        let data = (msg.0, topic);
+                        log_err!(
+                            sender.send(InternalPubSubMessage::Listen(data)),
+                            "Could not send subscribe-message"
+                        );
+                    }
+                    Err(e) => {
+                        log::error!("Could not get access token: {}", e);
+                    }
+                };
+            }
+            .into_actor(self),
         );
     }
 }
 impl Handler<SubAllMessage> for PubSubActor {
     type Result = ();
 
-    fn handle(&mut self, msg: SubAllMessage, _ctx: &mut Self::Context) -> Self::Result {
-        log_err!(
-            self.sender.send(InternalPubSubMessage::ListenAll(msg.0)),
-            "Could not send sub-all-message"
+    fn handle(&mut self, msg: SubAllMessage, ctx: &mut Self::Context) -> Self::Result {
+        let pool = self.pool.clone();
+        let sender = self.sender.clone();
+        ctx.spawn(
+            async move {
+                match Self::get_access_token_and_id(&pool).await {
+                    Ok((token, id)) => {
+                        let data: Vec<(String, String)> = msg
+                            .0
+                            .into_iter()
+                            .map(|chan| {
+                                let topic = Self::make_topics_for_channel(
+                                    chan.parse().unwrap_or(0),
+                                    id,
+                                    &token,
+                                );
+                                (chan, topic)
+                            })
+                            .collect();
+                        log_err!(
+                            sender.send(InternalPubSubMessage::ListenAll(data)),
+                            "Could not send subscribe-message"
+                        );
+                    }
+                    Err(e) => {
+                        log::error!("Could not get access token: {}", e);
+                    }
+                };
+            }
+            .into_actor(self),
         );
     }
 }
+
 impl Handler<ReconnectMessage> for PubSubActor {
     type Result = ();
 
@@ -262,6 +383,31 @@ impl Handler<VideoPlaybackMessage> for PubSubActor {
                 );
             }
             _ => (),
+        };
+    }
+}
+
+impl Handler<ModMessage> for PubSubActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: ModMessage, ctx: &mut Self::Context) -> Self::Result {
+        if msg.1.moderation_action == ModerationActionCommand::Untimeout {
+            log::info!("Untimeout in {} for {}", msg.0, msg.1.target_user_id);
+            ctx.spawn(
+                self.timeout_handler
+                    .send(RemoveTimeoutMessage {
+                        channel_id: msg.0,
+                        user_id: msg.1.target_user_id,
+                        later: Duration::from_secs(0),
+                    })
+                    .into_actor(self)
+                    .map(|res, _, _| {
+                        match res {
+                            Err(e) => log::warn!("Could not send remove timeout message: {}", e),
+                            _ => (),
+                        };
+                    }),
+            );
         };
     }
 }

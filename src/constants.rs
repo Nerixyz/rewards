@@ -3,6 +3,7 @@ use dotenv_codegen::dotenv;
 pub const TWITCH_CLIENT_ID: &str = dotenv!("TWITCH_CLIENT_ID");
 pub const TWITCH_CLIENT_SECRET: &str = dotenv!("TWITCH_CLIENT_SECRET");
 pub const TWITCH_CLIENT_USER_LOGIN: &str = dotenv!("TWITCH_CLIENT_USER_LOGIN");
+pub const TWITCH_CLIENT_USER_ID: &str = dotenv!("TWITCH_CLIENT_USER_ID");
 pub const BTTV_JWT: &str = dotenv!("BTTV_JWT");
 pub const FFZ_SESSION: &str = dotenv!("FFZ_SESSION");
 pub const SEVEN_TV_JWT: &str = dotenv!("SEVEN_TV_JWT");
