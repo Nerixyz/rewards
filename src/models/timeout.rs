@@ -18,7 +18,11 @@ impl Timeout {
     ) -> SqlResult<()> {
         //language=PostgreSQL
         sqlx::query!(
-            r#"INSERT INTO timeouts (channel_id, user_id, expires_at) VALUES ($1, $2, $3)"#,
+            r#"
+                INSERT INTO timeouts (channel_id, user_id, expires_at)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (channel_id, user_id)
+                    DO UPDATE SET expires_at = $3"#,
             channel,
             user,
             expires_at as _
