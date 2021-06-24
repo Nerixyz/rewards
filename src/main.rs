@@ -24,15 +24,11 @@ use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{guard, web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
-use rand::distributions::Alphanumeric;
-use rand::Rng;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
 use tokio::sync::Mutex;
 use twitch_api2::helix::Scope;
-use twitch_api2::pubsub::video_playback::VideoPlaybackById;
-use twitch_api2::pubsub::{listen_command, Topics};
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 
@@ -94,7 +90,7 @@ async fn main() -> std::io::Result<()> {
     let app_access_token = web::Data::new(Mutex::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
     let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
-    let pubsub = PubSubActor::new(live_actor).start();
+    let pubsub = PubSubActor::new(pool.clone(), live_actor, timeout_actor.clone()).start();
     let initial_listens = make_initial_pubsub_listens(&pool)
         .await
         .expect("sql thingy");
@@ -212,22 +208,5 @@ fn get_default_headers() -> DefaultHeaders {
 async fn make_initial_pubsub_listens(pool: &PgPool) -> Result<Vec<String>, AnyError> {
     let users = User::get_all(pool).await?;
 
-    Ok(users
-        .into_iter()
-        .filter_map(|user| {
-            let nonce = rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(30)
-                .map(char::from)
-                .collect::<String>();
-            listen_command(
-                &[Topics::VideoPlaybackById(VideoPlaybackById {
-                    channel_id: user.id.parse().unwrap_or_default(),
-                })],
-                &user.access_token,
-                nonce.as_str(),
-            )
-            .ok()
-        })
-        .collect())
+    Ok(users.into_iter().map(|user| user.id).collect())
 }

@@ -42,10 +42,6 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
     type Result = ();
 
     fn handle(&mut self, msg: ChannelTimeoutMessage, ctx: &mut Self::Context) -> Self::Result {
-        if msg.duration < Duration::from_secs(60) {
-            return;
-        }
-
         let pool = self.pool.clone();
         ctx.spawn(
             async move {
@@ -59,16 +55,24 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
                     msg.duration
                 );
 
-                log_err!(
-                    Timeout::create(
-                        &msg.channel_id,
-                        &msg.user_id,
-                        Utc::now() + chrono_duration,
-                        &pool
-                    )
-                    .await,
-                    "Couldn't save timeout"
-                );
+                if chrono_duration > chrono::Duration::seconds(30) {
+                    // only save timeouts longer than 30s
+                    log_err!(
+                        Timeout::create(
+                            &msg.channel_id,
+                            &msg.user_id,
+                            Utc::now() + chrono_duration,
+                            &pool
+                        )
+                        .await,
+                        "Couldn't save timeout"
+                    );
+                } else {
+                    log_err!(
+                        Timeout::delete_specific(&msg.channel_id, &msg.user_id, &pool).await,
+                        "Couldn't remove timeout"
+                    );
+                }
             }
             .into_actor(self),
         );
