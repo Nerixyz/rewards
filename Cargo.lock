@@ -377,6 +377,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
+name = "bindings"
+version = "0.1.0"
+source = "git+https://github.com/Nerixyz/uptimer.git?rev=b2f1af0#b2f1af0a546466409b6ef889ae174227293fae01"
+dependencies = [
+ "windows",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -507,6 +515,12 @@ dependencies = [
  "unicode-width",
  "winapi",
 ]
+
+[[package]]
+name = "const-sha1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb58b6451e8c2a812ad979ed1d83378caa5e927eef2622017a45f251457c2c9d"
 
 [[package]]
 name = "const_fn"
@@ -1007,6 +1021,12 @@ dependencies = [
  "libc",
  "wasi 0.10.0+wasi-snapshot-preview1",
 ]
+
+[[package]]
+name = "git_info"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "641b847f0375f4b2c595438eefc17a9c0fbf47b400cbdd1ad9332bf1e16b779d"
 
 [[package]]
 name = "h2"
@@ -1931,6 +1951,7 @@ dependencies = [
  "env_logger",
  "futures",
  "futures-util",
+ "git_info",
  "hex",
  "hmac 0.11.0",
  "humantime",
@@ -1943,6 +1964,7 @@ dependencies = [
  "rand 0.8.3",
  "regex",
  "reqwest",
+ "rustc_version 0.4.0",
  "serde",
  "serde_json",
  "serde_qs",
@@ -1953,6 +1975,7 @@ dependencies = [
  "tokio-tungstenite",
  "twitch-irc",
  "twitch_api2",
+ "uptimer",
 ]
 
 [[package]]
@@ -1976,7 +1999,16 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 dependencies = [
- "semver",
+ "semver 0.9.0",
+]
+
+[[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver 1.0.3",
 ]
 
 [[package]]
@@ -2032,6 +2064,12 @@ checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f3aac57ee7f3272d8395c6e4f502f434f0e289fcd62876f70daa008c20dcabe"
 
 [[package]]
 name = "semver-parser"
@@ -2342,7 +2380,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d022496b16281348b52d0e30ae99e01a73d737b2f45d38fed4edf79f9325a1d5"
 dependencies = [
  "discard",
- "rustc_version",
+ "rustc_version 0.2.3",
  "stdweb-derive",
  "stdweb-internal-macros",
  "stdweb-internal-runtime",
@@ -2841,6 +2879,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
+name = "uptimer"
+version = "0.1.0"
+source = "git+https://github.com/Nerixyz/uptimer.git?rev=b2f1af0#b2f1af0a546466409b6ef889ae174227293fae01"
+dependencies = [
+ "bindings",
+ "tokio",
+ "windows",
+]
+
+[[package]]
 name = "url"
 version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3011,6 +3059,33 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windows"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc9f9638ab146d5aac1e2a11e6a7d0936f2539ff7bf506bda53e32d8bc717522"
+dependencies = [
+ "const-sha1",
+ "windows_gen",
+ "windows_macros",
+]
+
+[[package]]
+name = "windows_gen"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98559339612c93b285707747c52e6bc647ecbf4c1559287500e3c4dc0f9beecd"
+
+[[package]]
+name = "windows_macros"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6fbda4b2e343ede6ce95ae3bc2e35e546b7869e100b8c661d3393f4fbbb4cc6"
+dependencies = [
+ "syn",
+ "windows_gen",
+]
 
 [[package]]
 name = "winreg"
