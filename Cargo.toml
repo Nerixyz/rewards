@@ -12,8 +12,8 @@ members = [".", "setup"]
 [dependencies]
 # todo: sort this
 actix = "0.11.1"
-actix-web = { version = "4.0.0-beta.6" }
-actix-files = { git = "https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.6" }
+actix-web = { version = "4.0.0-beta.8" }
+actix-files = { git = "https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.8" }
 twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls"] }
 tokio = { version = "1", features = ["rt", "time", "sync"] }
 dotenv_codegen = "0.15"
