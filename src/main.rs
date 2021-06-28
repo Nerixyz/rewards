@@ -16,12 +16,13 @@ use crate::services::eventsub::{
 };
 use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
+use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_web::dev::Service;
-use actix_web::http::header::USER_AGENT;
+use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE, USER_AGENT};
 use actix_web::http::HeaderValue;
 use actix_web::middleware::{DefaultHeaders, Logger};
-use actix_web::{guard, web, App, HttpResponse, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
 use sqlx::postgres::PgConnectOptions;
@@ -40,10 +41,6 @@ mod guards;
 mod models;
 mod repositories;
 mod services;
-
-async fn web_index() -> std::io::Result<NamedFile> {
-    NamedFile::open("web/dist/index.html")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -128,6 +125,7 @@ async fn main() -> std::io::Result<()> {
             .data(pubsub.clone())
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
+            .wrap(create_cors())
             .wrap(Logger::default())
             .wrap_fn(|req, srv| {
                 let header: &str = req
@@ -152,21 +150,10 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
-                    .default_service(
-                        web::resource("").route(web::route().to(HttpResponse::NotFound)),
-                    ),
+                    .default_service(web::route().to(HttpResponse::NotFound)),
             )
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
-            .default_service(
-                web::resource("")
-                    .route(web::get().to(web_index))
-                    .route(web::route().guard(guard::Options()).to(HttpResponse::Ok))
-                    .route(
-                        web::route()
-                            .guard(guard::Not(guard::Get()))
-                            .to(HttpResponse::NotFound),
-                    ),
-            )
+            .default_service(NamedFile::open("web/dist/index.html").unwrap())
     })
     .bind("127.0.0.1:8082")?
     .run()
@@ -187,21 +174,17 @@ async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
 }
 
 fn get_default_headers() -> DefaultHeaders {
-    let headers = DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"));
+    DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"))
+}
 
+fn create_cors() -> Cors {
     if cfg!(debug_assertions) {
-        headers
-            .header("Access-Control-Allow-Origin", "*")
-            .header(
-                "Access-Control-Allow-Methods",
-                "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            )
-            .header(
-                "Access-Control-Allow-Headers",
-                "Authorization, Content-Type",
-            )
+        Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
     } else {
-        headers
+        Cors::default()
     }
 }
 
