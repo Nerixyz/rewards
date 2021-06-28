@@ -12,7 +12,7 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use twitch_api2::eventsub;
 use twitch_api2::eventsub::Payload;
 use twitch_api2::helix::points::CustomRewardRedemptionStatus;
@@ -23,7 +23,7 @@ async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
-    app_token: web::Data<Mutex<AppAccessToken>>,
+    app_token: web::Data<RwLock<AppAccessToken>>,
     timeout_actor: web::Data<Addr<TimeoutActor>>,
 ) -> Result<HttpResponse> {
     match payload.into_inner() {

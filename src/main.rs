@@ -28,7 +28,7 @@ use log::LevelFilter;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use twitch_api2::helix::Scope;
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
@@ -84,7 +84,7 @@ async fn main() -> std::io::Result<()> {
     let app_access_token = get_app_access_token()
         .await
         .expect("Could not get app access token");
-    let app_access_token = web::Data::new(Mutex::new(app_access_token));
+    let app_access_token = web::Data::new(RwLock::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
     let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
     let pubsub = PubSubActor::new(pool.clone(), live_actor, timeout_actor.clone()).start();
