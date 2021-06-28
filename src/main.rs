@@ -119,10 +119,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .data(pool.clone())
-            .data(irc_actor.clone())
-            .data(timeout_actor.clone())
-            .data(pubsub.clone())
+            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(irc_actor.clone()))
+            .app_data(web::Data::new(timeout_actor.clone()))
+            .app_data(web::Data::new(pubsub.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(create_cors())
