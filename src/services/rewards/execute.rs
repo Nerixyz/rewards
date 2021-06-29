@@ -23,7 +23,7 @@ use crate::services::rewards::{extract_bttv_id, extract_ffz_id, extract_seventv_
 use crate::services::spotify::rewards as spotify;
 use crate::services::twitch::requests::get_user_by_login;
 use futures::TryFutureExt;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::AppAccessToken;
 
 /// This doesn't update the reward-redemption on twitch!
@@ -34,13 +34,13 @@ pub async fn execute_reward(
     pool: &PgPool,
     irc: Arc<Addr<IrcActor>>,
     timeout_handler: Arc<Addr<TimeoutActor>>,
-    app_token: Arc<Mutex<AppAccessToken>>,
+    app_token: Arc<RwLock<AppAccessToken>>,
 ) -> AnyResult<()> {
     match reward.data.0 {
         RewardData::Timeout(timeout) => {
             // check timeout
             let username = rewards::extract_username(&redemption.event.user_input)?.to_lowercase();
-            let user = get_user_by_login(username.clone(), &*app_token.lock().await)
+            let user = get_user_by_login(username.clone(), &*app_token.read().await)
                 .await
                 .map_err(|_| AnyError::msg("Could not get user"))?;
 

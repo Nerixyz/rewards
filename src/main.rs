@@ -9,6 +9,7 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::guards::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
 use crate::services::eventsub::{
@@ -16,18 +17,17 @@ use crate::services::eventsub::{
 };
 use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
+use actix_cors::Cors;
 use actix_files::NamedFile;
-use actix_web::dev::Service;
-use actix_web::http::header::USER_AGENT;
-use actix_web::http::HeaderValue;
+use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
 use actix_web::middleware::{DefaultHeaders, Logger};
-use actix_web::{guard, web, App, HttpResponse, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use twitch_api2::helix::Scope;
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
@@ -40,10 +40,6 @@ mod guards;
 mod models;
 mod repositories;
 mod services;
-
-async fn web_index() -> std::io::Result<NamedFile> {
-    NamedFile::open("web/dist/index.html")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -87,7 +83,7 @@ async fn main() -> std::io::Result<()> {
     let app_access_token = get_app_access_token()
         .await
         .expect("Could not get app access token");
-    let app_access_token = web::Data::new(Mutex::new(app_access_token));
+    let app_access_token = web::Data::new(RwLock::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
     let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
     let pubsub = PubSubActor::new(pool.clone(), live_actor, timeout_actor.clone()).start();
@@ -122,51 +118,22 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .data(pool.clone())
-            .data(irc_actor.clone())
-            .data(timeout_actor.clone())
-            .data(pubsub.clone())
+            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(irc_actor.clone()))
+            .app_data(web::Data::new(timeout_actor.clone()))
+            .app_data(web::Data::new(pubsub.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
+            .wrap(create_cors())
+            .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
             .wrap(Logger::default())
-            .wrap_fn(|req, srv| {
-                let header: &str = req
-                    .headers()
-                    .get(USER_AGENT)
-                    .map(|ua: &HeaderValue| ua.to_str().ok())
-                    .flatten()
-                    .unwrap_or("");
-                let fut = if header.contains("paloaltonetworks.com") {
-                    None
-                } else {
-                    Some(srv.call(req))
-                };
-                async {
-                    if let Some(fut) = fut {
-                        fut.await
-                    } else {
-                        Err(actix_web::error::ErrorImATeapot("No, I don't think so"))
-                    }
-                }
-            })
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
-                    .default_service(
-                        web::resource("").route(web::route().to(HttpResponse::NotFound)),
-                    ),
+                    .default_service(web::route().to(HttpResponse::NotFound)),
             )
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
-            .default_service(
-                web::resource("")
-                    .route(web::get().to(web_index))
-                    .route(web::route().guard(guard::Options()).to(HttpResponse::Ok))
-                    .route(
-                        web::route()
-                            .guard(guard::Not(guard::Get()))
-                            .to(HttpResponse::NotFound),
-                    ),
-            )
+            .default_service(NamedFile::open("web/dist/index.html").unwrap())
     })
     .bind("127.0.0.1:8082")?
     .run()
@@ -187,21 +154,17 @@ async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
 }
 
 fn get_default_headers() -> DefaultHeaders {
-    let headers = DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"));
+    DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"))
+}
 
+fn create_cors() -> Cors {
     if cfg!(debug_assertions) {
-        headers
-            .header("Access-Control-Allow-Origin", "*")
-            .header(
-                "Access-Control-Allow-Methods",
-                "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            )
-            .header(
-                "Access-Control-Allow-Headers",
-                "Authorization, Content-Type",
-            )
+        Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
     } else {
-        headers
+        Cors::default()
     }
 }
 

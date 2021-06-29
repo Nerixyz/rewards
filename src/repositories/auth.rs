@@ -16,7 +16,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::client::reqwest_http_client;
 use twitch_api2::twitch_oauth2::tokens::UserTokenBuilder;
 use twitch_api2::twitch_oauth2::{
@@ -37,7 +37,7 @@ async fn twitch_callback(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     pubsub: web::Data<Addr<PubSubActor>>,
-    app_access_token: web::Data<Mutex<AppAccessToken>>,
+    app_access_token: web::Data<RwLock<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
 ) -> Result<HttpResponse> {
     let query = query.into_inner();
@@ -147,7 +147,7 @@ fn redirect_to_twitch_auth() -> HttpResponse {
 #[delete("")]
 async fn revoke(
     claims: JwtClaims,
-    app_access_token: web::Data<Mutex<AppAccessToken>>,
+    app_access_token: web::Data<RwLock<AppAccessToken>>,
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
 ) -> Result<HttpResponse> {

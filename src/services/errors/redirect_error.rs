@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use actix_web::body::Body;
 use actix_web::http::StatusCode;
-use actix_web::{BaseHttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError};
 
 #[derive(Debug)]
 pub struct RedirectError<L, D>
@@ -38,8 +38,8 @@ impl<L: Display + Debug, D: Debug + Display> ResponseError for RedirectError<L, 
         StatusCode::FOUND
     }
 
-    fn error_response(&self) -> BaseHttpResponse<Body> {
-        BaseHttpResponse::build(self.status_code())
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
             .insert_header((
                 "location",
                 match &self.data {

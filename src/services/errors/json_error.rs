@@ -1,8 +1,7 @@
 use std::fmt::{Debug, Display, Formatter};
 
-use actix_web::body::Body;
 use actix_web::http::StatusCode;
-use actix_web::{BaseHttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -37,8 +36,8 @@ impl<T: Debug + Display + Serialize> ResponseError for JsonError<T> {
         self.status
     }
 
-    fn error_response(&self) -> BaseHttpResponse<Body> {
-        BaseHttpResponse::build(self.status_code())
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
             .insert_header(("content-type", "application/json"))
             .body(
                 serde_json::to_string(self)
