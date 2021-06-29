@@ -9,6 +9,7 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::guards::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
 use crate::services::eventsub::{
@@ -18,9 +19,7 @@ use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_cors::Cors;
 use actix_files::NamedFile;
-use actix_web::dev::Service;
-use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE, USER_AGENT};
-use actix_web::http::HeaderValue;
+use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
@@ -126,27 +125,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(create_cors())
+            .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
             .wrap(Logger::default())
-            .wrap_fn(|req, srv| {
-                let header: &str = req
-                    .headers()
-                    .get(USER_AGENT)
-                    .map(|ua: &HeaderValue| ua.to_str().ok())
-                    .flatten()
-                    .unwrap_or("");
-                let fut = if header.contains("paloaltonetworks.com") {
-                    None
-                } else {
-                    Some(srv.call(req))
-                };
-                async {
-                    if let Some(fut) = fut {
-                        fut.await
-                    } else {
-                        Err(actix_web::error::ErrorImATeapot("No, I don't think so"))
-                    }
-                }
-            })
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
