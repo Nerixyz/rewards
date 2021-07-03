@@ -7,7 +7,7 @@ use sqlx::PgPool;
 #[derive(Debug, sqlx::FromRow)]
 pub struct TimedMode {
     pub id: i32,
-    pub user_name: Option<String>,
+    pub user_name: String,
     pub user_id: String,
     pub mode: Mode,
     pub end_ts: DateTime<Utc>,
@@ -55,7 +55,7 @@ impl TimedMode {
         let modes = sqlx::query_as!(
             Self,
             r#"
-            SELECT timed_modes.id, user_id, end_ts, mode as "mode: _", name as user_name
+            SELECT timed_modes.id as "id!", user_id as "user_id!", end_ts as "end_ts!", mode as "mode: Mode", name as "user_name!"
             FROM timed_modes
                 LEFT JOIN users u on u.id = timed_modes.user_id
         "#

@@ -22,11 +22,7 @@ pub async fn resolve_timed_modes(irc: Addr<IrcActor>, pool: &PgPool) -> AnyResul
         log_err!(
             irc.send(TimedModeMessage {
                 mode: mode.mode,
-                broadcaster: match mode.user_name {
-                    Some(name) => name,
-                    // don't return an error
-                    None => continue,
-                },
+                broadcaster: mode.user_name,
                 broadcaster_id: mode.user_id,
                 duration: duration.as_secs()
             })
