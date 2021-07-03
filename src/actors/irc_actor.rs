@@ -50,6 +50,7 @@ impl TokenStorage for PgTokenStorage {
     }
 
     async fn update_token(&mut self, token: &UserAccessToken) -> Result<(), Self::UpdateError> {
+        log::info!("Token updated");
         self.0
             .send(SaveToken(UserAccessToken {
                 refresh_token: token.refresh_token.clone(),
