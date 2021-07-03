@@ -55,7 +55,7 @@ impl TimedMode {
         let modes = sqlx::query_as!(
             Self,
             r#"
-            SELECT timed_modes.id as "id!", user_id as "user_id!", end_ts as "end_ts!", mode as "mode: Mode", name as "user_name!"
+            SELECT timed_modes.id as "id!", user_id as "user_id!", end_ts as "end_ts!", mode as "mode!: Mode", name as "user_name!"
             FROM timed_modes
                 LEFT JOIN users u on u.id = timed_modes.user_id
         "#
