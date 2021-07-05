@@ -8,7 +8,7 @@ use crate::actors::pubsub_actor::PubSubActor;
 use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
-use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, SERVER_URL};
 use crate::middleware::metrics::Metrics;
 use crate::middleware::useragent::UserAgentGuard;
 use crate::models::user::User;
@@ -176,6 +176,7 @@ fn create_cors() -> Cors {
             .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
     } else {
         Cors::default()
+            .allowed_origin(SERVER_URL)
     }
 }
 
