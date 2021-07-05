@@ -3067,6 +3067,7 @@ dependencies = [
  "futures-util",
  "itertools",
  "log",
+ "metrics",
  "reqwest",
  "serde",
  "smallvec",

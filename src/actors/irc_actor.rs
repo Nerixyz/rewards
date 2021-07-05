@@ -86,12 +86,15 @@ impl IrcActor {
         executor: Recipient<ExecuteCommandMessage>,
         timeout_handler: Addr<TimeoutActor>,
     ) -> Self {
-        let config = ClientConfig::new_simple(IrcCredentials::new(
-            TWITCH_CLIENT_USER_LOGIN.to_string(),
-            TWITCH_CLIENT_ID.to_string(),
-            TWITCH_CLIENT_SECRET.to_string(),
-            PgTokenStorage(db),
-        ));
+        let config = ClientConfig {
+            metrics_identifier: Some("client".into()),
+            ..ClientConfig::new_simple( IrcCredentials::new(
+                TWITCH_CLIENT_USER_LOGIN.to_string(),
+                                        TWITCH_CLIENT_ID.to_string(),
+                                        TWITCH_CLIENT_SECRET.to_string(),
+                                        PgTokenStorage(db),
+            ))
+        };
 
         let (incoming, client) = IrcClient::new(config);
         let (notice_tx, notice_rx) = channel(None);

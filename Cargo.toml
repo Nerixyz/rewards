@@ -15,7 +15,7 @@ actix = "0.11.1"
 actix-web = { version = "4.0.0-beta.8" }
 actix-files = { git = "https://github.com/actix/actix-web", tag = "web-v4.0.0-beta.8" }
 actix-cors = "0.6.0-beta.2"
-twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls"] }
+twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls", "metrics-collection"] }
 tokio = { version = "1", features = ["rt", "time", "sync"] }
 dotenv_codegen = "0.15"
 jsonwebtoken = "7.2.0"
