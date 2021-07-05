@@ -16,6 +16,7 @@ use crate::repositories::init_repositories;
 use crate::services::eventsub::{
     clear_invalid_rewards, clear_unfulfilled_redemptions, register_eventsub_for_all_unregistered,
 };
+use crate::services::metrics::register_metrics;
 use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_cors::Cors;
@@ -52,6 +53,7 @@ async fn main() -> std::io::Result<()> {
     let prom_handle = prom_recorder.handle();
     metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
     Metrics::register_metrics();
+    register_metrics();
 
     log::info!("Connecting to database");
 

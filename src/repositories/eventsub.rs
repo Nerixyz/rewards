@@ -12,6 +12,7 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use twitch_api2::eventsub;
 use twitch_api2::eventsub::Payload;
@@ -39,6 +40,7 @@ async fn reward_redemption(
 
             let pool = pool.into_inner();
             let irc = irc.into_inner();
+            let redemption_received = Instant::now();
             actix_web::rt::spawn(async move {
                 let reward = Reward::get_by_id(&redemption.event.reward.id, &pool).await;
 
@@ -51,6 +53,7 @@ async fn reward_redemption(
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)
                 {
+                    let reward_type = reward.data.0.to_string();
                     let status = match execute_reward(
                         redemption,
                         reward,
@@ -75,6 +78,17 @@ async fn reward_redemption(
                             CustomRewardRedemptionStatus::Canceled
                         }
                     };
+                    // here, the redemption is finally updated, so we'll log this
+                    metrics::increment_counter!("rewards_redemptions", "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" }, "reward" => reward_type.clone());
+                    let execution = Instant::now()
+                        .checked_duration_since(redemption_received)
+                        .unwrap_or_else(|| Duration::from_secs(0));
+                    metrics::histogram!("rewards_redemption_execution_duration",
+                        execution.as_secs_f64(),
+                        "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
+                        "reward" => reward_type.clone()
+                    );
+
                     match update_reward_redemption(
                         &broadcaster_id,
                         &reward_id,
