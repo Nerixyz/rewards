@@ -9,6 +9,7 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::middleware::metrics::Metrics;
 use crate::middleware::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
@@ -50,6 +51,7 @@ async fn main() -> std::io::Result<()> {
     let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
     let prom_handle = prom_recorder.handle();
     metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
+    Metrics::register_metrics();
 
     log::info!("Connecting to database");
 
@@ -132,6 +134,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(get_default_headers())
             .wrap(create_cors())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
+            .wrap(Metrics::new().ignore("/api/v1/metrics"))
             .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")
