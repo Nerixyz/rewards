@@ -51,6 +51,22 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Create a new application on the [Twitch Console](https://dev.twitch.tv/console/apps).
 * Copy `.env.example` to `.env` and set the appropriate values.
 * Run `setup.sh` or `setup.bat` depending on your platform.
+* Setup nginx to proxy `8082`.
+* Add the following entry to your nginx config:
+```conf
+location /api/v1/metrics {
+    return 403;
+}
+```
+* Add the following job to your prometheus config
+  
+```yaml
+- job_name: 'rewards'
+scrape_interval: 10s
+metrics_path: '/api/v1/metrics'
+static_configs:
+- targets: ['localhost:8082']
+```
 * Now you're done!
 
 ### Setting up a development environment

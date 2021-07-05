@@ -9,12 +9,14 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::guards::useragent::UserAgentGuard;
+use crate::middleware::metrics::Metrics;
+use crate::middleware::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
 use crate::services::eventsub::{
     clear_invalid_rewards, clear_unfulfilled_redemptions, register_eventsub_for_all_unregistered,
 };
+use crate::services::metrics::register_metrics;
 use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_cors::Cors;
@@ -24,6 +26,7 @@ use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
+use metrics_exporter_prometheus::PrometheusBuilder;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
@@ -36,7 +39,7 @@ mod actors;
 mod chat;
 mod constants;
 mod extractors;
-mod guards;
+mod middleware;
 mod models;
 mod repositories;
 mod services;
@@ -45,6 +48,12 @@ mod services;
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::builder().format_timestamp(None).init();
+
+    let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
+    let prom_handle = prom_recorder.handle();
+    metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
+    Metrics::register_metrics();
+    register_metrics();
 
     log::info!("Connecting to database");
 
@@ -122,11 +131,13 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(irc_actor.clone()))
             .app_data(web::Data::new(timeout_actor.clone()))
             .app_data(web::Data::new(pubsub.clone()))
+            .app_data(web::Data::new(prom_handle.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(create_cors())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
-            .wrap(Logger::default())
+            .wrap(Metrics::new().ignore("/api/v1/metrics"))
+            .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)

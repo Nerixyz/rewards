@@ -5,6 +5,7 @@ pub mod eventsub;
 pub mod ffz;
 pub mod formatting;
 pub mod jwt;
+pub mod metrics;
 pub mod rewards;
 pub mod seven_tv;
 pub mod spotify;

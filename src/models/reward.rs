@@ -35,20 +35,32 @@ pub struct LiveRewardAT {
     pub access_token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, derive_more::Display)]
 #[serde(tag = "type", content = "data")]
 pub enum RewardData {
+    #[display(fmt = "timeout")]
     Timeout(String),
+    #[display(fmt = "mode::sub")]
     SubOnly(String),
+    #[display(fmt = "mode::emote")]
     EmoteOnly(String),
+    #[display(fmt = "swap::bttv")]
     BttvSwap(#[serde(default)] SwapRewardData),
+    #[display(fmt = "swap::ffz")]
     FfzSwap(#[serde(default)] SwapRewardData),
+    #[display(fmt = "swap::7tv")]
     SevenTvSwap(#[serde(default)] SwapRewardData),
+    #[display(fmt = "slot::bttv")]
     BttvSlot(SlotRewardData),
+    #[display(fmt = "slot::ffz")]
     FfzSlot(SlotRewardData),
+    #[display(fmt = "slot::7tv")]
     SevenTvSlot(SlotRewardData),
+    #[display(fmt = "spotify::skip")]
     SpotifySkip(()),
+    #[display(fmt = "spotify::queue")]
     SpotifyQueue(SpotifyPlayOptions),
+    #[display(fmt = "spotify::play")]
     SpotifyPlay(SpotifyPlayOptions),
 }
 
