@@ -132,7 +132,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(get_default_headers())
             .wrap(create_cors())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
-            .wrap(Logger::default())
+            .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
