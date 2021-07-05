@@ -9,7 +9,7 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::guards::useragent::UserAgentGuard;
+use crate::middleware::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
 use crate::services::eventsub::{
@@ -37,7 +37,7 @@ mod actors;
 mod chat;
 mod constants;
 mod extractors;
-mod guards;
+mod middleware;
 mod models;
 mod repositories;
 mod services;

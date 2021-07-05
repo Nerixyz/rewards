@@ -6,7 +6,7 @@ mod logs;
 mod rewards;
 mod user;
 
-use crate::guards::eventsub::EventsubGuard;
+use crate::middleware::eventsub::EventsubGuard;
 use crate::repositories::auth::init_auth_routes;
 use crate::repositories::connections::init_connection_routes;
 use crate::repositories::editors::init_editor_routes;
