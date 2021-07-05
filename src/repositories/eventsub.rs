@@ -79,7 +79,10 @@ async fn reward_redemption(
                         }
                     };
                     // here, the redemption is finally updated, so we'll log this
-                    metrics::increment_counter!("rewards_redemptions", "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" }, "reward" => reward_type.clone());
+                    metrics::increment_counter!("rewards_redemptions",
+                        "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
+                        "reward" => reward_type.clone()
+                    );
                     let execution = Instant::now()
                         .checked_duration_since(redemption_received)
                         .unwrap_or_else(|| Duration::from_secs(0));
