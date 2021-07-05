@@ -24,6 +24,7 @@ use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
+use metrics_exporter_prometheus::PrometheusBuilder;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{ConnectOptions, PgPool};
 use std::str::FromStr;
@@ -45,6 +46,10 @@ mod services;
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::builder().format_timestamp(None).init();
+
+    let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
+    let prom_handle = prom_recorder.handle();
+    metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
 
     log::info!("Connecting to database");
 
@@ -122,6 +127,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(irc_actor.clone()))
             .app_data(web::Data::new(timeout_actor.clone()))
             .app_data(web::Data::new(pubsub.clone()))
+            .app_data(web::Data::new(prom_handle.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(create_cors())

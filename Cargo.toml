@@ -51,6 +51,8 @@ percent-encoding = "2.1.0"
 paste = "1.0.5"
 tokio-tungstenite = { version = "0.14.0", features = ["native-tls"] }
 uptimer = { git = "https://github.com/Nerixyz/uptimer.git", rev = "04002e9", features = ["async"] }
+metrics = "0.16.0"
+metrics-exporter-prometheus = "0.5.0"
 
 [build-dependencies]
 git_info = "0.1.2"

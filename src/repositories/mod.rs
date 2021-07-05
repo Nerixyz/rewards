@@ -14,7 +14,14 @@ use crate::repositories::eventsub::init_eventsub_routes;
 use crate::repositories::logs::init_log_routes;
 use crate::repositories::rewards::init_rewards_routes;
 use crate::repositories::user::init_user_routes;
-use actix_web::web;
+use actix_web::{get, web, Responder};
+use metrics_exporter_prometheus::PrometheusHandle;
+use std::future::{ready, Ready};
+
+#[get("/metrics")]
+fn metrics_render(handle: web::Data<PrometheusHandle>) -> Ready<impl Responder> {
+    ready(handle.render())
+}
 
 pub fn init_repositories(config: &mut web::ServiceConfig) {
     config
@@ -28,5 +35,6 @@ pub fn init_repositories(config: &mut web::ServiceConfig) {
             web::scope("/eventsub")
                 .wrap(EventsubGuard)
                 .configure(init_eventsub_routes),
-        );
+        )
+        .service(metrics_render);
 }
