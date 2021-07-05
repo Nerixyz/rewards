@@ -62,10 +62,10 @@ location /api/v1/metrics {
   
 ```yaml
 - job_name: 'rewards'
-scrape_interval: 10s
-metrics_path: '/api/v1/metrics'
-static_configs:
-- targets: ['localhost:8082']
+  scrape_interval: 10s
+  metrics_path: '/api/v1/metrics'
+  static_configs:
+  - targets: ['localhost:8082']
 ```
 * Now you're done!
 
