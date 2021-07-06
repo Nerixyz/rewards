@@ -19,18 +19,22 @@ struct AuthUriQuery<'a> {
     response_type: &'a str,
     redirect_uri: String,
     scope: &'a str,
-    state: String,
+    state: &'a str,
 }
 
-pub fn get_auth_url(user_id: String) -> AnyResult<String> {
+pub fn get_auth_url(user_id: String) -> AnyResult<(String, String)> {
+    let jwt = encode_jwt(&JwtClaims::new_short(user_id))?;
     let query = serde_qs::to_string(&AuthUriQuery {
         client_id: SPOTIFY_CLIENT_ID,
         response_type: "code",
         redirect_uri: get_redirect_url(),
         scope: SPOTIFY_SCOPES,
-        state: encode_jwt(&JwtClaims::new_short(user_id))?,
+        state: &jwt,
     })?;
-    Ok(format!("https://accounts.spotify.com/authorize?{}", query))
+    Ok((
+        format!("https://accounts.spotify.com/authorize?{}", query),
+        jwt,
+    ))
 }
 
 pub fn get_redirect_url() -> String {
