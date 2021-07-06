@@ -252,9 +252,11 @@ impl Handler<TimeoutMessage> for IrcActor {
                 msg.duration
             );
             client
-                .privmsg(
+                .timeout(
                     msg.broadcaster.clone(),
-                    format!("/timeout {} {}", msg.user, msg.duration),
+                    &msg.user,
+                    Duration::from_secs(msg.duration),
+                    Some("Channel Point Reward"),
                 )
                 .await?;
             let sent = Instant::now();
