@@ -1,4 +1,4 @@
-use crate::constants::FFZ_SESSION;
+use crate::constants::{FFZ_REMEMBER, FFZ_SESSION};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
@@ -24,6 +24,13 @@ lazy_static! {
             let url = "https://frankerfacez.com".parse::<Url>().unwrap();
             jar.add_cookie_str(
                 &format!("session={}; Domain=frankerfacez.com", FFZ_SESSION),
+                &url,
+            );
+            jar.add_cookie_str(
+                &format!(
+                    "remember_token={}; Domain=www.frankerfacez.com",
+                    FFZ_REMEMBER
+                ),
                 &url,
             );
 

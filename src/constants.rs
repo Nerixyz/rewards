@@ -6,6 +6,7 @@ pub const TWITCH_CLIENT_USER_LOGIN: &str = dotenv!("TWITCH_CLIENT_USER_LOGIN");
 pub const TWITCH_CLIENT_USER_ID: &str = dotenv!("TWITCH_CLIENT_USER_ID");
 pub const BTTV_JWT: &str = dotenv!("BTTV_JWT");
 pub const FFZ_SESSION: &str = dotenv!("FFZ_SESSION");
+pub const FFZ_REMEMBER: &str = dotenv!("FFZ_REMEMBER");
 pub const SEVEN_TV_JWT: &str = dotenv!("SEVEN_TV_JWT");
 pub const SERVER_URL: &str = dotenv!("SERVER_URL");
 pub const DATABASE_URL: &str = dotenv!("DATABASE_URL");
