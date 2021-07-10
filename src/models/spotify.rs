@@ -7,6 +7,7 @@ pub struct SpotifyData {
     pub user_id: String,
     pub access_token: String,
     pub refresh_token: String,
+    pub only_while_live: bool,
 }
 
 impl SpotifyData {
