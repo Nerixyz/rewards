@@ -25,6 +25,14 @@
           <SpotifyIcon class="h-14 w-auto" />
           <div v-if="state.value.spotify" class="flex flex-col items-center gap-3">
             <span>Authorized</span>
+            <div class="mx-1 my-3 text-white">
+              <h4 class="font-serif text-xl mb-3 border-b border-white border-opacity-30">Settings</h4>
+              <CSwitch
+                v-model="state.value.spotify.only_while_live"
+                label="Allow control only while live"
+                @update:model-value="sendSpotifySettings"
+              />
+            </div>
             <OutlinedButton @click="revokeSpotifyAuth">Revoke</OutlinedButton>
           </div>
           <CButton v-else :href="spotifyUrl.value ?? ''" :disabled="!!(spotifyUrl.loading || spotifyUrl.error)"
@@ -46,13 +54,14 @@ import { asyncState, tryAsync } from '../async-state';
 import { Connections } from '../api/types';
 import Heading from '../components/core/Heading.vue';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
+import CSwitch from '../components/core/CSwitch.vue';
 
 export default defineComponent({
   name: 'ConnectionsDashboard',
-  components: { OutlinedButton, Heading, SpotifyIcon, CButton, CLoader },
+  components: { CSwitch, OutlinedButton, Heading, SpotifyIcon, CButton, CLoader },
   setup() {
     const api = useApi();
-    const { state } = asyncState<Connections>({ spotify: false });
+    const { state } = asyncState<Connections>({ spotify: undefined });
     const { state: spotifyUrl } = asyncState<string | null>(null);
 
     watch(
@@ -78,7 +87,15 @@ export default defineComponent({
         state.value = await api.getConnections();
       }, state);
 
-    return { state, spotifyUrl, revokeSpotifyAuth };
+    const sendSpotifySettings = () => {
+      tryAsync(async state => {
+        if (state.value.spotify) {
+          await api.updateSpotifySettings(state.value.spotify);
+        }
+      }, state);
+    };
+
+    return { state, spotifyUrl, revokeSpotifyAuth, sendSpotifySettings };
   },
 });
 </script>

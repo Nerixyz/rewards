@@ -1,5 +1,6 @@
 use crate::services::spotify::responses::{AccessTokenResponse, RefreshTokenResponse};
 use crate::services::sql::SqlResult;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
 #[derive(FromRow)]
@@ -7,6 +8,12 @@ pub struct SpotifyData {
     pub user_id: String,
     pub access_token: String,
     pub refresh_token: String,
+    pub only_while_live: bool,
+}
+
+#[derive(FromRow, Serialize, Deserialize)]
+pub struct SpotifySettings {
+    pub only_while_live: bool,
 }
 
 impl SpotifyData {
@@ -70,6 +77,35 @@ impl SpotifyData {
         sqlx::query!(r#"DELETE FROM spotify WHERE user_id = $1"#, id,)
             .execute(pool)
             .await?;
+
+        Ok(())
+    }
+}
+
+impl SpotifySettings {
+    pub async fn by_id(id: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
+        // language=PostgreSQL
+        let data = sqlx::query_as!(
+            Self,
+            r#"SELECT only_while_live FROM spotify WHERE user_id=$1"#,
+            id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(data)
+    }
+
+    pub async fn save(&self, user_id: &str, pool: &PgPool) -> SqlResult<()> {
+        // language=PostgreSQL
+        sqlx::query_as!(
+            Self,
+            r#"UPDATE spotify SET only_while_live = $2 WHERE user_id = $1"#,
+            user_id,
+            self.only_while_live
+        )
+        .execute(pool)
+        .await?;
 
         Ok(())
     }

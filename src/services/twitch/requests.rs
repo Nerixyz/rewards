@@ -1,5 +1,6 @@
 use crate::services::twitch::errors::TwitchApiError;
 use crate::services::twitch::{HelixResult, RHelixClient};
+use twitch_api2::helix::streams::{GetStreamsRequest, Stream};
 use twitch_api2::twitch_oauth2::TwitchToken;
 use twitch_api2::{
     helix::{
@@ -141,4 +142,15 @@ pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<U
         .await?;
 
     Ok(response.data)
+}
+
+pub async fn is_user_live<T: TwitchToken>(id: String, token: &T) -> HelixResult<bool> {
+    let response: Response<GetStreamsRequest, Vec<Stream>> = RHelixClient::default()
+        .req_get(
+            GetStreamsRequest::builder().user_id(vec![id]).build(),
+            token,
+        )
+        .await?;
+
+    Ok(response.data.into_iter().next().is_some())
 }

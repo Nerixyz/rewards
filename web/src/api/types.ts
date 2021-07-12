@@ -136,6 +136,10 @@ export interface LogEntry {
   content: string;
 }
 
+export interface SpotifySettings {
+  only_while_live: boolean;
+}
+
 export interface Connections {
-  spotify: boolean;
+  spotify?: SpotifySettings;
 }

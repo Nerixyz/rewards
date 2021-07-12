@@ -1,4 +1,4 @@
-use crate::models::spotify::SpotifyData;
+use crate::models::spotify::{SpotifyData, SpotifySettings};
 use crate::services::errors;
 use crate::services::errors::redirect_error::RedirectError;
 use crate::services::jwt::{decode_jwt, JwtClaims};
@@ -6,7 +6,7 @@ use crate::services::spotify::auth::{get_auth_url, SpotifyAuthResponse};
 use crate::services::spotify::requests::get_token;
 use actix_web::cookie::CookieBuilder;
 use actix_web::{
-    delete, get,
+    delete, get, patch,
     web::{self, ServiceConfig},
     HttpRequest, HttpResponse, Result,
 };
@@ -16,16 +16,14 @@ use time::{Duration, OffsetDateTime};
 
 #[derive(Serialize)]
 struct ConnectionsList {
-    spotify: bool,
+    spotify: Option<SpotifySettings>,
 }
 
 #[get("")]
 async fn list_connections(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
-    let spotify = SpotifyData::get_by_id(claims.user_id(), &pool).await?;
+    let spotify = SpotifySettings::by_id(claims.user_id(), &pool).await?;
 
-    Ok(HttpResponse::Ok().json(ConnectionsList {
-        spotify: spotify.is_some(),
-    }))
+    Ok(HttpResponse::Ok().json(ConnectionsList { spotify }))
 }
 
 #[get("/spotify-callback")]
@@ -82,6 +80,17 @@ async fn spotify_auth(claims: JwtClaims) -> Result<HttpResponse> {
         .body(url))
 }
 
+#[patch("/spotify")]
+async fn update_spotify_data(
+    claims: JwtClaims,
+    data: web::Json<SpotifySettings>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse> {
+    data.0.save(claims.user_id(), &pool).await?;
+
+    Ok(HttpResponse::NoContent().finish())
+}
+
 #[delete("/spotify")]
 async fn remove_spotify_data(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
     SpotifyData::remove_for_id(claims.user_id(), &pool).await?;
@@ -94,5 +103,6 @@ pub fn init_connection_routes(config: &mut ServiceConfig) {
         .service(spotify_auth)
         .service(spotify_callback)
         .service(list_connections)
-        .service(remove_spotify_data);
+        .service(remove_spotify_data)
+        .service(update_spotify_data);
 }
