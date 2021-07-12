@@ -215,6 +215,7 @@ where
     match res.status() {
         StatusCode::NO_CONTENT => Ok(None),
         StatusCode::OK => Ok(Some(res.json().await?)),
+        StatusCode::FORBIDDEN => Err(AnyError::msg("403 - Seems to be a temporary error by Spotify - maybe premium is required")),
         status => Err(AnyError::msg(format!("Bad status: {}", status))),
     }
 }
