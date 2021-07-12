@@ -1,4 +1,13 @@
-import { Connections, InputReward, InternalCustomReward, LogEntry, Reward, TwitchReward, TwitchUser } from './types';
+import {
+  Connections,
+  InputReward,
+  InternalCustomReward,
+  LogEntry,
+  Reward,
+  SpotifySettings,
+  TwitchReward,
+  TwitchUser,
+} from './types';
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
@@ -32,6 +41,10 @@ class HttpClient extends BaseClient {
 
   getConnections() {
     return this.get<Connections>('connections');
+  }
+
+  updateSpotifySettings(settings: SpotifySettings) {
+    return this.patch(settings, 'connections', 'spotify');
   }
 
   removeConnection(name: 'spotify') {
