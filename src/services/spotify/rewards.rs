@@ -41,7 +41,7 @@ pub async fn queue_track(user_id: &str, track: TrackObject, pool: &PgPool) -> An
         .await
         .map_err(|e| {
             log::warn!("Could not queue: {}", e);
-            AnyError::msg("Couldn't queue")
+            AnyError::msg(format!("Couldn't queue - {}", e))
         })?;
 
     Ok(track.to_string())
@@ -56,7 +56,7 @@ pub async fn play_track(user_id: &str, track: TrackObject, pool: &PgPool) -> Any
         .await
         .map_err(|e| {
             log::warn!("Could not queue: {}", e);
-            AnyError::msg("Couldn't play")
+            AnyError::msg(format!("Couldn't play - {}", e))
         })?;
 
     Ok(track.to_string())
@@ -106,7 +106,7 @@ fn extract_spotify_id(str: &str) -> Option<&str> {
 async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
     let player = requests::get_player(&token).await.map_err(|e| {
         log::warn!("Could not get player: {}", e);
-        AnyError::msg("Internal Error")
+        e
     })?;
     if !player.is_playing {
         return Err(AnyError::msg("There's no song playing"));
