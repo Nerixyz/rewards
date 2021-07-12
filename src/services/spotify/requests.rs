@@ -157,14 +157,7 @@ async fn post204<U: IntoUrl>(url: U, auth_token: &str) -> AnyResult<()> {
         .header("Authorization", format!("Bearer {}", auth_token))
         .send()
         .await?;
-    if response.status() != StatusCode::NO_CONTENT {
-        return Err(AnyError::msg(format!(
-            "Expected 204 - got {}",
-            response.status()
-        )));
-    }
-
-    Ok(())
+    no_content_result(response)
 }
 
 async fn put204<U: IntoUrl, T: Serialize>(url: U, body: &T, auth_token: &str) -> AnyResult<()> {
@@ -174,14 +167,18 @@ async fn put204<U: IntoUrl, T: Serialize>(url: U, body: &T, auth_token: &str) ->
         .header("Authorization", format!("Bearer {}", auth_token))
         .send()
         .await?;
-    if response.status() != StatusCode::NO_CONTENT {
-        return Err(AnyError::msg(format!(
-            "Expected 204 - got {}",
-            response.status()
-        )));
-    }
+    no_content_result(response)
+}
 
-    Ok(())
+fn no_content_result(response: Response) -> AnyResult<()> {
+    match response.status() {
+        StatusCode::NO_CONTENT => Ok(()),
+        StatusCode::FORBIDDEN => Err(AnyError::msg("Controlling the player requires Spotify premium :/")),
+        x => Err(AnyError::msg(format!(
+            "Expected 204 - got {}",
+            x
+        )))
+    }
 }
 
 async fn get<U, T>(url: U, auth_token: &str) -> AnyResult<T>
