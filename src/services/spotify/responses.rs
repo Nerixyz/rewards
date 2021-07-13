@@ -20,14 +20,14 @@ pub struct RefreshTokenResponse {
     pub expires_in: usize,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct PlayerResponse {
     pub is_playing: bool,
     pub item: Option<PlayingItem>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum PlayingItem {
@@ -44,7 +44,7 @@ impl ToString for PlayingItem {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct TrackObject {
     pub name: String,
@@ -63,20 +63,20 @@ impl ToString for TrackObject {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct ArtistObject {
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct EpisodeObject {
     pub name: String,
     pub show: SimplifiedShowObject,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SimplifiedShowObject {
     pub name: String,
