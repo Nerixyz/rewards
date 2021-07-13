@@ -117,7 +117,7 @@ pub async fn play_track(uri: &str, auth_token: &str) -> AnyResult<()> {
 }
 
 pub async fn get_player(auth_token: &str) -> AnyResult<PlayerResponse> {
-    maybe_get("https://api.spotify.com/v1/me/player", auth_token)
+    maybe_get("https://api.spotify.com/v1/me/player/currently-playing", auth_token)
         .await
         .map(|maybe| {
             maybe.unwrap_or(PlayerResponse {
