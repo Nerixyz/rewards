@@ -117,7 +117,7 @@ pub async fn play_track(uri: &str, auth_token: &str) -> AnyResult<()> {
 }
 
 pub async fn get_player(auth_token: &str) -> AnyResult<PlayerResponse> {
-    maybe_get("https://api.spotify.com/v1/me/player", auth_token)
+    maybe_get("https://api.spotify.com/v1/me/player/currently-playing", auth_token)
         .await
         .map(|maybe| {
             maybe.unwrap_or(PlayerResponse {
@@ -215,7 +215,6 @@ where
     match res.status() {
         StatusCode::NO_CONTENT => Ok(None),
         StatusCode::OK => Ok(Some(res.json().await?)),
-        StatusCode::FORBIDDEN => Err(AnyError::msg("403 - Seems to be a temporary error by Spotify - maybe premium is required")),
         status => Err(AnyError::msg(format!("Bad status: {}", status))),
     }
 }

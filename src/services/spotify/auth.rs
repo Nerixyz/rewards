@@ -4,7 +4,7 @@ use anyhow::Result as AnyResult;
 use serde::{Deserialize, Serialize};
 
 pub const SPOTIFY_SCOPES: &str =
-    "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
+    "user-modify-playback-state user-read-currently-playing";
 
 #[derive(Deserialize)]
 #[serde(untagged)]
