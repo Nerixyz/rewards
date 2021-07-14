@@ -135,8 +135,9 @@ where
         .await?;
     if !response.status().is_success() {
         return Err(AnyError::msg(format!(
-            "Non OK status: {}",
-            response.status()
+            "Non OK status: {} - Error: {}",
+            response.status(),
+            response.text().await.unwrap_or_else(|_| "<no error?>".to_string())
         )));
     }
 
