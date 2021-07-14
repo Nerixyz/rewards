@@ -23,7 +23,7 @@ pub async fn skip_track(user_id: &str, pool: &PgPool) -> AnyResult<String> {
 
     requests::skip_next(&token).await.map_err(|e| {
         log::warn!("Could not skip: {}", e);
-        AnyError::msg("Couldn't skip")
+        AnyError::msg(format!("Couldn't skip - {}", e))
     })?;
 
     Ok(player
