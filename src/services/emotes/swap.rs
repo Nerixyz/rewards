@@ -36,8 +36,8 @@ where
                 sql_err
             );
         }
-        log::warn!("Could not add shared emote: {}", e);
-        return Err(AnyError::msg("Couldn't add shared emote."));
+        log::warn!("Could not add emote: {}", e);
+        return Err(AnyError::msg("Couldn't add emote."));
     }
     history.push(data.emote.id().to_owned());
     RW::save_history(broadcaster_id, history, pool)
