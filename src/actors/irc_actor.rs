@@ -87,7 +87,7 @@ impl IrcActor {
         timeout_handler: Addr<TimeoutActor>,
     ) -> Self {
         let config = ClientConfig {
-            metrics_identifier: Some("client".into()),
+            metrics_identifier: Some("rewardmore".into()),
             ..ClientConfig::new_simple(IrcCredentials::new(
                 TWITCH_CLIENT_USER_LOGIN.to_string(),
                 TWITCH_CLIENT_ID.to_string(),
