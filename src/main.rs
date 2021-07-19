@@ -9,7 +9,6 @@ use crate::actors::slot_actor::SlotActor;
 use crate::actors::timeout_actor::TimeoutActor;
 use crate::actors::token_refresher::TokenRefresher;
 use crate::constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::middleware::metrics::Metrics;
 use crate::middleware::useragent::UserAgentGuard;
 use crate::models::user::User;
 use crate::repositories::init_repositories;
@@ -21,6 +20,7 @@ use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_cors::Cors;
 use actix_files::NamedFile;
+use actix_metrics::Metrics;
 use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
 use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{web, App, HttpResponse, HttpServer};
@@ -136,7 +136,6 @@ async fn main() -> std::io::Result<()> {
             .wrap(get_default_headers())
             .wrap(create_cors())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
-            .wrap(Metrics::new().ignore("/api/v1/metrics"))
             .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")

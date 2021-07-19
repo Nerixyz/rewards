@@ -29,7 +29,11 @@ where
         (None, data.history)
     };
 
-    log::info!("Add emote_id={} to platform_id={}", data.emote.id(), data.platform_id);
+    log::info!(
+        "Add emote_id={} to platform_id={}",
+        data.emote.id(),
+        data.platform_id
+    );
     if let Err(e) = RW::add_emote(&data.platform_id, data.emote.id()).await {
         if let Err(sql_err) = RW::save_history(broadcaster_id, history, pool).await {
             log::warn!(

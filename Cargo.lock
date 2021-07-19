@@ -60,7 +60,8 @@ dependencies = [
 [[package]]
 name = "actix-files"
 version = "0.6.0-beta.6"
-source = "git+https://github.com/actix/actix-web?tag=web-v4.0.0-beta.8#604be5495f920a9f11056fad989ff757ed364f2b"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89b864740ed79d26e6e3c33fd2a1e03a071daaa43c88e6900ff1f9378fca88ce"
 dependencies = [
  "actix-http",
  "actix-service",
@@ -130,6 +131,18 @@ checksum = "c2f86cd6857c135e6e9fe57b1619a88d1f94a7df34c00e11fe13e64fd3438837"
 dependencies = [
  "quote",
  "syn",
+]
+
+[[package]]
+name = "actix-metrics"
+version = "0.2.1"
+source = "git+https://github.com/nerixyz/actix-metrics?tag=v0.2.1#035a7f7e1e82c4e1c62e5683c91890a4d1160878"
+dependencies = [
+ "actix-utils",
+ "actix-web",
+ "futures",
+ "metrics",
+ "pin-project",
 ]
 
 [[package]]
@@ -2242,6 +2255,7 @@ dependencies = [
  "actix",
  "actix-cors",
  "actix-files",
+ "actix-metrics",
  "actix-utils",
  "actix-web",
  "anyhow",
@@ -2261,6 +2275,7 @@ dependencies = [
  "hex",
  "hmac 0.11.0",
  "humantime",
+ "indexmap",
  "itertools",
  "jsonwebtoken",
  "lazy_static",

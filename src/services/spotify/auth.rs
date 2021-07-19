@@ -3,8 +3,7 @@ use crate::services::jwt::{encode_jwt, JwtClaims};
 use anyhow::Result as AnyResult;
 use serde::{Deserialize, Serialize};
 
-pub const SPOTIFY_SCOPES: &str =
-    "user-modify-playback-state user-read-currently-playing";
+pub const SPOTIFY_SCOPES: &str = "user-modify-playback-state user-read-currently-playing";
 
 #[derive(Deserialize)]
 #[serde(untagged)]

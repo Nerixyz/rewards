@@ -117,14 +117,17 @@ pub async fn play_track(uri: &str, auth_token: &str) -> AnyResult<()> {
 }
 
 pub async fn get_player(auth_token: &str) -> AnyResult<PlayerResponse> {
-    maybe_get("https://api.spotify.com/v1/me/player/currently-playing", auth_token)
-        .await
-        .map(|maybe| {
-            maybe.unwrap_or(PlayerResponse {
-                item: None,
-                is_playing: false,
-            })
+    maybe_get(
+        "https://api.spotify.com/v1/me/player/currently-playing",
+        auth_token,
+    )
+    .await
+    .map(|maybe| {
+        maybe.unwrap_or(PlayerResponse {
+            item: None,
+            is_playing: false,
         })
+    })
 }
 
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
@@ -173,11 +176,10 @@ async fn put204<U: IntoUrl, T: Serialize>(url: U, body: &T, auth_token: &str) ->
 fn no_content_result(response: Response) -> AnyResult<()> {
     match response.status() {
         StatusCode::NO_CONTENT => Ok(()),
-        StatusCode::FORBIDDEN => Err(AnyError::msg("Controlling the player requires Spotify premium :/")),
-        x => Err(AnyError::msg(format!(
-            "Expected 204 - got {}",
-            x
-        )))
+        StatusCode::FORBIDDEN => Err(AnyError::msg(
+            "Controlling the player requires Spotify premium :/",
+        )),
+        x => Err(AnyError::msg(format!("Expected 204 - got {}", x))),
     }
 }
 
