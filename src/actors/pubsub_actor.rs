@@ -11,13 +11,13 @@ use crate::{
     constants::TWITCH_CLIENT_USER_ID,
     log_err,
     models::config::ConfigEntry,
-    services::{errors::json_error::JsonError, sql::SqlReason},
 };
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,
 };
 use async_trait::async_trait;
+use errors::{json_error::JsonError, sql::SqlReason};
 use futures::{future, stream::StreamExt};
 use sqlx::PgPool;
 use std::time::Duration;

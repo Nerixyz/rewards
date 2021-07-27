@@ -1,7 +1,6 @@
 use crate::{
     models::reward::{Reward, RewardData},
     services::{
-        errors,
         jwt::JwtClaims,
         rewards::{
             save::save_reward,

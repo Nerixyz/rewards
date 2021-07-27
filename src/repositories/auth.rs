@@ -10,7 +10,6 @@ use crate::{
     constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
     models::{reward::Reward, user::User},
     services::{
-        errors::redirect_error::RedirectError,
         eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
         jwt::{encode_jwt, JwtClaims},
         twitch::requests::delete_reward,
@@ -18,6 +17,7 @@ use crate::{
 };
 use actix::Addr;
 use actix_web::{cookie::CookieBuilder, delete, get, web, HttpResponse, Result};
+use errors::redirect_error::RedirectError;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;

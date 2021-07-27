@@ -1,9 +1,7 @@
-use crate::{
-    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
-    services::sql::SqlResult,
-};
+use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
+use errors::sql::SqlResult;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};

@@ -1053,9 +1053,12 @@ version = "0.1.1"
 source = "git+https://github.com/Nerixyz/nerix-utils-rs?tag=errors-v0.1.1#7743a1b141919758a213a3f9ccdaf22d528772c0"
 dependencies = [
  "actix-web",
+ "derive_more",
+ "log",
  "paste",
  "serde",
  "serde_json",
+ "sqlx",
 ]
 
 [[package]]

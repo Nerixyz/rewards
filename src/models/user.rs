@@ -1,7 +1,5 @@
-use crate::{
-    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
-    services::sql::SqlResult,
-};
+use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use errors::sql::SqlResult;
 use sqlx::{types::Json, FromRow, PgPool};
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};

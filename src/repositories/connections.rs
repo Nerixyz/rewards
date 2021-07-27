@@ -1,8 +1,6 @@
 use crate::{
     models::spotify::{SpotifyData, SpotifySettings},
     services::{
-        errors,
-        errors::redirect_error::RedirectError,
         jwt::{decode_jwt, JwtClaims},
         spotify::{
             auth::{get_auth_url, SpotifyAuthResponse},
@@ -16,6 +14,7 @@ use actix_web::{
     web::{self, ServiceConfig},
     HttpRequest, HttpResponse, Result,
 };
+use errors::redirect_error::RedirectError;
 use serde::Serialize;
 use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};

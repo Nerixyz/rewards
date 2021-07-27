@@ -1,4 +1,5 @@
-use crate::{models::user::User, services::sql::SqlResult};
+use crate::models::user::User;
+use errors::sql::SqlResult;
 use sqlx::PgPool;
 
 pub struct Editor;

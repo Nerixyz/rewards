@@ -1,4 +1,4 @@
-use crate::services::sql::SqlResult;
+use errors::sql::SqlResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
 use twitch_irc::login::UserAccessToken;

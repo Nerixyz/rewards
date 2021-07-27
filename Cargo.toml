@@ -51,7 +51,7 @@ metrics-exporter-prometheus = "0.5.0"
 uptimer = { git = "https://github.com/Nerixyz/uptimer.git", rev = "04002e9", features = ["async"] }
 
 anyhow = "1.0.40"
-errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.1.1" }
+errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.1.1", features = ["sql-result", "sql-log"] }
 derive_more = "0.99.14"
 async-trait = "0.1.50"
 

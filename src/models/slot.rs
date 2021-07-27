@@ -1,5 +1,5 @@
-use crate::services::sql::SqlResult;
 use chrono::{DateTime, Utc};
+use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 
 #[derive(FromRow, Debug)]

@@ -1,5 +1,5 @@
-use crate::services::sql::SqlResult;
 use actix::Message;
+use errors::sql::SqlResult;
 use twitch_irc::login::UserAccessToken;
 
 #[derive(Message)]
