@@ -1,17 +1,22 @@
-use crate::actors::db_actor::DbActor;
-use crate::actors::messages::chat_messages::ExecuteCommandMessage;
-use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::actors::messages::irc_messages::{
-    ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage, TimedModeMessage,
-    TimeoutMessage, WhisperMessage,
+use crate::{
+    actors::{
+        db_actor::DbActor,
+        messages::{
+            chat_messages::ExecuteCommandMessage,
+            db_messages::{GetToken, SaveToken},
+            irc_messages::{
+                ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage,
+                TimedModeMessage, TimeoutMessage, WhisperMessage,
+            },
+            timeout_messages::{ChannelTimeoutMessage, RemoveTimeoutMessage},
+        },
+        timeout_actor::TimeoutActor,
+    },
+    chat::{parse::opt_next_space, try_parse_command},
+    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN},
+    log_err,
+    models::timed_mode::TimedMode,
 };
-use crate::actors::messages::timeout_messages::{ChannelTimeoutMessage, RemoveTimeoutMessage};
-use crate::actors::timeout_actor::TimeoutActor;
-use crate::chat::parse::opt_next_space;
-use crate::chat::try_parse_command;
-use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN};
-use crate::log_err;
-use crate::models::timed_mode::TimedMode;
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
     ResponseFuture, WrapFuture,
@@ -19,15 +24,23 @@ use actix::{
 use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use sqlx::PgPool;
-use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
-use std::time::{Duration, Instant};
-use tokio::sync::mpsc::UnboundedReceiver;
-use tokio::sync::watch::{channel, Receiver, Sender};
-use tokio::task;
-use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
-use twitch_irc::message::{ClearChatAction, ClearChatMessage, NoticeMessage, ServerMessage};
-use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Formatter},
+    time::{Duration, Instant},
+};
+use tokio::{
+    sync::{
+        mpsc::UnboundedReceiver,
+        watch::{channel, Receiver, Sender},
+    },
+    task,
+};
+use twitch_irc::{
+    login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken},
+    message::{ClearChatAction, ClearChatMessage, NoticeMessage, ServerMessage},
+    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+};
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
 type IrcClient = TwitchIRCClient<SecureTCPTransport, IrcCredentials>;

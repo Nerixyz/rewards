@@ -6,14 +6,14 @@ mod logs;
 mod rewards;
 mod user;
 
-use crate::middleware::eventsub::EventsubGuard;
-use crate::repositories::auth::init_auth_routes;
-use crate::repositories::connections::init_connection_routes;
-use crate::repositories::editors::init_editor_routes;
-use crate::repositories::eventsub::init_eventsub_routes;
-use crate::repositories::logs::init_log_routes;
-use crate::repositories::rewards::init_rewards_routes;
-use crate::repositories::user::init_user_routes;
+use crate::{
+    middleware::eventsub::EventsubGuard,
+    repositories::{
+        auth::init_auth_routes, connections::init_connection_routes, editors::init_editor_routes,
+        eventsub::init_eventsub_routes, logs::init_log_routes, rewards::init_rewards_routes,
+        user::init_user_routes,
+    },
+};
 use actix_metrics::Metrics;
 use actix_web::{get, web, Responder};
 use metrics_exporter_prometheus::PrometheusHandle;

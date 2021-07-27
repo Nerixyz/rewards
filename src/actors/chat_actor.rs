@@ -1,5 +1,4 @@
-use crate::actors::messages::chat_messages::ExecuteCommandMessage;
-use crate::actors::messages::irc_messages::SayMessage;
+use crate::actors::messages::{chat_messages::ExecuteCommandMessage, irc_messages::SayMessage};
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
 use sqlx::PgPool;
 

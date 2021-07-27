@@ -1,7 +1,13 @@
-use crate::models::slot::SlotPlatform;
-use crate::models::user::{User, UserBttvData};
-use crate::services::bttv::{get_or_fetch_id, requests as bttv};
-use crate::services::emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW};
+use crate::{
+    models::{
+        slot::SlotPlatform,
+        user::{User, UserBttvData},
+    },
+    services::{
+        bttv::{get_or_fetch_id, requests as bttv},
+        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+    },
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;

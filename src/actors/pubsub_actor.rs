@@ -1,13 +1,18 @@
-use crate::actors::live_actor::LiveActor;
-use crate::actors::messages::live_messages::{LiveMessage, OfflineMessage};
-use crate::actors::messages::pubsub_messages::{SubAllMessage, SubMessage};
-use crate::actors::messages::timeout_messages::RemoveTimeoutMessage;
-use crate::actors::timeout_actor::TimeoutActor;
-use crate::constants::TWITCH_CLIENT_USER_ID;
-use crate::log_err;
-use crate::models::config::ConfigEntry;
-use crate::services::errors::json_error::JsonError;
-use crate::services::sql::SqlReason;
+use crate::{
+    actors::{
+        live_actor::LiveActor,
+        messages::{
+            live_messages::{LiveMessage, OfflineMessage},
+            pubsub_messages::{SubAllMessage, SubMessage},
+            timeout_messages::RemoveTimeoutMessage,
+        },
+        timeout_actor::TimeoutActor,
+    },
+    constants::TWITCH_CLIENT_USER_ID,
+    log_err,
+    models::config::ConfigEntry,
+    services::{errors::json_error::JsonError, sql::SqlReason},
+};
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,

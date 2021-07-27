@@ -1,11 +1,17 @@
-use crate::models::spotify::{SpotifyData, SpotifySettings};
-use crate::services::errors;
-use crate::services::errors::redirect_error::RedirectError;
-use crate::services::jwt::{decode_jwt, JwtClaims};
-use crate::services::spotify::auth::{get_auth_url, SpotifyAuthResponse};
-use crate::services::spotify::requests::get_token;
-use actix_web::cookie::CookieBuilder;
+use crate::{
+    models::spotify::{SpotifyData, SpotifySettings},
+    services::{
+        errors,
+        errors::redirect_error::RedirectError,
+        jwt::{decode_jwt, JwtClaims},
+        spotify::{
+            auth::{get_auth_url, SpotifyAuthResponse},
+            requests::get_token,
+        },
+    },
+};
 use actix_web::{
+    cookie::CookieBuilder,
     delete, get, patch,
     web::{self, ServiceConfig},
     HttpRequest, HttpResponse, Result,

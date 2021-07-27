@@ -4,8 +4,7 @@ use crate::actors::messages::timeout_messages::{
 use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
 use sqlx::PgPool;
 
-use crate::log_err;
-use crate::models::timeout::Timeout;
+use crate::{log_err, models::timeout::Timeout};
 use chrono::Utc;
 use std::time::Duration;
 

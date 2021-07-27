@@ -1,8 +1,4 @@
-use crate::services::twitch::errors::TwitchApiError;
-use crate::services::twitch::{HelixResult, RHelixClient};
-use twitch_api2::helix::streams::{GetStreamsRequest, Stream};
-use twitch_api2::twitch_oauth2::TwitchToken;
-use twitch_api2::types::{Nickname, RewardId, UserId};
+use crate::services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient};
 use twitch_api2::{
     helix::{
         points::{
@@ -11,10 +7,12 @@ use twitch_api2::{
             DeleteCustomRewardRequest, GetCustomRewardRequest, UpdateCustomRewardBody,
             UpdateCustomRewardRequest,
         },
+        streams::{GetStreamsRequest, Stream},
         users::{GetUsersRequest, User},
         Response,
     },
-    twitch_oauth2::UserToken,
+    twitch_oauth2::{TwitchToken, UserToken},
+    types::{Nickname, RewardId, UserId},
 };
 
 pub async fn create_reward(

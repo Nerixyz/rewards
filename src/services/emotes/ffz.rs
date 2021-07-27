@@ -1,7 +1,10 @@
-use crate::models::slot::SlotPlatform;
-use crate::models::user::User;
-use crate::services::emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW};
-use crate::services::ffz::requests as ffz;
+use crate::{
+    models::{slot::SlotPlatform, user::User},
+    services::{
+        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+        ffz::requests as ffz,
+    },
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;

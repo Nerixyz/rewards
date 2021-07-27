@@ -1,10 +1,8 @@
 use crate::constants::SEVEN_TV_JWT;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use reqwest::IntoUrl;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use std::array::IntoIter;
-use std::collections::HashMap;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{array::IntoIter, collections::HashMap};
 
 #[derive(Serialize)]
 struct GqlRequest<'a> {

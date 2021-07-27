@@ -1,24 +1,30 @@
-use crate::constants::SERVER_URL;
-use crate::models::reward::RewardToUpdate;
-use crate::models::user::User;
-use crate::services::twitch::eventsub::{delete_subscription, subscribe_to_rewards};
-use crate::services::twitch::RHelixClient;
+use crate::{
+    constants::SERVER_URL,
+    models::{reward::RewardToUpdate, user::User},
+    services::twitch::{
+        eventsub::{delete_subscription, subscribe_to_rewards},
+        RHelixClient,
+    },
+};
 use actix_web::Result as ActixResult;
 use anyhow::Result as AnyhowResult;
 use futures::TryStreamExt;
 use regex::Regex;
 use sqlx::PgPool;
-use std::convert::TryInto;
-use std::sync::Arc;
+use std::{convert::TryInto, sync::Arc};
 use tokio::sync::RwLock;
-use twitch_api2::eventsub::Status;
-use twitch_api2::helix::eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest};
-use twitch_api2::helix::points::{
-    CustomRewardRedemption, CustomRewardRedemptionStatus, GetCustomRewardRedemptionRequest,
-    UpdateRedemptionStatusBody, UpdateRedemptionStatusRequest,
+use twitch_api2::{
+    eventsub::Status,
+    helix::{
+        eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest},
+        points::{
+            CustomRewardRedemption, CustomRewardRedemptionStatus, GetCustomRewardRedemptionRequest,
+            UpdateRedemptionStatusBody, UpdateRedemptionStatusRequest,
+        },
+        Response,
+    },
+    twitch_oauth2::{AppAccessToken, UserToken},
 };
-use twitch_api2::helix::Response;
-use twitch_api2::twitch_oauth2::{AppAccessToken, UserToken};
 
 pub async fn register_eventsub_for_id(
     id: &str,

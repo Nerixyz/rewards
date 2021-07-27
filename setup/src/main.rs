@@ -1,15 +1,12 @@
 use chrono::{DateTime, Duration, Utc};
 use dialoguer::{console::style, Confirm, Input, Password};
 use serde::Serialize;
-use std::collections::HashMap;
-use std::env;
-use std::ops::Add;
-use tokio_postgres::types::Json;
-use tokio_postgres::NoTls;
-use twitch_oauth2::client::reqwest_http_client;
-use twitch_oauth2::oauth2::url::Url;
-use twitch_oauth2::tokens::UserTokenBuilder;
-use twitch_oauth2::{ClientId, ClientSecret, RedirectUrl, Scope, TwitchToken};
+use std::{collections::HashMap, env, ops::Add};
+use tokio_postgres::{types::Json, NoTls};
+use twitch_oauth2::{
+    client::reqwest_http_client, oauth2::url::Url, tokens::UserTokenBuilder, ClientId,
+    ClientSecret, RedirectUrl, Scope, TwitchToken,
+};
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "type", content = "data")]

@@ -1,6 +1,7 @@
-use crate::models::editor::Editor;
-use crate::services::jwt::JwtClaims;
-use crate::services::twitch::requests::get_users;
+use crate::{
+    models::editor::Editor,
+    services::{jwt::JwtClaims, twitch::requests::get_users},
+};
 use actix_web::{delete, get, put, web, HttpResponse, Result};
 use sqlx::PgPool;
 

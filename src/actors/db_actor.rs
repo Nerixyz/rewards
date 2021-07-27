@@ -1,6 +1,8 @@
-use crate::actors::messages::db_messages::{GetToken, SaveToken};
-use crate::models::config::ConfigEntry;
-use crate::services::sql::SqlResult;
+use crate::{
+    actors::messages::db_messages::{GetToken, SaveToken},
+    models::config::ConfigEntry,
+    services::sql::SqlResult,
+};
 use actix::{Actor, Context, Handler, ResponseFuture};
 use sqlx::PgPool;
 use twitch_irc::login::UserAccessToken;

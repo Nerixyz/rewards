@@ -1,8 +1,10 @@
 use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
 
-use crate::models::user::User;
-use crate::services::bttv::requests::{get_dashboards, get_user_by_twitch_id, BttvLimits};
+use crate::{
+    models::user::User,
+    services::bttv::requests::{get_dashboards, get_user_by_twitch_id, BttvLimits},
+};
 
 pub mod requests;
 

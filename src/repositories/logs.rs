@@ -1,6 +1,7 @@
-use crate::models::log_entry::LogEntry;
-use crate::services::jwt::JwtClaims;
-use crate::services::sql::get_user_or_editor;
+use crate::{
+    models::log_entry::LogEntry,
+    services::{jwt::JwtClaims, sql::get_user_or_editor},
+};
 use actix_web::{
     get,
     web::{self, ServiceConfig},

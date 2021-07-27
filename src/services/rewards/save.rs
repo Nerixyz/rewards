@@ -1,10 +1,11 @@
-use crate::models::reward::RewardData;
-use crate::services::emotes::bttv::BttvEmotes;
-use crate::services::emotes::ffz::FfzEmotes;
-use crate::services::emotes::seven_tv::SevenTvEmotes;
-use crate::services::emotes::{slots, swap};
-use crate::services::ffz;
-use crate::services::{bttv, seven_tv};
+use crate::{
+    models::reward::RewardData,
+    services::{
+        bttv,
+        emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap},
+        ffz, seven_tv,
+    },
+};
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
 

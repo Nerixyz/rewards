@@ -3,8 +3,7 @@ use std::sync::Arc;
 use actix::Addr;
 use anyhow::Result as AnyResult;
 
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::SayMessage;
+use crate::actors::{irc_actor::IrcActor, messages::irc_messages::SayMessage};
 
 pub enum SpotifyAction {
     Skip,

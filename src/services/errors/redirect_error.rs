@@ -1,8 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
 
-use actix_web::body::Body;
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{body::Body, http::StatusCode, HttpResponse, ResponseError};
 
 #[derive(Debug)]
 pub struct RedirectError<L, D>

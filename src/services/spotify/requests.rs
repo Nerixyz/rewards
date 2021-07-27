@@ -1,16 +1,18 @@
-use crate::constants::{SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET};
-use crate::services::spotify::auth::get_redirect_url;
-use crate::services::spotify::responses::{
-    AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
+use crate::{
+    constants::{SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET},
+    services::spotify::{
+        auth::get_redirect_url,
+        responses::{
+            AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
+        },
+    },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use percent_encoding::{AsciiSet, CONTROLS};
-use reqwest::Client;
-use reqwest::{IntoUrl, Response, StatusCode};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use reqwest::{Client, IntoUrl, Response, StatusCode};
+use serde::{de::DeserializeOwned, Serialize};
 
 lazy_static! {
     static ref SPOTIFY_CLIENT: Client = Client::builder()

@@ -1,7 +1,5 @@
-use crate::actors::messages::irc_messages::SayMessage;
-use crate::chat::command::ChatCommand;
-use actix::Message;
-use actix::Recipient;
+use crate::{actors::messages::irc_messages::SayMessage, chat::command::ChatCommand};
+use actix::{Message, Recipient};
 use twitch_irc::message::PrivmsgMessage;
 
 #[derive(Message)]

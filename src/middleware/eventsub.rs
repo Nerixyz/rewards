@@ -1,23 +1,25 @@
-use crate::constants::EVENTSUB_BASE64_SECRET;
-use crate::services::errors;
-use actix_web::dev::Payload;
-use actix_web::error::PayloadError;
-use actix_web::http::HeaderValue;
-use actix_web::web::{Bytes, BytesMut};
+use crate::{constants::EVENTSUB_BASE64_SECRET, services::errors};
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    dev::{Payload, Service, ServiceRequest, ServiceResponse, Transform},
+    error::PayloadError,
+    http::HeaderValue,
+    web::{Bytes, BytesMut},
     Error, HttpMessage,
 };
 use chrono::{DateTime, Duration, Utc};
-use futures::future::{ok, Ready};
-use futures::StreamExt;
+use futures::{
+    future::{ok, Ready},
+    StreamExt,
+};
 use hmac::{Hmac, Mac, NewMac};
 use sha2::Sha256;
-use std::cell::RefCell;
-use std::future::Future;
-use std::pin::Pin;
-use std::rc::Rc;
-use std::task::{Context, Poll};
+use std::{
+    cell::RefCell,
+    future::Future,
+    pin::Pin,
+    rc::Rc,
+    task::{Context, Poll},
+};
 
 pub struct EventsubGuard;
 

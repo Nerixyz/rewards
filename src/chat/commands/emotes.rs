@@ -1,5 +1,4 @@
-use crate::chat::command::ChatCommand;
-use crate::models::slot::Slot;
+use crate::{chat::command::ChatCommand, models::slot::Slot};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use itertools::Itertools;

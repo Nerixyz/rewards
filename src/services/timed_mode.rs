@@ -1,7 +1,8 @@
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::TimedModeMessage;
-use crate::log_err;
-use crate::models::timed_mode::TimedMode;
+use crate::{
+    actors::{irc_actor::IrcActor, messages::irc_messages::TimedModeMessage},
+    log_err,
+    models::timed_mode::TimedMode,
+};
 use actix::Addr;
 use anyhow::Result as AnyResult;
 use chrono::Utc;

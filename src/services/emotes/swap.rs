@@ -1,5 +1,7 @@
-use crate::models::reward::SwapRewardData;
-use crate::services::emotes::{Emote, EmoteRW};
+use crate::{
+    models::reward::SwapRewardData,
+    services::emotes::{Emote, EmoteRW},
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use rand::prelude::SliceRandom;
 use sqlx::PgPool;

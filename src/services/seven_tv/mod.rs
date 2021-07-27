@@ -1,8 +1,9 @@
 use anyhow::{Error as AnyError, Result as AnyResult};
 
-use crate::constants::TWITCH_CLIENT_USER_LOGIN;
-use crate::models::user::User;
-use crate::services::seven_tv::requests::get_user_editors;
+use crate::{
+    constants::TWITCH_CLIENT_USER_LOGIN, models::user::User,
+    services::seven_tv::requests::get_user_editors,
+};
 use sqlx::PgPool;
 
 pub mod requests;

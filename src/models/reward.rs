@@ -1,16 +1,17 @@
-use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::services::sql::SqlResult;
+use crate::{
+    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    services::sql::SqlResult,
+};
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
 use futures::Stream;
 use serde::{Deserialize, Serialize};
-use sqlx::types::Json;
-use sqlx::{FromRow, PgPool};
-use std::convert::TryFrom;
-use std::pin::Pin;
-use std::time::Duration;
-use twitch_api2::helix::points::CreateCustomRewardResponse;
-use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
+use sqlx::{types::Json, FromRow, PgPool};
+use std::{convert::TryFrom, pin::Pin, time::Duration};
+use twitch_api2::{
+    helix::points::CreateCustomRewardResponse,
+    twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken},
+};
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct Reward {

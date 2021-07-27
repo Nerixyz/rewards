@@ -1,10 +1,10 @@
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::WhisperMessage;
-use crate::actors::timeout_actor::TimeoutActor;
-use crate::models::reward::Reward;
-use crate::models::user::User;
-use crate::services::rewards::execute::execute_reward;
-use crate::services::twitch::eventsub::update_reward_redemption;
+use crate::{
+    actors::{
+        irc_actor::IrcActor, messages::irc_messages::WhisperMessage, timeout_actor::TimeoutActor,
+    },
+    models::{reward::Reward, user::User},
+    services::{rewards::execute::execute_reward, twitch::eventsub::update_reward_redemption},
+};
 use actix::Addr;
 use actix_web::{
     post,
@@ -14,10 +14,10 @@ use actix_web::{
 use sqlx::PgPool;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use twitch_api2::eventsub;
-use twitch_api2::eventsub::Payload;
-use twitch_api2::helix::points::CustomRewardRedemptionStatus;
-use twitch_api2::twitch_oauth2::AppAccessToken;
+use twitch_api2::{
+    eventsub, eventsub::Payload, helix::points::CustomRewardRedemptionStatus,
+    twitch_oauth2::AppAccessToken,
+};
 
 #[post("/reward")]
 async fn reward_redemption(

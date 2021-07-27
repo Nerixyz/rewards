@@ -1,21 +1,27 @@
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::SayMessage;
-use crate::actors::messages::live_messages::{LiveMessage, OfflineMessage};
-use crate::log_err;
-use crate::models::reward::Reward;
-use crate::models::user::User;
-use crate::services::twitch::requests::{get_reward_for_broadcaster_by_id, update_reward};
+use crate::{
+    actors::{
+        irc_actor::IrcActor,
+        messages::{
+            irc_messages::SayMessage,
+            live_messages::{LiveMessage, OfflineMessage},
+        },
+    },
+    log_err,
+    models::{reward::Reward, user::User},
+    services::twitch::requests::{get_reward_for_broadcaster_by_id, update_reward},
+};
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, WrapFuture,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::Utc;
-use futures::future::TryFutureExt;
-use futures::stream::{self, StreamExt};
+use futures::{
+    future::TryFutureExt,
+    stream::{self, StreamExt},
+};
 use sqlx::PgPool;
 
-use twitch_api2::helix::points::UpdateCustomRewardBody;
-use twitch_api2::twitch_oauth2::UserToken;
+use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
 
 struct UnpauseInfo {
     run_in: std::time::Duration,

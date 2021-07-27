@@ -1,5 +1,7 @@
-use crate::services::spotify::responses::{AccessTokenResponse, RefreshTokenResponse};
-use crate::services::sql::SqlResult;
+use crate::services::{
+    spotify::responses::{AccessTokenResponse, RefreshTokenResponse},
+    sql::SqlResult,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 

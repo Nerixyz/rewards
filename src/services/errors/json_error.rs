@@ -1,7 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
 
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]

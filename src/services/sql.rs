@@ -1,8 +1,7 @@
-use crate::models::editor::Editor;
-use crate::models::user::User;
-use crate::services::errors;
-use crate::services::errors::json_error::JsonError;
-use crate::services::jwt::JwtClaims;
+use crate::{
+    models::{editor::Editor, user::User},
+    services::{errors, errors::json_error::JsonError, jwt::JwtClaims},
+};
 use actix_web::http::StatusCode;
 use serde::Serialize;
 use sqlx::{Error, PgPool};

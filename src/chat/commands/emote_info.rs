@@ -1,7 +1,8 @@
-use crate::chat::command::ChatCommand;
-use crate::chat::parse::opt_next_space;
-use crate::models::slot::Slot;
-use crate::services::formatting::human_format_duration;
+use crate::{
+    chat::{command::ChatCommand, parse::opt_next_space},
+    models::slot::Slot,
+    services::formatting::human_format_duration,
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use chrono::Utc;

@@ -1,12 +1,18 @@
-use crate::models::reward::{Reward, RewardData};
-use crate::services::errors;
-use crate::services::jwt::JwtClaims;
-use crate::services::rewards::save::save_reward;
-use crate::services::rewards::verify::{verify_live_delay, verify_reward};
-use crate::services::sql::get_user_or_editor;
-use crate::services::twitch::requests::{
-    create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
-    update_reward,
+use crate::{
+    models::reward::{Reward, RewardData},
+    services::{
+        errors,
+        jwt::JwtClaims,
+        rewards::{
+            save::save_reward,
+            verify::{verify_live_delay, verify_reward},
+        },
+        sql::get_user_or_editor,
+        twitch::requests::{
+            create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
+            update_reward,
+        },
+    },
 };
 use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};

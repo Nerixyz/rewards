@@ -2,11 +2,11 @@ use crate::constants::BTTV_JWT;
 use anyhow::Result as AnyResult;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
-use reqwest::header::{HeaderMap, AUTHORIZATION};
-use reqwest::Client;
-use reqwest::{IntoUrl, Response};
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use reqwest::{
+    header::{HeaderMap, AUTHORIZATION},
+    Client, IntoUrl, Response,
+};
+use serde::{de::DeserializeOwned, Deserialize};
 
 lazy_static! {
     static ref BTTV_CLIENT: Client = Client::builder()

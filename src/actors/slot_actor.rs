@@ -1,18 +1,20 @@
-use crate::log_err;
-use crate::models::log_entry::LogEntry;
-use crate::models::slot::{Slot, SlotPlatform};
-use crate::models::user::User;
-use crate::services::emotes::bttv::BttvEmotes;
-use crate::services::emotes::ffz::FfzEmotes;
-use crate::services::emotes::seven_tv::SevenTvEmotes;
-use crate::services::emotes::EmoteRW;
-use crate::services::twitch::requests::update_reward;
+use crate::{
+    log_err,
+    models::{
+        log_entry::LogEntry,
+        slot::{Slot, SlotPlatform},
+        user::User,
+    },
+    services::{
+        emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
+        twitch::requests::update_reward,
+    },
+};
 use actix::{Actor, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
 use std::time::Duration;
-use twitch_api2::helix::points::UpdateCustomRewardBody;
-use twitch_api2::twitch_oauth2::UserToken;
+use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
 
 pub struct SlotActor {
     pool: PgPool,

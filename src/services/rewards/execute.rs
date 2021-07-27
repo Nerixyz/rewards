@@ -3,25 +3,39 @@ use std::sync::Arc;
 use actix::Addr;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
-use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1;
-use twitch_api2::eventsub::NotificationPayload;
+use twitch_api2::eventsub::{
+    channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload,
+};
 
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::messages::irc_messages::{TimedModeMessage, TimeoutMessage};
-use crate::actors::messages::timeout_messages::CheckValidTimeoutMessage;
-use crate::actors::timeout_actor::TimeoutActor;
-use crate::models::reward::{Reward, RewardData};
-use crate::models::timed_mode;
-use crate::models::user::User;
-use crate::services::emotes::bttv::BttvEmotes;
-use crate::services::emotes::execute::{execute_slot, execute_swap};
-use crate::services::emotes::ffz::FfzEmotes;
-use crate::services::emotes::seven_tv::SevenTvEmotes;
-use crate::services::rewards;
-use crate::services::rewards::reply::SpotifyAction;
-use crate::services::rewards::{extract_bttv_id, extract_ffz_id, extract_seventv_id, reply};
-use crate::services::spotify::rewards as spotify;
-use crate::services::twitch::requests::get_user_by_login;
+use crate::{
+    actors::{
+        irc_actor::IrcActor,
+        messages::{
+            irc_messages::{TimedModeMessage, TimeoutMessage},
+            timeout_messages::CheckValidTimeoutMessage,
+        },
+        timeout_actor::TimeoutActor,
+    },
+    models::{
+        reward::{Reward, RewardData},
+        timed_mode,
+        user::User,
+    },
+    services::{
+        emotes::{
+            bttv::BttvEmotes,
+            execute::{execute_slot, execute_swap},
+            ffz::FfzEmotes,
+            seven_tv::SevenTvEmotes,
+        },
+        rewards,
+        rewards::{
+            extract_bttv_id, extract_ffz_id, extract_seventv_id, reply, reply::SpotifyAction,
+        },
+        spotify::rewards as spotify,
+        twitch::requests::get_user_by_login,
+    },
+};
 use futures::TryFutureExt;
 use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::AppAccessToken;

@@ -1,5 +1,7 @@
-use crate::services::errors::json_error::JsonError;
-use crate::services::sql::{SqlReason, SqlResult};
+use crate::services::{
+    errors::json_error::JsonError,
+    sql::{SqlReason, SqlResult},
+};
 use actix_web::http::StatusCode;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;

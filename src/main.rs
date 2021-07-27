@@ -1,39 +1,47 @@
-use crate::actors::chat_actor::ChatActor;
-use crate::actors::db_actor::DbActor;
-use crate::actors::irc_actor::IrcActor;
-use crate::actors::live_actor::LiveActor;
-use crate::actors::messages::irc_messages::JoinAllMessage;
-use crate::actors::messages::pubsub_messages::SubAllMessage;
-use crate::actors::pubsub_actor::PubSubActor;
-use crate::actors::slot_actor::SlotActor;
-use crate::actors::timeout_actor::TimeoutActor;
-use crate::actors::token_refresher::TokenRefresher;
-use crate::constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
-use crate::middleware::useragent::UserAgentGuard;
-use crate::models::user::User;
-use crate::repositories::init_repositories;
-use crate::services::eventsub::{
-    clear_invalid_rewards, clear_unfulfilled_redemptions, register_eventsub_for_all_unregistered,
+use crate::{
+    actors::{
+        chat_actor::ChatActor,
+        db_actor::DbActor,
+        irc_actor::IrcActor,
+        live_actor::LiveActor,
+        messages::{irc_messages::JoinAllMessage, pubsub_messages::SubAllMessage},
+        pubsub_actor::PubSubActor,
+        slot_actor::SlotActor,
+        timeout_actor::TimeoutActor,
+        token_refresher::TokenRefresher,
+    },
+    constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    middleware::useragent::UserAgentGuard,
+    models::user::User,
+    repositories::init_repositories,
+    services::{
+        eventsub::{
+            clear_invalid_rewards, clear_unfulfilled_redemptions,
+            register_eventsub_for_all_unregistered,
+        },
+        metrics::register_metrics,
+        timed_mode::resolve_timed_modes,
+    },
 };
-use crate::services::metrics::register_metrics;
-use crate::services::timed_mode::resolve_timed_modes;
 use actix::Actor;
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_metrics::Metrics;
-use actix_web::http::header::{AUTHORIZATION, CONTENT_TYPE};
-use actix_web::middleware::{DefaultHeaders, Logger};
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{
+    http::header::{AUTHORIZATION, CONTENT_TYPE},
+    middleware::{DefaultHeaders, Logger},
+    web, App, HttpResponse, HttpServer,
+};
 use anyhow::Error as AnyError;
 use log::LevelFilter;
 use metrics_exporter_prometheus::PrometheusBuilder;
-use sqlx::postgres::PgConnectOptions;
-use sqlx::{ConnectOptions, PgPool};
+use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use std::str::FromStr;
 use tokio::sync::RwLock;
-use twitch_api2::helix::Scope;
-use twitch_api2::twitch_oauth2::client::reqwest_http_client;
-use twitch_api2::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
+use twitch_api2::{
+    helix::Scope,
+    twitch_oauth2::{client::reqwest_http_client, AppAccessToken, ClientId, ClientSecret},
+};
 
 mod actors;
 mod chat;

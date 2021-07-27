@@ -1,5 +1,7 @@
-use crate::constants::{SERVER_URL, SPOTIFY_CLIENT_ID};
-use crate::services::jwt::{encode_jwt, JwtClaims};
+use crate::{
+    constants::{SERVER_URL, SPOTIFY_CLIENT_ID},
+    services::jwt::{encode_jwt, JwtClaims},
+};
 use anyhow::Result as AnyResult;
 use serde::{Deserialize, Serialize};
 

@@ -1,11 +1,14 @@
-use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::error::Error;
-use actix_web::http::header::USER_AGENT;
-use actix_web::http::StatusCode;
-use actix_web::HttpResponse;
+use actix_web::{
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    error::Error,
+    http::{header::USER_AGENT, StatusCode},
+    HttpResponse,
+};
 use futures::future::{ok, Either, Ready};
-use std::rc::Rc;
-use std::task::{Context, Poll};
+use std::{
+    rc::Rc,
+    task::{Context, Poll},
+};
 
 pub struct UserAgentGuard {
     banned: Rc<Vec<String>>,

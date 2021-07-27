@@ -1,18 +1,17 @@
-use crate::log_err;
-use crate::models::log_entry::LogEntry;
-use crate::models::reward::SlotRewardData;
-use crate::models::slot::Slot;
-use crate::models::user::User;
-use crate::services::emotes::{Emote, EmoteId, EmoteRW};
-use crate::services::twitch::requests::update_reward;
+use crate::{
+    log_err,
+    models::{log_entry::LogEntry, reward::SlotRewardData, slot::Slot, user::User},
+    services::{
+        emotes::{Emote, EmoteId, EmoteRW},
+        twitch::requests::update_reward,
+    },
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::{Duration, Utc};
 use futures::TryFutureExt;
 use sqlx::PgPool;
-use std::cmp::Ordering;
-use std::fmt::Display;
-use twitch_api2::helix::points::UpdateCustomRewardBody;
-use twitch_api2::twitch_oauth2::UserToken;
+use std::{cmp::Ordering, fmt::Display};
+use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
 
 pub async fn adjust_size<RW, I, E, EI>(
     broadcaster_id: &str,

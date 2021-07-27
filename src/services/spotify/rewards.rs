@@ -1,9 +1,13 @@
-use crate::models::reward::SpotifyPlayOptions;
-use crate::models::spotify::SpotifyData;
-use crate::models::user::User;
-use crate::services::spotify::requests;
-use crate::services::spotify::responses::{PlayerResponse, TrackObject};
-use crate::services::twitch::requests::is_user_live;
+use crate::{
+    models::{reward::SpotifyPlayOptions, spotify::SpotifyData, user::User},
+    services::{
+        spotify::{
+            requests,
+            responses::{PlayerResponse, TrackObject},
+        },
+        twitch::requests::is_user_live,
+    },
+};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
 use regex::Regex;

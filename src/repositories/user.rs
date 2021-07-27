@@ -1,5 +1,7 @@
-use crate::services::jwt::JwtClaims;
-use crate::services::twitch::requests::{get_user, get_user_by_login};
+use crate::services::{
+    jwt::JwtClaims,
+    twitch::requests::{get_user, get_user_by_login},
+};
 use actix_web::{get, web, HttpResponse, Result};
 use sqlx::PgPool;
 use twitch_api2::twitch_oauth2::UserToken;

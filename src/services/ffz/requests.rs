@@ -3,13 +3,9 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
-use reqwest::cookie::Jar;
-use reqwest::Client;
-use reqwest::{IntoUrl, Response, Url};
+use reqwest::{cookie::Jar, Client, IntoUrl, Response, Url};
 use serde::{de::DeserializeOwned, Deserialize};
-use std::collections::HashMap;
-use std::fmt::Display;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt::Display, sync::Arc};
 
 lazy_static! {
     static ref FFZ_CLIENT: Client = Client::builder()
