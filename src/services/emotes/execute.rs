@@ -28,8 +28,12 @@ where
         extractor,
         &redemption.event.user_input,
         irc,
-        redemption.event.broadcaster_user_login.clone(),
-        &redemption.event.user_login,
+        redemption
+            .event
+            .broadcaster_user_login
+            .clone()
+            .into_string(),
+        redemption.event.user_login.as_ref(),
     )
     .await?;
 
@@ -40,10 +44,10 @@ where
         redemption.event.broadcaster_user_login
     );
 
-    let broadcaster = redemption.event.broadcaster_user_login;
-    let user = redemption.event.user_login;
+    let broadcaster: String = redemption.event.broadcaster_user_login.into_string();
+    let user: String = redemption.event.user_login.into_string();
     match swap::swap_or_add_emote::<RW, I, E, EI>(
-        &redemption.event.broadcaster_user_id,
+        redemption.event.broadcaster_user_id.as_ref(),
         platform_id,
         reward_data,
         pool,
@@ -91,12 +95,16 @@ where
         extractor,
         &redemption.event.user_input,
         irc,
-        redemption.event.broadcaster_user_login.clone(),
-        &redemption.event.user_login,
+        redemption
+            .event
+            .broadcaster_user_login
+            .clone()
+            .into_string(),
+        redemption.event.user_login.as_ref(),
     )
     .await?;
-    let broadcaster = redemption.event.broadcaster_user_login;
-    let user = redemption.event.user_login;
+    let broadcaster: String = redemption.event.broadcaster_user_login.into_string();
+    let user: String = redemption.event.user_login.into_string();
 
     log::info!(
         "Adding {:?} emote {} in {}",
@@ -106,8 +114,8 @@ where
     );
 
     match slots::add_slot_emote::<RW, I, E, EI>(
-        &redemption.event.broadcaster_user_id,
-        &redemption.event.reward.id,
+        redemption.event.broadcaster_user_id.as_ref(),
+        redemption.event.reward.id.as_ref(),
         slot_data,
         platform_id,
         &user,

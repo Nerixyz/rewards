@@ -19,14 +19,16 @@ actix-utils = "3.0.0"
 actix-metrics = { git = "https://github.com/nerixyz/actix-metrics", tag = "v0.2.1" }
 twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls", "metrics-collection"] }
 tokio = { version = "1", features = ["rt", "time", "sync"] }
+tokio-stream = "0.1.7"
 dotenv_codegen = "0.15"
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-futures-util = "0.3.15"
+futures-util = "0.3.16"
 cookie = "0.15"
 time = "0.2.26"
-twitch_api2 = { git = "https://github.com/Nerixyz/twitch_api2.git", rev = "a98141f", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "pubsub", "unsupported"] }
+twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "1b6d1b9", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "pubsub", "unsupported"], default-features = false }
+twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "ce736ca", features = ["native-tls", "unsupported"], default-features = false }
 reqwest = { version = "0.11.3", features = ["cookies"] }
 derive_more = "0.99.14"
 serde_qs = "0.8.3"

@@ -2,6 +2,7 @@ use crate::constants::{EVENTSUB_BASE64_SECRET, SERVER_URL};
 use crate::services::twitch::errors::TwitchApiError;
 use crate::services::twitch::{HelixResult, RHelixClient};
 use twitch_api2::helix::points::CustomRewardRedemption;
+use twitch_api2::types::EventSubId;
 use twitch_api2::{
     eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport, TransportMethod},
     helix::{
@@ -18,10 +19,15 @@ use twitch_api2::{
     twitch_oauth2::{AppAccessToken, UserToken},
 };
 
-pub async fn delete_subscription(token: &AppAccessToken, id: String) -> HelixResult<()> {
+pub async fn delete_subscription<I: Into<EventSubId>>(
+    token: &AppAccessToken,
+    id: I,
+) -> HelixResult<()> {
     RHelixClient::default()
         .req_delete(
-            DeleteEventSubSubscriptionRequest::builder().id(id).build(),
+            DeleteEventSubSubscriptionRequest::builder()
+                .id(id.into())
+                .build(),
             token,
         )
         .await?;

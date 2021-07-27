@@ -64,11 +64,11 @@ async fn create(
     let db_reward = Reward::from_response(&reward, body.data.clone(), body.live_delay);
     db_reward.create(&pool).await?;
 
-    if let Err(e) = save_reward(&body.data, &reward.id, &broadcaster_id, &pool).await {
+    if let Err(e) = save_reward(&body.data, reward.id.as_ref(), &broadcaster_id, &pool).await {
         log::warn!("Could not save reward: {}", e);
 
         let (internal, twitch) = futures::future::join(
-            Reward::delete(&reward.id, &pool),
+            Reward::delete(reward.id.as_ref(), &pool),
             delete_reward(&broadcaster_id, reward.id.clone(), &token),
         )
         .await;

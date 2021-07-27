@@ -93,9 +93,9 @@ impl Reward {
         live_delay: Option<String>,
     ) -> Self {
         Self {
-            user_id: res.broadcaster_id.clone(),
+            user_id: res.broadcaster_id.clone().into_string(),
             data: Json(data),
-            id: res.id.clone(),
+            id: res.id.clone().into_string(),
             live_delay,
         }
     }

@@ -34,7 +34,8 @@ async fn reward_redemption(
         }
         Payload::ChannelPointsCustomRewardRedemptionAddV1(redemption) => {
             // main path
-            let user = User::get_by_id(&redemption.event.broadcaster_user_id, &pool).await?;
+            let user =
+                User::get_by_id(redemption.event.broadcaster_user_id.as_ref(), &pool).await?;
 
             log::info!("redemption: {:?}", redemption);
 
@@ -42,13 +43,14 @@ async fn reward_redemption(
             let irc = irc.into_inner();
             let redemption_received = Instant::now();
             actix_web::rt::spawn(async move {
-                let reward = Reward::get_by_id(&redemption.event.reward.id, &pool).await;
+                let reward = Reward::get_by_id(redemption.event.reward.id.as_ref(), &pool).await;
 
-                let broadcaster_id = redemption.event.broadcaster_user_id.clone();
-                let reward_id = redemption.event.reward.id.clone();
-                let redemption_id = redemption.event.id.clone();
+                let broadcaster_id: String =
+                    redemption.event.broadcaster_user_id.clone().into_string();
+                let reward_id: String = redemption.event.reward.id.clone().into_string();
+                let redemption_id: String = redemption.event.id.clone().into_string();
 
-                let executing_user_login = redemption.event.user_name.clone();
+                let executing_user_login: String = redemption.event.user_name.clone().into_string();
 
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)

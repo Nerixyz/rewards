@@ -27,7 +27,7 @@ pub async fn verify_reward(
         }
         RewardData::FfzSwap(_) => {
             let user = get_user(broadcaster_id.to_string(), token).await?;
-            if !is_editor_in(&user.login).await {
+            if !is_editor_in(user.login.as_ref()).await {
                 return Err(AnyError::msg("RewardMore isn't an editor for the user"));
             }
         }
@@ -45,7 +45,7 @@ pub async fn verify_reward(
         }
         RewardData::FfzSlot(slot) => {
             let user = get_user(broadcaster_id.to_string(), token).await?;
-            if !is_editor_in(&user.login).await {
+            if !is_editor_in(user.login.as_ref()).await {
                 return Err(AnyError::msg("RewardMore isn't an editor for the user"));
             }
 
