@@ -136,7 +136,7 @@ dependencies = [
 [[package]]
 name = "actix-metrics"
 version = "0.2.1"
-source = "git+https://github.com/nerixyz/actix-metrics?tag=v0.2.1#035a7f7e1e82c4e1c62e5683c91890a4d1160878"
+source = "git+https://github.com/Nerixyz/nerix-utils-rs?tag=actix-metrics-v0.1.0#71c860fa11b0a42f3a90ee585af7d83b83077a54"
 dependencies = [
  "actix-utils",
  "actix-web",
@@ -1034,6 +1034,43 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "errors"
+version = "0.1.0"
+source = "git+https://github.com/Nerixyz/nerix-utils-rs?tag=eventsub-v0.1.0#71c860fa11b0a42f3a90ee585af7d83b83077a54"
+dependencies = [
+ "actix-web",
+ "paste",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "errors"
+version = "0.1.1"
+source = "git+https://github.com/Nerixyz/nerix-utils-rs?tag=errors-v0.1.1#7743a1b141919758a213a3f9ccdaf22d528772c0"
+dependencies = [
+ "actix-web",
+ "paste",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "eventsub"
+version = "0.1.0"
+source = "git+https://github.com/Nerixyz/nerix-utils-rs?tag=eventsub-v0.1.0#71c860fa11b0a42f3a90ee585af7d83b83077a54"
+dependencies = [
+ "actix-web",
+ "async-stream",
+ "chrono",
+ "errors 0.1.0",
+ "futures",
+ "hex",
+ "hmac 0.11.0",
+ "sha2",
 ]
 
 [[package]]
@@ -2305,6 +2342,8 @@ dependencies = [
  "dotenv",
  "dotenv_codegen",
  "env_logger",
+ "errors 0.1.1",
+ "eventsub",
  "futures",
  "futures-util",
  "git_info",
