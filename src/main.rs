@@ -95,7 +95,7 @@ async fn main() -> std::io::Result<()> {
     let app_access_token = web::Data::new(RwLock::new(app_access_token));
     let _refresh_actor = TokenRefresher::new(pool.clone()).start();
     let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
-    let pubsub = PubSubActor::new(pool.clone(), live_actor, timeout_actor.clone()).start();
+    let pubsub = PubSubActor::run(pool.clone(), live_actor, timeout_actor.clone());
     let initial_listens = make_initial_pubsub_listens(&pool)
         .await
         .expect("sql thingy");

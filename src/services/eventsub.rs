@@ -32,7 +32,7 @@ pub async fn register_eventsub_for_id(
 
     let reward = subscribe_to_rewards(&*token, id).await?;
 
-    User::set_eventsub_id(id, &reward.id, pool).await?;
+    User::set_eventsub_id(id, &reward.id.into_string(), pool).await?;
 
     Ok(())
 }
@@ -99,7 +99,7 @@ pub async fn clear_invalid_rewards(
             let is_this_server = sub.transport.callback.starts_with(SERVER_URL);
 
             if !is_enabled || !is_this_server {
-                if let Err(e) = User::clear_eventsub_id(&sub.id, pool).await {
+                if let Err(e) = User::clear_eventsub_id(sub.id.as_ref(), pool).await {
                     log::warn!("Error clearing eventsub in db, but ignoring: {:?}", e);
                 }
             }

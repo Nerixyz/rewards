@@ -46,8 +46,8 @@ pub async fn execute_reward(
 
             let ok_timeout = timeout_handler
                 .send(CheckValidTimeoutMessage {
-                    channel_id: redemption.event.broadcaster_user_id.clone(),
-                    user_id: user.id.clone(),
+                    channel_id: redemption.event.broadcaster_user_id.clone().into_string(),
+                    user_id: user.id.clone().into_string(),
                 })
                 .await
                 .map_err(|_| AnyError::msg("Too much traffic"))?
@@ -59,10 +59,10 @@ pub async fn execute_reward(
 
             irc.send(TimeoutMessage {
                 user: rewards::extract_username(&redemption.event.user_input)?,
-                user_id: user.id,
+                user_id: user.id.into_string(),
                 duration: rewards::get_duration(&timeout)?,
                 broadcaster: broadcaster.name,
-                broadcaster_id: redemption.event.broadcaster_user_id,
+                broadcaster_id: redemption.event.broadcaster_user_id.into_string(),
             })
             .await??
         }
@@ -121,53 +121,56 @@ pub async fn execute_reward(
             .await?;
         }
         RewardData::SpotifySkip(_) => {
-            let res = spotify::skip_track(&redemption.event.broadcaster_user_id, pool).await;
+            let res =
+                spotify::skip_track(redemption.event.broadcaster_user_id.as_ref(), pool).await;
             reply::send_spotify_reply(
                 SpotifyAction::Skip,
                 res,
                 &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
+                redemption.event.broadcaster_user_login.into_string(),
+                redemption.event.user_login.into_string(),
             )
             .await?;
         }
         RewardData::SpotifyPlay(opts) => {
             let res = spotify::get_track_uri_from_input(
                 &redemption.event.user_input,
-                &redemption.event.broadcaster_user_id,
+                redemption.event.broadcaster_user_id.as_ref(),
                 &opts,
                 pool,
             )
             .and_then(|track| async {
-                spotify::play_track(&redemption.event.broadcaster_user_id, track, pool).await
+                spotify::play_track(redemption.event.broadcaster_user_id.as_ref(), track, pool)
+                    .await
             })
             .await;
             reply::send_spotify_reply(
                 SpotifyAction::Play,
                 res,
                 &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
+                redemption.event.broadcaster_user_login.into_string(),
+                redemption.event.user_login.into_string(),
             )
             .await?;
         }
         RewardData::SpotifyQueue(opts) => {
             let res = spotify::get_track_uri_from_input(
                 &redemption.event.user_input,
-                &redemption.event.broadcaster_user_id,
+                redemption.event.broadcaster_user_id.as_ref(),
                 &opts,
                 pool,
             )
             .and_then(|track| async {
-                spotify::queue_track(&redemption.event.broadcaster_user_id, track, pool).await
+                spotify::queue_track(redemption.event.broadcaster_user_id.as_ref(), track, pool)
+                    .await
             })
             .await;
             reply::send_spotify_reply(
                 SpotifyAction::Queue,
                 res,
                 &irc,
-                redemption.event.broadcaster_user_login,
-                redemption.event.user_login,
+                redemption.event.broadcaster_user_login.into_string(),
+                redemption.event.user_login.into_string(),
             )
             .await?;
         }

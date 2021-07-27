@@ -63,7 +63,7 @@ impl LiveActor {
                     match get_reward_for_broadcaster_by_id(user_id, reward.id, &user_token).await {
                         Ok(reward) => {
                             if !reward.is_paused {
-                                Some((duration, reward.id))
+                                Some((duration, reward.id.into_string()))
                             } else {
                                 None
                             }

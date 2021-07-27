@@ -2,6 +2,7 @@ use crate::services::twitch::errors::TwitchApiError;
 use crate::services::twitch::{HelixResult, RHelixClient};
 use twitch_api2::helix::streams::{GetStreamsRequest, Stream};
 use twitch_api2::twitch_oauth2::TwitchToken;
+use twitch_api2::types::{Nickname, RewardId, UserId};
 use twitch_api2::{
     helix::{
         points::{
@@ -58,12 +59,16 @@ pub async fn update_reward(
     }
 }
 
-pub async fn delete_reward(user_id: &str, id: String, token: &UserToken) -> HelixResult<()> {
+pub async fn delete_reward<I: Into<RewardId>>(
+    user_id: &str,
+    id: I,
+    token: &UserToken,
+) -> HelixResult<()> {
     RHelixClient::default()
         .req_delete(
             DeleteCustomRewardRequest::builder()
                 .broadcaster_id(user_id)
-                .id(id)
+                .id(id.into())
                 .build(),
             token,
         )
@@ -98,7 +103,7 @@ pub async fn get_reward_for_broadcaster_by_id(
         .req_get(
             GetCustomRewardRequest::builder()
                 .broadcaster_id(broadcaster)
-                .id(vec![id])
+                .id(vec![RewardId::new(id)])
                 .only_manageable_rewards(Some(true))
                 .build(),
             token,
@@ -114,7 +119,10 @@ pub async fn get_reward_for_broadcaster_by_id(
 
 pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
     let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(GetUsersRequest::builder().id(vec![id]).build(), token)
+        .req_get(
+            GetUsersRequest::builder().id(vec![UserId::new(id)]).build(),
+            token,
+        )
         .await?;
 
     response
@@ -126,7 +134,12 @@ pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
 
 pub async fn get_user_by_login<T: TwitchToken>(login: String, token: &T) -> HelixResult<User> {
     let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(GetUsersRequest::builder().login(vec![login]).build(), token)
+        .req_get(
+            GetUsersRequest::builder()
+                .login(vec![Nickname::new(login)])
+                .build(),
+            token,
+        )
         .await?;
 
     response
@@ -138,7 +151,12 @@ pub async fn get_user_by_login<T: TwitchToken>(login: String, token: &T) -> Heli
 
 pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<User>> {
     let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(GetUsersRequest::builder().id(ids).build(), token)
+        .req_get(
+            GetUsersRequest::builder()
+                .id(ids.into_iter().map(UserId::new).collect())
+                .build(),
+            token,
+        )
         .await?;
 
     Ok(response.data)
@@ -147,7 +165,9 @@ pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<U
 pub async fn is_user_live<T: TwitchToken>(id: String, token: &T) -> HelixResult<bool> {
     let response: Response<GetStreamsRequest, Vec<Stream>> = RHelixClient::default()
         .req_get(
-            GetStreamsRequest::builder().user_id(vec![id]).build(),
+            GetStreamsRequest::builder()
+                .user_id(vec![UserId::new(id)])
+                .build(),
             token,
         )
         .await?;
