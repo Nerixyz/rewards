@@ -7,13 +7,14 @@ mod rewards;
 mod user;
 
 use crate::{
-    middleware::eventsub::EventsubGuard,
+    constants::EVENTSUB_BASE64_SECRET,
     repositories::{
         auth::init_auth_routes, connections::init_connection_routes, editors::init_editor_routes,
         eventsub::init_eventsub_routes, logs::init_log_routes, rewards::init_rewards_routes,
         user::init_user_routes,
     },
 };
+use ::eventsub::EventsubVerify;
 use actix_metrics::Metrics;
 use actix_web::{get, web, Responder};
 use metrics_exporter_prometheus::PrometheusHandle;
@@ -59,7 +60,7 @@ pub fn init_repositories(config: &mut web::ServiceConfig) {
         .service(
             web::scope("/eventsub")
                 .wrap(Metrics::new("eventsub"))
-                .wrap(EventsubGuard)
+                .wrap(EventsubVerify::new(EVENTSUB_BASE64_SECRET))
                 .configure(init_eventsub_routes),
         )
         .service(metrics_render);
