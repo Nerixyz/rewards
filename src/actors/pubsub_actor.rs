@@ -17,13 +17,12 @@ use futures::{future, stream::StreamExt};
 use sqlx::PgPool;
 use std::time::Duration;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use twitch_api2::pubsub::Topic as TopicDef;
 use twitch_pubsub::{
     moderation::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, PubsubClient, ServerMessage, TokenProvider, Topic, TopicData,
+    ClientConfig, PubsubClient, ServerMessage, TokenProvider, Topic, TopicData, TopicDef,
 };
 
 #[derive(Debug)]
