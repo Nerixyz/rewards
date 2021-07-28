@@ -1,20 +1,3 @@
-use crate::{
-    actors::{
-        irc_actor::IrcActor,
-        messages::{
-            irc_messages::{JoinMessage, PartMessage},
-            pubsub_messages::SubMessage,
-        },
-        pubsub_actor::PubSubActor,
-    },
-    constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
-    models::{reward::Reward, user::User},
-    services::{
-        eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
-        jwt::{encode_jwt, JwtClaims},
-        twitch::requests::delete_reward,
-    },
-};
 use actix::Addr;
 use actix_web::{cookie::CookieBuilder, delete, get, web, HttpResponse, Result};
 use errors::redirect_error::RedirectError;
@@ -26,6 +9,20 @@ use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::{
     client::reqwest_http_client, tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret,
     CsrfToken, RedirectUrl, Scope, TwitchToken, UserToken,
+};
+
+use crate::{
+    actors::{
+        irc::{IrcActor, JoinMessage, PartMessage},
+        pubsub::{PubSubActor, SubMessage},
+    },
+    constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    models::{reward::Reward, user::User},
+    services::{
+        eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
+        jwt::{encode_jwt, JwtClaims},
+        twitch::requests::delete_reward,
+    },
 };
 
 #[derive(Deserialize)]

@@ -1,61 +1,34 @@
-use crate::{
-    actors::{
-        live_actor::LiveActor,
-        messages::{
-            live_messages::{LiveMessage, OfflineMessage},
-            pubsub_messages::{SubAllMessage, SubMessage},
-            timeout_messages::RemoveTimeoutMessage,
-        },
-        timeout_actor::TimeoutActor,
-    },
-    constants::TWITCH_CLIENT_USER_ID,
-    log_err,
-    models::config::ConfigEntry,
-};
+use std::time::Duration;
+
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,
 };
-use async_trait::async_trait;
-use errors::{json_error::JsonError, sql::SqlReason};
 use futures::{future, stream::StreamExt};
 use sqlx::PgPool;
-use std::time::Duration;
+use token_provider::PubsubTokenProvider;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use twitch_pubsub::{
     moderation::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, PubsubClient, ServerMessage, TokenProvider, Topic, TopicData, TopicDef,
+    ClientConfig, PubsubClient, ServerMessage, Topic, TopicData, TopicDef,
 };
 
-#[derive(Debug)]
-struct PubsubTokenProvider(PgPool);
+use crate::{
+    actors::{
+        live::{LiveActor, LiveMessage, OfflineMessage},
+        timeout::TimeoutActor,
+    },
+    constants::TWITCH_CLIENT_USER_ID,
+    log_err,
+};
 
-impl PubsubTokenProvider {
-    async fn get_token(&self) -> Result<String, <Self as TokenProvider>::Error> {
-        ConfigEntry::get_user_token(&self.0)
-            .await
-            .map(|conf| conf.access_token)
-    }
-}
-
-#[async_trait]
-impl TokenProvider for PubsubTokenProvider {
-    type Error = JsonError<SqlReason>;
-
-    async fn provide_token(&self, _: &Topic) -> Result<Option<String>, Self::Error> {
-        Ok(Some(self.get_token().await?))
-    }
-
-    async fn provide_many(
-        &self,
-        topics: Vec<Topic>,
-    ) -> Result<Vec<(Vec<Topic>, Option<String>)>, Self::Error> {
-        Ok(vec![(topics, Some(self.get_token().await?))])
-    }
-}
+mod messages;
+mod token_provider;
+use crate::actors::timeout::RemoveTimeoutMessage;
+pub use messages::*;
 
 pub struct PubSubActor {
     live_addr: Addr<LiveActor>,

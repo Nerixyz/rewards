@@ -1,11 +1,12 @@
-use crate::{
-    actors::messages::db_messages::{GetToken, SaveToken},
-    models::config::ConfigEntry,
-};
 use actix::{Actor, Context, Handler, ResponseFuture};
 use errors::sql::SqlResult;
 use sqlx::PgPool;
 use twitch_irc::login::UserAccessToken;
+
+use crate::models::config::ConfigEntry;
+
+mod messages;
+pub use messages::*;
 
 pub struct DbActor {
     pool: PgPool,

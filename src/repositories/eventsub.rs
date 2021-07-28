@@ -1,10 +1,5 @@
-use crate::{
-    actors::{
-        irc_actor::IrcActor, messages::irc_messages::WhisperMessage, timeout_actor::TimeoutActor,
-    },
-    models::{reward::Reward, user::User},
-    services::{rewards::execute::execute_reward, twitch::eventsub::update_reward_redemption},
-};
+use std::time::{Duration, Instant};
+
 use actix::Addr;
 use actix_web::{
     post,
@@ -12,11 +7,19 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use twitch_api2::{
     eventsub, eventsub::Payload, helix::points::CustomRewardRedemptionStatus,
     twitch_oauth2::AppAccessToken,
+};
+
+use crate::{
+    actors::{
+        irc::{IrcActor, WhisperMessage},
+        timeout::TimeoutActor,
+    },
+    models::{reward::Reward, user::User},
+    services::{rewards::execute::execute_reward, twitch::eventsub::update_reward_redemption},
 };
 
 #[post("/reward")]

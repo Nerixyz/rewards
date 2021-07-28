@@ -1,14 +1,16 @@
-use crate::{
-    actors::{irc_actor::IrcActor, messages::irc_messages::SayMessage},
-    models::reward::{SlotRewardData, SwapRewardData},
-    services::emotes::{slots, swap, Emote, EmoteRW},
-};
+use std::{fmt::Display, sync::Arc};
+
 use actix::Addr;
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
-use std::{fmt::Display, sync::Arc};
 use twitch_api2::eventsub::{
     channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload,
+};
+
+use crate::{
+    actors::irc::{IrcActor, SayMessage},
+    models::reward::{SlotRewardData, SwapRewardData},
+    services::emotes::{slots, swap, Emote, EmoteRW},
 };
 
 pub async fn execute_swap<RW, F, I, E, EI>(

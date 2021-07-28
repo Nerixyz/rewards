@@ -1,12 +1,13 @@
-use crate::actors::messages::timeout_messages::{
-    ChannelTimeoutMessage, CheckValidTimeoutMessage, RemoveTimeoutMessage,
-};
+use std::time::Duration;
+
 use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
+use chrono::Utc;
 use sqlx::PgPool;
 
 use crate::{log_err, models::timeout::Timeout};
-use chrono::Utc;
-use std::time::Duration;
+
+mod messages;
+pub use messages::*;
 
 pub struct TimeoutActor {
     pool: PgPool,

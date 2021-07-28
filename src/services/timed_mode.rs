@@ -1,12 +1,13 @@
-use crate::{
-    actors::{irc_actor::IrcActor, messages::irc_messages::TimedModeMessage},
-    log_err,
-    models::timed_mode::TimedMode,
-};
 use actix::Addr;
 use anyhow::Result as AnyResult;
 use chrono::Utc;
 use sqlx::PgPool;
+
+use crate::{
+    actors::irc::{IrcActor, TimedModeMessage},
+    log_err,
+    models::timed_mode::TimedMode,
+};
 
 pub async fn resolve_timed_modes(irc: Addr<IrcActor>, pool: &PgPool) -> AnyResult<()> {
     let all = TimedMode::get_all(pool).await?;

@@ -2,19 +2,18 @@ use std::sync::Arc;
 
 use actix::Addr;
 use anyhow::{Error as AnyError, Result as AnyResult};
+use futures::TryFutureExt;
 use sqlx::PgPool;
-use twitch_api2::eventsub::{
-    channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload,
+use tokio::sync::RwLock;
+use twitch_api2::{
+    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload},
+    twitch_oauth2::AppAccessToken,
 };
 
 use crate::{
     actors::{
-        irc_actor::IrcActor,
-        messages::{
-            irc_messages::{TimedModeMessage, TimeoutMessage},
-            timeout_messages::CheckValidTimeoutMessage,
-        },
-        timeout_actor::TimeoutActor,
+        irc::{IrcActor, TimedModeMessage, TimeoutMessage},
+        timeout::{CheckValidTimeoutMessage, TimeoutActor},
     },
     models::{
         reward::{Reward, RewardData},
@@ -36,9 +35,6 @@ use crate::{
         twitch::requests::get_user_by_login,
     },
 };
-use futures::TryFutureExt;
-use tokio::sync::RwLock;
-use twitch_api2::twitch_oauth2::AppAccessToken;
 
 /// This doesn't update the reward-redemption on twitch!
 pub async fn execute_reward(

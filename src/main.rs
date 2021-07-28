@@ -1,28 +1,5 @@
-use crate::{
-    actors::{
-        chat_actor::ChatActor,
-        db_actor::DbActor,
-        irc_actor::IrcActor,
-        live_actor::LiveActor,
-        messages::{irc_messages::JoinAllMessage, pubsub_messages::SubAllMessage},
-        pubsub_actor::PubSubActor,
-        slot_actor::SlotActor,
-        timeout_actor::TimeoutActor,
-        token_refresher::TokenRefresher,
-    },
-    constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
-    middleware::useragent::UserAgentGuard,
-    models::user::User,
-    repositories::init_repositories,
-    services::{
-        eventsub::{
-            clear_invalid_rewards, clear_unfulfilled_redemptions,
-            register_eventsub_for_all_unregistered,
-        },
-        metrics::register_metrics,
-        timed_mode::resolve_timed_modes,
-    },
-};
+use std::str::FromStr;
+
 use actix::Actor;
 use actix_cors::Cors;
 use actix_files::NamedFile;
@@ -36,11 +13,31 @@ use anyhow::Error as AnyError;
 use log::LevelFilter;
 use metrics_exporter_prometheus::PrometheusBuilder;
 use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
-use std::str::FromStr;
 use tokio::sync::RwLock;
 use twitch_api2::{
     helix::Scope,
     twitch_oauth2::{client::reqwest_http_client, AppAccessToken, ClientId, ClientSecret},
+};
+
+use actors::{irc::JoinAllMessage, pubsub::SubAllMessage};
+
+use crate::{
+    actors::{
+        chat::ChatActor, db::DbActor, irc::IrcActor, live::LiveActor, pubsub::PubSubActor,
+        slot::SlotActor, timeout::TimeoutActor, token_refresher::TokenRefresher,
+    },
+    constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    middleware::useragent::UserAgentGuard,
+    models::user::User,
+    repositories::init_repositories,
+    services::{
+        eventsub::{
+            clear_invalid_rewards, clear_unfulfilled_redemptions,
+            register_eventsub_for_all_unregistered,
+        },
+        metrics::register_metrics,
+        timed_mode::resolve_timed_modes,
+    },
 };
 
 mod actors;

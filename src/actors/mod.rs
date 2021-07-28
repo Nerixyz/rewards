@@ -1,9 +1,8 @@
-pub mod chat_actor;
-pub mod db_actor;
-pub mod irc_actor;
-pub mod live_actor;
-pub mod messages;
-pub mod pubsub_actor;
-pub mod slot_actor;
-pub mod timeout_actor;
+pub mod chat;
+pub mod db;
+pub mod irc;
+pub mod live;
+pub mod pubsub;
+pub mod slot;
+pub mod timeout;
 pub mod token_refresher;

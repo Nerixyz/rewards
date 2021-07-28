@@ -1,6 +1,7 @@
-use crate::{actors::messages::irc_messages::SayMessage, chat::command::ChatCommand};
 use actix::{Message, Recipient};
 use twitch_irc::message::PrivmsgMessage;
+
+use crate::{actors::irc::SayMessage, chat::command::ChatCommand};
 
 #[derive(Message)]
 #[rtype(result = "()")]

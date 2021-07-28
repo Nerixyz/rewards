@@ -1,34 +1,14 @@
-use crate::{
-    actors::{
-        db_actor::DbActor,
-        messages::{
-            chat_messages::ExecuteCommandMessage,
-            db_messages::{GetToken, SaveToken},
-            irc_messages::{
-                ChatMessage, JoinAllMessage, JoinMessage, PartMessage, SayMessage,
-                TimedModeMessage, TimeoutMessage, WhisperMessage,
-            },
-            timeout_messages::{ChannelTimeoutMessage, RemoveTimeoutMessage},
-        },
-        timeout_actor::TimeoutActor,
-    },
-    chat::{parse::opt_next_space, try_parse_command},
-    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN},
-    log_err,
-    models::timed_mode::TimedMode,
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
 };
+
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
     ResponseFuture, WrapFuture,
 };
 use anyhow::Error as AnyError;
-use async_trait::async_trait;
 use sqlx::PgPool;
-use std::{
-    collections::HashMap,
-    fmt::{Debug, Formatter},
-    time::{Duration, Instant},
-};
 use tokio::{
     sync::{
         mpsc::UnboundedReceiver,
@@ -37,44 +17,30 @@ use tokio::{
     task,
 };
 use twitch_irc::{
-    login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken},
+    login::RefreshingLoginCredentials,
     message::{ClearChatAction, ClearChatMessage, NoticeMessage, ServerMessage},
     ClientConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
+use token_storage::PgTokenStorage;
+
+use crate::{
+    actors::{db::DbActor, timeout::TimeoutActor},
+    chat::{parse::opt_next_space, try_parse_command},
+    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN},
+    log_err,
+    models::timed_mode::TimedMode,
+};
+mod messages;
+mod token_storage;
+use crate::actors::{
+    chat::ExecuteCommandMessage,
+    timeout::{ChannelTimeoutMessage, RemoveTimeoutMessage},
+};
+pub use messages::*;
+
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
 type IrcClient = TwitchIRCClient<SecureTCPTransport, IrcCredentials>;
-
-struct PgTokenStorage(Addr<DbActor>);
-
-impl Debug for PgTokenStorage {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("PgTokenStorage")
-    }
-}
-
-#[async_trait]
-impl TokenStorage for PgTokenStorage {
-    type LoadError = AnyError;
-    type UpdateError = AnyError;
-
-    async fn load_token(&mut self) -> Result<UserAccessToken, Self::LoadError> {
-        self.0.send(GetToken {}).await?.map_err(AnyError::new)
-    }
-
-    async fn update_token(&mut self, token: &UserAccessToken) -> Result<(), Self::UpdateError> {
-        log::info!("Token updated");
-        self.0
-            .send(SaveToken(UserAccessToken {
-                refresh_token: token.refresh_token.clone(),
-                access_token: token.access_token.clone(),
-                created_at: token.created_at,
-                expires_at: token.expires_at,
-            }))
-            .await?
-            .map_err(AnyError::new)
-    }
-}
 
 type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {

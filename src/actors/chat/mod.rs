@@ -1,6 +1,9 @@
-use crate::actors::messages::{chat_messages::ExecuteCommandMessage, irc_messages::SayMessage};
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
 use sqlx::PgPool;
+mod messages;
+
+use crate::actors::irc::SayMessage;
+pub use messages::*;
 
 pub struct ChatActor {
     pool: PgPool,
