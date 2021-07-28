@@ -1,34 +1,39 @@
 use crate::{
-    models::reward::SwapRewardData,
+    log_err,
+    models::{reward::SwapRewardData, swap_emote::SwapEmote},
     services::emotes::{Emote, EmoteRW},
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
-use rand::prelude::SliceRandom;
 use sqlx::PgPool;
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 pub async fn swap_or_add_emote<RW, I, E, EI>(
     broadcaster_id: &str,
     emote_id: &str,
     reward_data: SwapRewardData,
+    executing_user: &str,
     pool: &PgPool,
 ) -> AnyResult<(Option<String>, String)>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
     I: Display,
-    EI: Display + ToOwned<Owned = EI>,
+    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
     E: Emote<EI>,
 {
     let data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
-    let (removed_emote, mut history) = if data.current_emotes >= data.max_emotes
+    let removed_emote = if data.current_emotes >= data.max_emotes
         || reward_data
             .limit
-            .map(|l| data.history.len() >= l as usize)
+            .map(|l| data.history_len >= l as usize)
             .unwrap_or(false)
     {
-        remove_last_emote::<RW, I, E, EI>(data.history, &data.platform_id, &data.emotes).await?
+        Some(
+            remove_last_emote::<RW, I, E, EI>(broadcaster_id, &data.platform_id, pool)
+                .await
+                .0?,
+        )
     } else {
-        (None, data.history)
+        None
     };
 
     log::info!(
@@ -37,85 +42,62 @@ where
         data.platform_id
     );
     if let Err(e) = RW::add_emote(&data.platform_id, data.emote.id()).await {
-        if let Err(sql_err) = RW::save_history(broadcaster_id, history, pool).await {
-            log::warn!(
-                "Error setting history after failing to insert shared emote: sql_error={}",
-                sql_err
-            );
-        }
         log::warn!("Could not add emote: {}", e);
         return Err(AnyError::msg("Couldn't add emote."));
     }
-    history.push(data.emote.id().to_owned());
-    RW::save_history(broadcaster_id, history, pool)
-        .await
-        .map_err(|_| AnyError::msg("Internal Error"))?;
+    SwapEmote::add(
+        broadcaster_id,
+        &data.emote.id().to_string(),
+        RW::platform(),
+        data.emote.name(),
+        executing_user,
+        pool,
+    )
+    .await
+    .map_err(|_| AnyError::msg("Could not save emote in DB"))?;
 
-    let removed_emote = if let Some(id) = removed_emote {
-        Some(
-            RW::get_emote_by_id(&id)
-                .await
-                .map(|e| e.name())
-                .unwrap_or_else(|e| {
-                    log::warn!(
-                        "Emote {} was added in {} but isn't there anymore error={}",
-                        id,
-                        broadcaster_id,
-                        e
-                    );
-                    "[?]".to_string()
-                }),
-        )
-    } else {
-        None
-    };
-
-    Ok((removed_emote, data.emote.name()))
+    Ok((removed_emote, data.emote.into_name()))
 }
 
 pub async fn remove_last_emote<RW, I, E, EI>(
-    mut history: Vec<EI>,
+    user_id: &str,
     platform_id: &I,
-    current_emotes: &[E],
-) -> AnyResult<(Option<EI>, Vec<EI>)>
+    pool: &PgPool,
+) -> (AnyResult<String>, usize)
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
     I: Display,
-    EI: Display + ToOwned<Owned = EI>,
+    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
     E: Emote<EI>,
 {
-    let mut iter = history.into_iter();
     let mut emote = None;
-    while let Some(id) = iter.next() {
-        if let Err(e) = RW::remove_emote(platform_id, &id).await {
-            log::info!("Skipping shared emote: id={}; error={}", id, e);
+    let mut removed_from_db = 0;
+    while let Ok(Some(db_emote)) = SwapEmote::oldest(user_id, RW::platform(), pool).await {
+        if let Err(e) = RW::remove_emote(
+            platform_id,
+            &EI::from_str(&db_emote.emote_id).unwrap_or_default(),
+        )
+        .await
+        {
+            log::info!("Skipping emote: {:?}; error={}", db_emote, e);
             continue;
         }
-        emote = Some(id);
+        log_err!(
+            SwapEmote::remove(db_emote.id, pool).await,
+            "Failed to remove a swap emote even though we just got the id"
+        );
+        emote = Some(db_emote);
+        removed_from_db += 1;
         break;
     }
-    // add the remaining back to the history
-    history = iter.collect();
 
-    let emote = match emote {
-        Some(id) => id,
-        None => {
-            // There are no emotes in history, remove a random one
-            let emote = current_emotes.choose(&mut rand::thread_rng());
-
-            if let Some(emote) = emote {
-                RW::remove_emote(platform_id, emote.id()).await?;
-
-                emote.id().to_owned()
-            } else {
-                // this should never happen as this function is only called if there are too many emotes
-                log::warn!("Invalid branch - there are no emotes to remove but the limit is reached?! id={}", platform_id);
-                return Err(AnyError::msg("There are no emotes to remove"));
-            }
-        }
-    };
-
-    Ok((Some(emote), history))
+    (
+        emote.map(|e| e.name).ok_or_else(|| {
+            log::info!("Could not remove any emotes in {}.", user_id);
+            AnyError::msg("There are no recent emotes to remove - refusing to remove random emote.")
+        }),
+        removed_from_db,
+    )
 }
 
 pub async fn update_swap_limit<RW, I, E, EI>(
@@ -126,27 +108,25 @@ pub async fn update_swap_limit<RW, I, E, EI>(
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
     I: Display,
-    EI: Display + ToOwned<Owned = EI>,
+    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
     E: Emote<EI>,
 {
     let limit = limit as usize;
-    let (data, id) = RW::get_history_and_platform_id(broadcaster_id, pool).await?;
-    if data.len() > limit {
+    let mut current_emotes =
+        SwapEmote::emote_count(broadcaster_id, RW::platform(), pool).await? as usize;
+    if current_emotes > limit {
+        let platform_id = RW::get_platform_id(broadcaster_id, pool).await?;
         // remove the last emotes
-
-        // pretend like there are no current emotes.
-        let current_emotes = [];
-        let mut data = data;
         loop {
-            data = remove_last_emote::<RW, _, _, _>(data, &id, &current_emotes)
-                .await?
-                .1;
+            let (res, removed) =
+                remove_last_emote::<RW, _, _, _>(broadcaster_id, &platform_id, pool).await;
+            current_emotes -= removed;
+            let _ = res?;
 
-            if data.len() <= limit {
+            if current_emotes <= limit {
                 break;
             }
         }
-        RW::save_history(broadcaster_id, data, pool).await?;
     }
     Ok(())
 }

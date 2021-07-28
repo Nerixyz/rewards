@@ -163,7 +163,7 @@ where
             AnyError::msg("Could not add duration lole")
         })?,
     );
-    let emote_name = emote_data.emote.name();
+    let emote_name = emote_data.emote.into_name();
     slot.name = Some(emote_name.clone());
     slot.added_by = Some(redeemed_user_login.to_string());
     slot.added_at = Some(now);

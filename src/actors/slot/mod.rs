@@ -1,10 +1,6 @@
 use crate::{
     log_err,
-    models::{
-        log_entry::LogEntry,
-        slot::{Slot, SlotPlatform},
-        user::User,
-    },
+    models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User},
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
         twitch::requests::update_reward,

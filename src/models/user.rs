@@ -1,6 +1,6 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
 use errors::sql::SqlResult;
-use sqlx::{types::Json, FromRow, PgPool};
+use sqlx::{FromRow, PgPool};
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
 
@@ -18,7 +18,6 @@ pub struct User {
 pub struct UserBttvData {
     pub id: String,
     pub bttv_id: Option<String>,
-    pub bttv_history: Json<Vec<String>>,
 }
 
 #[derive(FromRow)]
@@ -26,7 +25,6 @@ pub struct UserSevenTvData {
     pub id: String,
     pub name: String,
     pub seventv_id: Option<String>,
-    pub seventv_history: Json<Vec<String>>,
 }
 
 impl User {
@@ -79,7 +77,7 @@ impl User {
         let data = sqlx::query_as!(
             UserBttvData,
             r#"
-            SELECT id, bttv_id, bttv_history as "bttv_history: Json<Vec<String>>"
+            SELECT id, bttv_id
             FROM users
             WHERE id = $1
             "#,
@@ -89,60 +87,6 @@ impl User {
         .await?;
 
         Ok(data)
-    }
-
-    pub async fn set_bttv_history(
-        user_id: &str,
-        history: Vec<String>,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
-        // language=PostgreSQL
-        let _ = sqlx::query!(
-            r#"
-            UPDATE users SET bttv_history = $2 WHERE id = $1
-            "#,
-            user_id,
-            Json(history) as _
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn get_ffz_history(user_id: &str, pool: &PgPool) -> SqlResult<Vec<usize>> {
-        // language=PostgreSQL
-        let history = sqlx::query_scalar!(
-            r#"
-            SELECT ffz_history as "ffz_history: Json<Vec<usize>>"
-            FROM users
-            WHERE id = $1
-            "#,
-            user_id
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(history.0)
-    }
-
-    pub async fn set_ffz_history(
-        user_id: &str,
-        history: Vec<usize>,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
-        // language=PostgreSQL
-        let _ = sqlx::query!(
-            r#"
-            UPDATE users SET ffz_history = $2 WHERE id = $1
-            "#,
-            user_id,
-            Json(history) as _
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
     }
 
     pub async fn get_seventv_data(user_id: &str, pool: &PgPool) -> SqlResult<UserSevenTvData> {
@@ -150,7 +94,7 @@ impl User {
         let data = sqlx::query_as!(
             UserSevenTvData,
             r#"
-            SELECT id, name, seventv_id, seventv_history as "seventv_history: Json<Vec<String>>"
+            SELECT id, name, seventv_id
             FROM users
             WHERE id = $1
             "#,
@@ -160,25 +104,6 @@ impl User {
         .await?;
 
         Ok(data)
-    }
-
-    pub async fn set_seventv_history(
-        user_id: &str,
-        history: Vec<String>,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
-        // language=PostgreSQL
-        let _ = sqlx::query!(
-            r#"
-            UPDATE users SET seventv_history = $2 WHERE id = $1
-            "#,
-            user_id,
-            Json(history) as _
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
     }
 
     pub async fn create(&self, pool: &PgPool) -> SqlResult<()> {
