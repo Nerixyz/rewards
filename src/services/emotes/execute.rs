@@ -12,6 +12,7 @@ use crate::{
     models::reward::{SlotRewardData, SwapRewardData},
     services::emotes::{slots, swap, Emote, EmoteRW},
 };
+use std::str::FromStr;
 
 pub async fn execute_swap<RW, F, I, E, EI>(
     extractor: F,
@@ -24,7 +25,7 @@ where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
     F: FnOnce(&str) -> AnyResult<&str>,
     I: Display,
-    EI: Display + Clone,
+    EI: Display + Clone + FromStr + Default,
     E: Emote<EI>,
 {
     let platform_id = extract_id(
@@ -53,6 +54,7 @@ where
         redemption.event.broadcaster_user_id.as_ref(),
         platform_id,
         reward_data,
+        &user,
         pool,
     )
     .await

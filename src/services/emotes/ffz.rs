@@ -1,5 +1,5 @@
 use crate::{
-    models::{slot::SlotPlatform, user::User},
+    models::{emote::SlotPlatform, swap_emote::SwapEmote},
     services::{
         emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
         ffz::requests as ffz,
@@ -19,7 +19,11 @@ impl Emote<usize> for ffz::FfzEmote {
         &self.id
     }
 
-    fn name(self) -> String {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn into_name(self) -> String {
         self.name
     }
 }
@@ -45,7 +49,7 @@ impl EmoteRW for FfzEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         pool: &PgPool,
-    ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote, usize>> {
+    ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote>> {
         let (ffz_user, ffz_emote, ffz_room, ffz_history) = futures::future::try_join4(
             ffz::get_user(broadcaster_id).map_err(|e| {
                 log::warn!("err: {}", e);
@@ -59,9 +63,9 @@ impl EmoteRW for FfzEmotes {
                 log::warn!("err: {}", e);
                 AnyError::msg("No such ffz-room")
             }),
-            User::get_ffz_history(broadcaster_id, pool).map_err(|e| {
+            SwapEmote::emote_count(broadcaster_id, Self::platform(), pool).map_err(|e| {
                 log::warn!("err: {}", e);
-                AnyError::msg("No history?!")
+                AnyError::msg("No emote-count?!")
             }),
         )
         .await?;
@@ -83,7 +87,7 @@ impl EmoteRW for FfzEmotes {
         Ok(EmoteInitialData {
             max_emotes: ffz_user.max_emoticons,
             current_emotes: room_emotes.len(),
-            history: ffz_history,
+            history_len: ffz_history as usize,
             platform_id: ffz_room.room._id,
             emote: ffz_emote,
             emotes: room_emotes,
@@ -119,23 +123,11 @@ impl EmoteRW for FfzEmotes {
         })
     }
 
-    async fn get_history_and_platform_id(
-        broadcaster_id: &str,
-        pool: &PgPool,
-    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)> {
-        let (room, history) = futures::future::try_join(
-            ffz::get_room(broadcaster_id).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No such ffz-room")
-            }),
-            User::get_ffz_history(broadcaster_id, pool).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No history?!")
-            }),
-        )
-        .await?;
-
-        Ok((history, room.room._id))
+    async fn get_platform_id(broadcaster_id: &str, _pool: &PgPool) -> AnyResult<Self::PlatformId> {
+        // TODO: save room id in db
+        ffz::get_room(broadcaster_id)
+            .await
+            .map(|room| room.room._id)
     }
 
     async fn get_emote_by_id(emote_id: &usize) -> AnyResult<ffz::FfzEmote> {
@@ -148,15 +140,6 @@ impl EmoteRW for FfzEmotes {
 
     async fn add_emote(platform_id: &usize, emote_id: &usize) -> AnyResult<()> {
         ffz::add_emote(*platform_id, *emote_id).await
-    }
-
-    async fn save_history(
-        broadcaster_id: &str,
-        history: Vec<usize>,
-        pool: &PgPool,
-    ) -> AnyResult<()> {
-        User::set_ffz_history(broadcaster_id, history, pool).await?;
-        Ok(())
     }
 
     async fn remove_emote_from_broadcaster(

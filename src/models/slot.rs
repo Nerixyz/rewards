@@ -1,3 +1,4 @@
+use crate::models::emote::SlotPlatform;
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
@@ -13,15 +14,6 @@ pub struct Slot {
     pub name: Option<String>,
     pub added_by: Option<String>,
     pub added_at: Option<DateTime<Utc>>,
-}
-
-#[derive(sqlx::Type, Debug)]
-#[sqlx(type_name = "slot_platform", rename_all = "snake_case")]
-pub enum SlotPlatform {
-    Bttv,
-    Ffz,
-    #[sqlx(rename = "7tv")]
-    SevenTv,
 }
 
 #[derive(FromRow)]

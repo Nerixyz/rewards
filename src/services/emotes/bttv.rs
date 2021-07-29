@@ -1,8 +1,5 @@
 use crate::{
-    models::{
-        slot::SlotPlatform,
-        user::{User, UserBttvData},
-    },
+    models::{emote::SlotPlatform, swap_emote::SwapEmote},
     services::{
         bttv::{get_or_fetch_id, requests as bttv},
         emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
@@ -17,32 +14,16 @@ pub struct BttvEmotes {
     _private: usize,
 }
 
-impl BttvEmotes {
-    async fn get_data_and_id(
-        broadcaster_id: &str,
-        pool: &PgPool,
-    ) -> AnyResult<(UserBttvData, String)> {
-        let this_user = User::get_bttv_data(broadcaster_id, pool)
-            .await
-            .map_err(|_| AnyError::msg("No internal user"))?;
-        let bttv_id = if let Some(id) = &this_user.bttv_id {
-            id.to_string()
-        } else {
-            fetch_save_bttv_id(broadcaster_id, pool)
-                .await
-                .map_err(|_| AnyError::msg("No such user"))?
-        };
-
-        Ok((this_user, bttv_id))
-    }
-}
-
 impl Emote<String> for bttv::BttvEmote {
     fn id(&self) -> &String {
         &self.id
     }
 
-    fn name(self) -> String {
+    fn name(&self) -> &str {
+        &self.code
+    }
+
+    fn into_name(self) -> String {
         self.code
     }
 }
@@ -67,8 +48,13 @@ impl EmoteRW for BttvEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         pool: &PgPool,
-    ) -> AnyResult<EmoteInitialData<String, bttv::BttvEmote, String>> {
-        let (this_user, bttv_id) = Self::get_data_and_id(broadcaster_id, pool).await?;
+    ) -> AnyResult<EmoteInitialData<String, bttv::BttvEmote>> {
+        let (bttv_id, history_len) = futures::future::try_join(
+            get_or_fetch_id(broadcaster_id, pool),
+            SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
+                .map_err(|_| AnyError::msg("Could not get past emotes")),
+        )
+        .await?;
 
         // get the data in parallel
         let (bttv_user, user_limits, emote_data) = futures::future::try_join3(
@@ -97,7 +83,7 @@ impl EmoteRW for BttvEmotes {
         Ok(EmoteInitialData {
             max_emotes: user_limits.shared_emotes,
             current_emotes: bttv_user.shared_emotes.len(),
-            history: this_user.bttv_history.0,
+            history_len: history_len as usize,
             platform_id: bttv_id,
             emote: emote_data,
             emotes: bttv_user.shared_emotes,
@@ -118,14 +104,6 @@ impl EmoteRW for BttvEmotes {
         })
     }
 
-    async fn get_history_and_platform_id(
-        broadcaster_id: &str,
-        pool: &PgPool,
-    ) -> AnyResult<(Vec<Self::EmoteId>, Self::PlatformId)> {
-        let (this_user, id) = Self::get_data_and_id(broadcaster_id, pool).await?;
-        Ok((this_user.bttv_history.0, id))
-    }
-
     async fn get_emote_by_id(emote_id: &String) -> AnyResult<bttv::BttvEmote> {
         bttv::get_emote(emote_id).await
     }
@@ -137,15 +115,6 @@ impl EmoteRW for BttvEmotes {
 
     async fn add_emote(platform_id: &String, emote_id: &String) -> AnyResult<()> {
         bttv::add_shared_emote(emote_id, platform_id).await?;
-        Ok(())
-    }
-
-    async fn save_history(
-        broadcaster_id: &str,
-        history: Vec<String>,
-        pool: &PgPool,
-    ) -> AnyResult<()> {
-        User::set_bttv_history(broadcaster_id, history, pool).await?;
         Ok(())
     }
 
@@ -170,6 +139,10 @@ impl EmoteRW for BttvEmotes {
 
         Ok(emote.code)
     }
+
+    async fn get_platform_id(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Self::PlatformId> {
+        get_or_fetch_id(broadcaster_id, pool).await
+    }
 }
 
 async fn get_user_limits(bttv_id: &str) -> AnyResult<bttv::BttvLimits> {
@@ -179,11 +152,4 @@ async fn get_user_limits(bttv_id: &str) -> AnyResult<bttv::BttvLimits> {
         .find(|d| d.id == bttv_id)
         .map(|u| u.limits)
         .ok_or_else(|| AnyError::msg("User isn't an editor"))
-}
-
-async fn fetch_save_bttv_id(user_id: &str, pool: &PgPool) -> AnyResult<String> {
-    let user = bttv::get_user_by_twitch_id(user_id).await?;
-    User::set_bttv_id(user_id, &user.id, pool).await?;
-
-    Ok(user.id)
 }
