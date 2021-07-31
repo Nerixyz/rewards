@@ -3172,8 +3172,8 @@ dependencies = [
 
 [[package]]
 name = "twitch-pubsub"
-version = "0.1.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs?rev=b6ba82b#b6ba82bd73532f9a827e84fb1391c036c6b1b6bd"
+version = "0.2.0"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs?rev=1c967b3#1c967b34f86d209b861c55aa44342e06c625ac47"
 dependencies = [
  "async-trait",
  "async-tungstenite",

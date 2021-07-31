@@ -13,7 +13,7 @@ use twitch_pubsub::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, PubsubClient, ServerMessage, Topic, TopicData, TopicDef,
+    ClientConfig, ListenError, PubsubClient, ServerMessage, Topic, TopicData, TopicDef,
 };
 
 use crate::{
@@ -22,7 +22,7 @@ use crate::{
         timeout::TimeoutActor,
     },
     config::CONFIG,
-    log_err,
+    log_discord, log_err,
 };
 
 mod messages;
@@ -47,13 +47,7 @@ impl PubSubActor {
         let (incoming, client) = PubsubClient::new(config);
 
         Self::create(|ctx| {
-            let stream = UnboundedReceiverStream::new(incoming).filter_map(|s| {
-                future::ready(match s {
-                    ServerMessage::Message { data } => Some(data),
-                    _ => None,
-                })
-            });
-            ctx.add_stream(stream);
+            ctx.add_stream(UnboundedReceiverStream::new(incoming));
 
             Self {
                 live_addr,
@@ -79,10 +73,10 @@ impl Actor for PubSubActor {
     type Context = Context<Self>;
 }
 
-impl StreamHandler<TopicData> for PubSubActor {
-    fn handle(&mut self, item: TopicData, ctx: &mut Self::Context) {
+impl StreamHandler<ServerMessage> for PubSubActor {
+    fn handle(&mut self, item: ServerMessage, ctx: &mut Self::Context) {
         match item {
-            TopicData::ChatModeratorActions { topic, reply } => {
+            ServerMessage::Data(TopicData::ChatModeratorActions { topic, reply }) => {
                 if let ChatModeratorActionsReply::ModerationAction(ModerationAction {
                     moderation_action: ModerationActionCommand::Untimeout,
                     target_user_id,
@@ -102,7 +96,7 @@ impl StreamHandler<TopicData> for PubSubActor {
                         .spawn(ctx);
                 }
             }
-            TopicData::VideoPlaybackById { topic, reply } => match *reply {
+            ServerMessage::Data(TopicData::VideoPlaybackById { topic, reply }) => match *reply {
                 VideoPlaybackReply::StreamUp { .. } => {
                     log::info!("{} is now live", topic.channel_id);
 
@@ -132,6 +126,20 @@ impl StreamHandler<TopicData> for PubSubActor {
                 }
                 _ => (),
             },
+            ServerMessage::ListenError(ListenError { error, topics }) => {
+                log::warn!(
+                    "Couldn't listen on some topics error={} topics={:?}",
+                    error,
+                    topics
+                );
+                log_discord!(
+                    "Pubsub",
+                    "Couldn't listen on some topics",
+                    0xffcc4d,
+                    "error" = error.to_string(),
+                    "topics" = format!("`{:?}`", topics)
+                );
+            }
             _ => (),
         };
     }
