@@ -1,36 +1,72 @@
-use crate::{chat::command::ChatCommand, models::slot::Slot};
-use anyhow::{Error as AnyError, Result as AnyResult};
+use crate::{
+    chat::{command::ChatCommand, parse::opt_next_space},
+    models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote},
+};
+use anyhow::Result as AnyResult;
 use async_trait::async_trait;
+use futures::future;
 use itertools::Itertools;
 use sqlx::PgPool;
 use twitch_irc::message::PrivmsgMessage;
 
-pub struct Emotes;
+enum Requested {
+    Slots,
+    Bttv,
+    Ffz,
+    SevenTv,
+}
+
+pub struct Emotes {
+    requested: Option<Requested>,
+}
 
 #[async_trait]
 impl ChatCommand for Emotes {
     async fn execute(&mut self, msg: PrivmsgMessage, pool: &PgPool) -> AnyResult<String> {
-        let occupied = Slot::get_occupied_emotes(&msg.channel_id, pool)
+        let resp = match self.requested {
+            None => future::try_join(
+                Slot::get_occupied_emotes(&msg.channel_id, pool),
+                SwapEmote::all_emote_names(&msg.channel_id, pool),
+            )
             .await
-            .map_err(|_| AnyError::msg("Internal error"))?;
-        Ok(if occupied.is_empty() {
+            .map(|(mut slots, mut swap)| {
+                slots.append(&mut swap);
+                slots
+            }),
+            Some(Requested::Slots) => Slot::get_occupied_emotes(&msg.channel_id, pool).await,
+            Some(Requested::Bttv) => {
+                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::Bttv, pool).await
+            }
+            Some(Requested::Ffz) => {
+                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::Ffz, pool).await
+            }
+            Some(Requested::SevenTv) => {
+                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::SevenTv, pool).await
+            }
+        }?;
+        Ok(if resp.is_empty() {
             format!(
-                "@{}, there are no occupied emote-slots in this channel!",
+                "@{}, no managed emotes found for this channel",
                 msg.sender.login
             )
         } else {
-            format!(
-                "@{}, these are the current emotes: {}",
-                msg.sender.login,
-                occupied.iter().join(" ")
-            )
+            format!("@{}, {}", msg.sender.login, resp.iter().join(" "))
         })
     }
 
-    fn parse(_args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {
-        Ok(Box::new(Self))
+        let requested =
+            args.map(opt_next_space)
+                .and_then(|(arg, _)| match arg.to_lowercase().as_str() {
+                    "slot" | "slots" => Some(Requested::Slots),
+                    "bttv" | "betterttv" => Some(Requested::Bttv),
+                    "ffz" | "frankerfacez" => Some(Requested::Ffz),
+                    "seventv" | "7tv" => Some(Requested::SevenTv),
+                    _ => None,
+                });
+        Ok(Box::new(Self { requested }))
     }
 }
