@@ -16,7 +16,7 @@ use crate::{
         irc::{IrcActor, JoinMessage, PartMessage},
         pubsub::{PubSubActor, SubMessage},
     },
-    constants::{SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    config::CONFIG,
     models::{reward::Reward, user::User},
     services::{
         eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
@@ -56,9 +56,9 @@ async fn twitch_callback(
     };
 
     let mut builder = UserTokenBuilder::new(
-        ClientId::new(TWITCH_CLIENT_ID.to_string()),
-        ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
-        RedirectUrl::new(format!("{}/api/v1/auth/twitch-callback", SERVER_URL))
+        ClientId::new(CONFIG.twitch.client_id.to_string()),
+        ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
+        RedirectUrl::new(format!("{}/api/v1/auth/twitch-callback", CONFIG.server.url))
             .expect("Invalid redirect-url"),
     )
     .expect("Invalid url");
@@ -125,8 +125,8 @@ struct TwitchAuthUrlResponse {
 #[get("/twitch-auth")]
 fn redirect_to_twitch_auth() -> HttpResponse {
     let params = TwitchOAuthParams {
-        client_id: TWITCH_CLIENT_ID.to_string(),
-        redirect_uri: format!("{}/api/v1/auth/twitch-callback", SERVER_URL),
+        client_id: CONFIG.twitch.client_id.to_string(),
+        redirect_uri: format!("{}/api/v1/auth/twitch-callback", CONFIG.server.url),
         response_type: "code".to_string(),
         scope: vec![
             Scope::ChannelManageRedemptions,

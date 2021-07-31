@@ -27,7 +27,7 @@ use token_storage::PgTokenStorage;
 use crate::{
     actors::{db::DbActor, timeout::TimeoutActor},
     chat::{parse::opt_next_space, try_parse_command},
-    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN},
+    config::CONFIG,
     log_err,
     models::timed_mode::TimedMode,
 };
@@ -68,9 +68,9 @@ impl IrcActor {
         let config = ClientConfig {
             metrics_identifier: Some("rewardmore".into()),
             ..ClientConfig::new_simple(IrcCredentials::new(
-                TWITCH_CLIENT_USER_LOGIN.to_string(),
-                TWITCH_CLIENT_ID.to_string(),
-                TWITCH_CLIENT_SECRET.to_string(),
+                CONFIG.twitch.login.to_string(),
+                CONFIG.twitch.client_id.to_string(),
+                CONFIG.twitch.client_secret.to_string(),
                 PgTokenStorage(db),
             ))
         };
@@ -191,7 +191,7 @@ impl Handler<WhisperMessage> for IrcActor {
         Box::pin(async move {
             Ok(client
                 .privmsg(
-                    TWITCH_CLIENT_USER_LOGIN.to_string(),
+                    CONFIG.twitch.login.to_string(),
                     format!("/w {} {}", msg.0, msg.1),
                 )
                 .await?)
@@ -336,13 +336,13 @@ impl Handler<ChatMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
-        if !msg.0.message_text.starts_with("::")
-            || msg.0.message_text.len() < 2
+        if !msg.0.message_text.starts_with(&CONFIG.bot.prefix)
+            || msg.0.message_text.len() < CONFIG.bot.prefix.len()
             || !self.check_update_cooldown(&msg.0.channel_login)
         {
             return;
         }
-        let (command, args) = opt_next_space(&msg.0.message_text[2..]);
+        let (command, args) = opt_next_space(msg.0.message_text[CONFIG.bot.prefix.len()..].trim());
         match try_parse_command(command, args) {
             Some(Ok(ex)) => {
                 self.executor

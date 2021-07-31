@@ -49,7 +49,7 @@ This would timeout the user for a random duration between `10m` and `1h`.
 
 * Setup a [`postgres`](https://www.postgresql.org/) database.
 * Create a new application on the [Twitch Console](https://dev.twitch.tv/console/apps).
-* Copy `.env.example` to `.env` and set the appropriate values.
+* Copy `config.toml.example` to `config.toml` and set the appropriate values.
 * Run `setup.sh` or `setup.bat` depending on your platform.
 * Setup nginx to proxy `8082`.
 * Add the following entry to your nginx config:
@@ -72,7 +72,7 @@ location /api/v1/metrics {
 ### Setting up a development environment
 
 * Use [`ngrok`](https://ngrok.com/) to create a tunnel to your machine for _eventsub_.
-* Edit the `SERVER_URL` to the ngrok-https-url.
+* Edit `server.url` to the ngrok-https-url.
 * In the `web` directory set the `VITE_API_BASE_URL` to the ngrok-https-url.
 
 ## Roadmap

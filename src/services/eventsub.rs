@@ -1,5 +1,5 @@
 use crate::{
-    constants::SERVER_URL,
+    config::CONFIG,
     models::{reward::RewardToUpdate, user::User},
     services::twitch::{
         eventsub::{delete_subscription, subscribe_to_rewards},
@@ -102,7 +102,7 @@ pub async fn clear_invalid_rewards(
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
             let is_enabled = sub.status == Status::Enabled;
-            let is_this_server = sub.transport.callback.starts_with(SERVER_URL);
+            let is_this_server = sub.transport.callback.starts_with(&CONFIG.server.url);
 
             if !is_enabled || !is_this_server {
                 if let Err(e) = User::clear_eventsub_id(sub.id.as_ref(), pool).await {

@@ -1,0 +1,50 @@
+[db]
+url = "postgres://user:password@host/db"
+
+[server]
+url = "https://rewards.nerixyz.de"
+
+# defaults to 127.0.0.1:8082
+# bind_addr = "127.0.0.1:8082"
+
+[auth]
+# a secret used for JWT tokens
+# e.g. generate it with `openssl rand -base64 <len>`
+jwt-secret = ""
+
+[twitch]
+# from your twitch app
+client-id = ""
+client-secret = ""
+# login of the bot user
+login = "rewardmore"
+# user-id of the bot user
+user-id = "691109305"
+
+[twitch.eventsub]
+# a secrete for EventSub requests
+# e.g. generate it with `openssl rand -base64 <len>`
+secret = ""
+
+[emotes.bttv]
+# The JWT of the BTTV bot user
+jwt = ""
+
+[emotes.ffz]
+# the `session` cookie on `frankerfacez.com` of the bot user
+session = ""
+# the `remember_token` cookie on `frankerfacez.com` of the bot user
+remember = ""
+
+[emotes.seven-tv]
+# the JWT of the 7TV bot user
+jwt = ""
+
+[spotify]
+# from your spotify app
+client-id = ""
+client-secret = ""
+
+[bot]
+# defaults to "::"
+# prefix = "::"

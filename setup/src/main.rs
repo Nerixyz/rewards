@@ -1,7 +1,7 @@
 use chrono::{DateTime, Duration, Utc};
 use dialoguer::{console::style, Confirm, Input, Password};
-use serde::Serialize;
-use std::{collections::HashMap, env, ops::Add};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, ops::Add};
 use tokio_postgres::{types::Json, NoTls};
 use twitch_oauth2::{
     client::reqwest_http_client, oauth2::url::Url, tokens::UserTokenBuilder, ClientId,
@@ -22,25 +22,50 @@ struct UserAccessToken<'a> {
     expires_at: DateTime<Utc>,
 }
 
+#[derive(Deserialize)]
+#[non_exhaustive]
+struct SimpleMainConfig {
+    twitch: SimpleTwitchConfig,
+    db: SimpleDbConfig,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+struct SimpleTwitchConfig {
+    client_id: String,
+    client_secret: String,
+}
+
+#[derive(Deserialize)]
+#[non_exhaustive]
+struct SimpleDbConfig {
+    url: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
+    let maybe_config = tokio::fs::read("config.toml")
+        .await
+        .ok()
+        .and_then(|bytes| toml::from_slice::<SimpleMainConfig>(&bytes).ok());
 
-    println!("Let's get some configuration upfront. If you run this in the main directory with a .env file this will be automatic.");
+    println!("Let's get some configuration upfront. If you run this in the main directory with a config.toml file this will be automatic.");
 
-    let client_id = match env::var("TWITCH_CLIENT_ID") {
-        Ok(id) => id,
-        Err(_) => Input::<String>::new()
-            .with_prompt("ClientId")
-            .interact_text()?,
-    };
-    let client_secret = match env::var("TWITCH_CLIENT_SECRET") {
-        Ok(id) => id,
-        Err(_) => Password::new().with_prompt("ClientSecret").interact()?,
-    };
-    let database_url = match env::var("DATABASE_URL") {
-        Ok(id) => id,
-        Err(_) => Password::new().with_prompt("DatabaseUrl").interact()?,
+    let (client_id, client_secret, database_url) = match maybe_config {
+        Some(config) => (
+            config.twitch.client_id,
+            config.twitch.client_secret,
+            config.db.url,
+        ),
+        None => (
+            Input::<String>::new()
+                .with_prompt("ClientId")
+                .interact_text()?,
+            Password::new().with_prompt("ClientSecret").interact()?,
+            Password::new().with_prompt("DatabaseUrl").interact()?,
+        ),
     };
 
     let (pg, pg_connection) = tokio_postgres::connect(&database_url, NoTls).await?;

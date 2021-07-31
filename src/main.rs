@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use actix::Actor;
 use actix_cors::Cors;
 use actix_files::NamedFile;
@@ -26,7 +24,7 @@ use crate::{
         chat::ChatActor, db::DbActor, irc::IrcActor, live::LiveActor, pubsub::PubSubActor,
         slot::SlotActor, timeout::TimeoutActor, token_refresher::TokenRefresher,
     },
-    constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
+    config::CONFIG,
     middleware::useragent::UserAgentGuard,
     models::user::User,
     repositories::init_repositories,
@@ -39,10 +37,11 @@ use crate::{
         timed_mode::resolve_timed_modes,
     },
 };
+use std::convert::TryInto;
 
 mod actors;
 mod chat;
-mod constants;
+mod config;
 mod extractors;
 mod middleware;
 mod models;
@@ -51,6 +50,7 @@ mod services;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    lazy_static::initialize(&CONFIG);
     dotenv::dotenv().ok();
     env_logger::builder().format_timestamp(None).init();
 
@@ -62,8 +62,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Connecting to database");
 
-    let mut pool_options =
-        PgConnectOptions::from_str(DATABASE_URL).expect("couldn't read database url");
+    let mut pool_options: PgConnectOptions = (&CONFIG.db).try_into().expect("invalid db config");
     pool_options.log_statements(LevelFilter::Debug);
     let pool = PgPool::connect_with(pool_options)
         .await
@@ -150,7 +149,7 @@ async fn main() -> std::io::Result<()> {
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(NamedFile::open("web/dist/index.html").unwrap())
     })
-    .bind("127.0.0.1:8082")?
+    .bind(&CONFIG.server.bind_addr)?
     .run()
     .await
 }
@@ -158,8 +157,8 @@ async fn main() -> std::io::Result<()> {
 async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
     Ok(AppAccessToken::get_app_access_token(
         reqwest_http_client,
-        ClientId::new(TWITCH_CLIENT_ID.to_string()),
-        ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
+        ClientId::new(CONFIG.twitch.client_id.to_string()),
+        ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
         vec![
             Scope::ChannelReadRedemptions,
             Scope::ChannelManageRedemptions,
@@ -179,7 +178,7 @@ fn create_cors() -> Cors {
             .allow_any_method()
             .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
     } else {
-        Cors::default().allowed_origin(SERVER_URL)
+        Cors::default().allowed_origin(&CONFIG.server.url)
     }
 }
 

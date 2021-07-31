@@ -21,7 +21,7 @@ use crate::{
         live::{LiveActor, LiveMessage, OfflineMessage},
         timeout::TimeoutActor,
     },
-    constants::TWITCH_CLIENT_USER_ID,
+    config::CONFIG,
     log_err,
 };
 
@@ -141,7 +141,7 @@ impl Handler<SubMessage> for PubSubActor {
     type Result = ();
 
     fn handle(&mut self, msg: SubMessage, ctx: &mut Self::Context) -> Self::Result {
-        let my_id = TWITCH_CLIENT_USER_ID.parse::<u32>().unwrap_or(0);
+        let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let target_id = msg.0.parse::<u32>().unwrap_or(0);
         let client = self.client.clone();
         async move {
@@ -161,7 +161,7 @@ impl Handler<SubAllMessage> for PubSubActor {
     type Result = ();
 
     fn handle(&mut self, msg: SubAllMessage, ctx: &mut Self::Context) -> Self::Result {
-        let my_id = TWITCH_CLIENT_USER_ID.parse::<u32>().unwrap_or(0);
+        let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let topics = msg
             .0
             .iter()

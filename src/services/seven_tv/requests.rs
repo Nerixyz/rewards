@@ -1,4 +1,4 @@
-use crate::constants::SEVEN_TV_JWT;
+use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use reqwest::IntoUrl;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -127,7 +127,10 @@ where
 {
     let response = reqwest::Client::default()
         .post(url)
-        .header("Authorization", format!("Bearer {}", SEVEN_TV_JWT))
+        .header(
+            "Authorization",
+            format!("Bearer {}", CONFIG.emotes.seven_tv.jwt),
+        )
         .json(request)
         .send()
         .await?;
