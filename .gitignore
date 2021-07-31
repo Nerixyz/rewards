@@ -4,4 +4,5 @@ dist
 .idea
 .vscode
 .env
+config.toml
 restart.sh
