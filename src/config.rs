@@ -14,6 +14,8 @@ pub struct Config {
     pub emotes: EmoteConfig,
     pub spotify: SpotifyConfig,
     pub bot: BotConfig,
+    #[serde(default)]
+    pub log: LogConfig,
 }
 
 #[derive(Deserialize)]
@@ -90,6 +92,22 @@ pub struct SpotifyConfig {
 pub struct BotConfig {
     #[serde(default = "default_prefix")]
     pub prefix: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case", default)]
+pub struct LogConfig {
+    pub webhook_url: Option<String>,
+    pub announce_start: bool,
+}
+
+impl Default for LogConfig {
+    fn default() -> Self {
+        Self {
+            webhook_url: None,
+            announce_start: true,
+        }
+    }
 }
 
 fn default_prefix() -> String {
