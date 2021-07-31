@@ -20,11 +20,11 @@ impl TokenRefresher {
 
     async fn refresh(pool: &PgPool) {
         log_err!(
-            refresh_twitch_users(&pool).await,
+            refresh_twitch_users(pool).await,
             "Failed to refresh twitch users"
         );
         log_err!(
-            refresh_spotify_tokens(&pool).await,
+            refresh_spotify_tokens(pool).await,
             "Failed to refresh spotify tokens"
         );
     }
@@ -44,7 +44,7 @@ impl Actor for TokenRefresher {
 }
 
 async fn refresh_twitch_users(pool: &PgPool) -> AnyResult<()> {
-    let users = User::get_all(&pool).await.unwrap_or_default();
+    let users = User::get_all(pool).await.unwrap_or_default();
     for user in users {
         let mut token: UserToken = user.into();
         if token.refresh_token(reqwest_http_client).await.is_ok() {
@@ -56,7 +56,7 @@ async fn refresh_twitch_users(pool: &PgPool) -> AnyResult<()> {
                         .refresh_token
                         .map(|t| t.secret().clone())
                         .unwrap_or_default(),
-                    &pool,
+                    pool,
                 )
                 .await,
                 "Failed to insert"
@@ -69,7 +69,7 @@ async fn refresh_twitch_users(pool: &PgPool) -> AnyResult<()> {
 }
 
 async fn refresh_spotify_tokens(pool: &PgPool) -> AnyResult<()> {
-    let users = SpotifyData::get_all(&pool).await.unwrap_or_default();
+    let users = SpotifyData::get_all(pool).await.unwrap_or_default();
 
     for user in users {
         match refresh_token(&user.refresh_token).await {

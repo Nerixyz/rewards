@@ -9,11 +9,11 @@ pub async fn get_user_or_editor(
     broadcaster_id: &str,
     pool: &PgPool,
 ) -> Result<User, actix_web::Error> {
-    let user = claims.get_user(&pool).await?;
+    let user = claims.get_user(pool).await?;
     Ok(if user.id == broadcaster_id {
         user
     } else {
-        Editor::get_broadcaster_for_editor(&user.id, &broadcaster_id, &pool)
+        Editor::get_broadcaster_for_editor(&user.id, broadcaster_id, pool)
             .await
             .map_err(|_| errors::ErrorForbidden("The user isn't an editor for the broadcaster."))?
     })

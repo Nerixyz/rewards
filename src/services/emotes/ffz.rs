@@ -110,15 +110,15 @@ impl EmoteRW for FfzEmotes {
         )
         .await?;
 
-        let room_emotes: Vec<ffz::FfzEmote> = ffz_room
+        let room_emotes = ffz_room
             .sets
             .into_iter()
             .map(|s| s.1.emoticons)
             .flatten()
-            .collect();
+            .count();
 
         Ok(EmoteEnvData {
-            current_emotes: room_emotes.len(),
+            current_emotes: room_emotes,
             max_emotes: ffz_user.max_emoticons,
         })
     }

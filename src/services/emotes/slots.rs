@@ -58,7 +58,7 @@ where
             }
             for row in to_delete {
                 // no WHERE in $1 saj
-                Slot::remove(row.id, &pool).await?
+                Slot::remove(row.id, pool).await?
             }
         }
         n_current_emotes if n_current_emotes < n_slots => {

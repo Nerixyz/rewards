@@ -158,7 +158,7 @@ pub async fn delete_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
 }
 
 fn check_for_success(text: &str, success: &Regex, reason: &Regex) -> AnyResult<()> {
-    if success.is_match(&text) {
+    if success.is_match(text) {
         Ok(())
     } else {
         let reason = reason

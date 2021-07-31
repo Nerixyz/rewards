@@ -45,7 +45,7 @@ impl LiveActor {
         irc: &Addr<IrcActor>,
     ) -> AnyResult<Vec<UnpauseInfo>> {
         let user_token = User::get_by_id(user_id, pool).await?.into();
-        let live = Reward::get_all_live_for_user(user_id, &pool).await?;
+        let live = Reward::get_all_live_for_user(user_id, pool).await?;
         if live.is_empty() {
             return Ok(vec![]);
         }

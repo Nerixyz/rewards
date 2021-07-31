@@ -108,7 +108,7 @@ fn extract_spotify_id(str: &str) -> Option<&str> {
 }
 
 async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
-    let player = requests::get_player(&token).await.map_err(|e| {
+    let player = requests::get_player(token).await.map_err(|e| {
         log::warn!("Could not get player: {}", e);
         e
     })?;
