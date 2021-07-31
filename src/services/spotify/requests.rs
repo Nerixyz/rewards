@@ -1,5 +1,5 @@
 use crate::{
-    constants::{SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET},
+    config::CONFIG,
     services::spotify::{
         auth::get_redirect_url,
         responses::{
@@ -65,7 +65,10 @@ pub async fn get_token(code: &str) -> AnyResult<AccessTokenResponse> {
             "Authorization",
             format!(
                 "Basic {}",
-                base64::encode(format!("{}:{}", SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET))
+                base64::encode(format!(
+                    "{}:{}",
+                    CONFIG.spotify.client_id, CONFIG.spotify.client_secret
+                ))
             ),
         )
         .send()
@@ -83,7 +86,10 @@ pub async fn refresh_token(refresh_token: &str) -> AnyResult<RefreshTokenRespons
             "Authorization",
             format!(
                 "Basic {}",
-                base64::encode(format!("{}:{}", SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET))
+                base64::encode(format!(
+                    "{}:{}",
+                    CONFIG.spotify.client_id, CONFIG.spotify.client_secret
+                ))
             ),
         )
         .send()

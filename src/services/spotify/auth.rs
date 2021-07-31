@@ -1,5 +1,5 @@
 use crate::{
-    constants::{SERVER_URL, SPOTIFY_CLIENT_ID},
+    config::CONFIG,
     services::jwt::{encode_jwt, JwtClaims},
 };
 use anyhow::Result as AnyResult;
@@ -26,7 +26,7 @@ struct AuthUriQuery<'a> {
 pub fn get_auth_url(user_id: String) -> AnyResult<(String, String)> {
     let jwt = encode_jwt(&JwtClaims::new_short(user_id))?;
     let query = serde_qs::to_string(&AuthUriQuery {
-        client_id: SPOTIFY_CLIENT_ID,
+        client_id: &CONFIG.spotify.client_id,
         response_type: "code",
         redirect_uri: get_redirect_url(),
         scope: SPOTIFY_SCOPES,
@@ -39,5 +39,5 @@ pub fn get_auth_url(user_id: String) -> AnyResult<(String, String)> {
 }
 
 pub fn get_redirect_url() -> String {
-    format!("{}/api/v1/connections/spotify-callback", SERVER_URL)
+    format!("{}/api/v1/connections/spotify-callback", CONFIG.server.url)
 }

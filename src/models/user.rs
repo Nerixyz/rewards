@@ -1,4 +1,4 @@
-use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::config::CONFIG;
 use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 use std::time::Duration;
@@ -252,8 +252,8 @@ impl From<User> for UserToken {
         Self::from_existing_unchecked(
             AccessToken::new(u.access_token),
             RefreshToken::new(u.refresh_token),
-            ClientId::new(TWITCH_CLIENT_ID.to_string()),
-            ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
+            ClientId::new(CONFIG.twitch.client_id.to_string()),
+            ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
             u.name,
             u.id,
             None,

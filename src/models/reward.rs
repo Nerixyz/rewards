@@ -1,4 +1,4 @@
-use crate::constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET};
+use crate::config::CONFIG;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
@@ -287,8 +287,8 @@ impl TryFrom<RewardToUpdate> for (String, UserToken) {
                 UserToken::from_existing_unchecked(
                     AccessToken::new(access_token),
                     RefreshToken::new(refresh_token),
-                    ClientId::new(TWITCH_CLIENT_ID.to_string()),
-                    ClientSecret::new(TWITCH_CLIENT_SECRET.to_string()),
+                    ClientId::new(CONFIG.twitch.client_id.to_string()),
+                    ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
                     String::new(),
                     broadcaster_id,
                     None,
@@ -312,7 +312,7 @@ impl From<LiveRewardAT> for (LiveReward, UserToken) {
             UserToken::from_existing_unchecked(
                 AccessToken::new(reward.access_token),
                 None,
-                ClientId::new(TWITCH_CLIENT_ID.to_string()),
+                ClientId::new(CONFIG.twitch.client_id.to_string()),
                 None,
                 String::new(),
                 reward.user_id,

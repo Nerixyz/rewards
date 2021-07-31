@@ -1,5 +1,5 @@
 use crate::{
-    constants::{EVENTSUB_BASE64_SECRET, SERVER_URL},
+    config::CONFIG,
     services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient},
 };
 use twitch_api2::{
@@ -49,8 +49,8 @@ pub async fn subscribe_to_rewards(
                 .transport(
                     Transport::builder()
                         .method(TransportMethod::Webhook)
-                        .secret(EVENTSUB_BASE64_SECRET.to_string())
-                        .callback(format!("{}/api/v1/eventsub/reward", SERVER_URL))
+                        .secret(CONFIG.twitch.eventsub.secret.to_string())
+                        .callback(format!("{}/api/v1/eventsub/reward", CONFIG.server.url))
                         .build(),
                 )
                 .subscription(

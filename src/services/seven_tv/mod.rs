@@ -1,9 +1,6 @@
 use anyhow::{Error as AnyError, Result as AnyResult};
 
-use crate::{
-    constants::TWITCH_CLIENT_USER_LOGIN, models::user::User,
-    services::seven_tv::requests::get_user_editors,
-};
+use crate::{config::CONFIG, models::user::User, services::seven_tv::requests::get_user_editors};
 use sqlx::PgPool;
 
 pub mod requests;
@@ -41,7 +38,7 @@ pub async fn verify_user(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Strin
     };
     let editors = get_user_editors(&seventv_id).await?;
 
-    if editors.iter().any(|e| e.login == TWITCH_CLIENT_USER_LOGIN) {
+    if editors.iter().any(|e| e.login == CONFIG.twitch.login) {
         Ok(seventv_id)
     } else {
         Err(AnyError::msg("RewardMore isn't an editor for the user"))

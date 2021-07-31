@@ -27,7 +27,7 @@ use token_storage::PgTokenStorage;
 use crate::{
     actors::{db::DbActor, timeout::TimeoutActor},
     chat::{parse::opt_next_space, try_parse_command},
-    constants::{TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_CLIENT_USER_LOGIN},
+    config::CONFIG,
     log_err,
     models::timed_mode::TimedMode,
 };
@@ -68,9 +68,9 @@ impl IrcActor {
         let config = ClientConfig {
             metrics_identifier: Some("rewardmore".into()),
             ..ClientConfig::new_simple(IrcCredentials::new(
-                TWITCH_CLIENT_USER_LOGIN.to_string(),
-                TWITCH_CLIENT_ID.to_string(),
-                TWITCH_CLIENT_SECRET.to_string(),
+                CONFIG.twitch.login.to_string(),
+                CONFIG.twitch.client_id.to_string(),
+                CONFIG.twitch.client_secret.to_string(),
                 PgTokenStorage(db),
             ))
         };
@@ -191,7 +191,7 @@ impl Handler<WhisperMessage> for IrcActor {
         Box::pin(async move {
             Ok(client
                 .privmsg(
-                    TWITCH_CLIENT_USER_LOGIN.to_string(),
+                    CONFIG.twitch.login.to_string(),
                     format!("/w {} {}", msg.0, msg.1),
                 )
                 .await?)

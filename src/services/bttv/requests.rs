@@ -1,4 +1,4 @@
-use crate::constants::BTTV_JWT;
+use crate::config::CONFIG;
 use anyhow::Result as AnyResult;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
@@ -18,7 +18,9 @@ lazy_static! {
             let mut map = HeaderMap::with_capacity(1);
             map.insert(
                 AUTHORIZATION,
-                format!("Bearer {}", BTTV_JWT).parse().unwrap(),
+                format!("Bearer {}", CONFIG.emotes.bttv.jwt)
+                    .parse()
+                    .unwrap(),
             );
             map
         })

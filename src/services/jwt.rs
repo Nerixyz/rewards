@@ -1,4 +1,4 @@
-use crate::{constants::JWT_BASE64_SECRET, models::user::User};
+use crate::{config::CONFIG, models::user::User};
 use actix_web::Result;
 use jsonwebtoken::{
     decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
@@ -48,7 +48,7 @@ impl JwtClaims {
 pub fn decode_jwt(token: &str) -> jsonwebtoken::errors::Result<TokenData<JwtClaims>> {
     decode::<JwtClaims>(
         token,
-        &DecodingKey::from_base64_secret(JWT_BASE64_SECRET).expect("invalid key"),
+        &DecodingKey::from_base64_secret(&CONFIG.auth.jwt_secret).expect("invalid key"),
         &Validation::new(Algorithm::HS256),
     )
 }
@@ -57,6 +57,6 @@ pub fn encode_jwt(claims: &JwtClaims) -> jsonwebtoken::errors::Result<String> {
     encode(
         &Header::new(Algorithm::HS256),
         claims,
-        &EncodingKey::from_base64_secret(JWT_BASE64_SECRET).expect("invalid key"),
+        &EncodingKey::from_base64_secret(&CONFIG.auth.jwt_secret).expect("invalid key"),
     )
 }

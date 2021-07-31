@@ -7,7 +7,7 @@ mod rewards;
 mod user;
 
 use crate::{
-    constants::EVENTSUB_BASE64_SECRET,
+    config::CONFIG,
     repositories::{
         auth::init_auth_routes, connections::init_connection_routes, editors::init_editor_routes,
         eventsub::init_eventsub_routes, logs::init_log_routes, rewards::init_rewards_routes,
@@ -60,7 +60,7 @@ pub fn init_repositories(config: &mut web::ServiceConfig) {
         .service(
             web::scope("/eventsub")
                 .wrap(Metrics::new("eventsub"))
-                .wrap(EventsubVerify::new(EVENTSUB_BASE64_SECRET))
+                .wrap(EventsubVerify::new(&CONFIG.twitch.eventsub.secret))
                 .configure(init_eventsub_routes),
         )
         .service(metrics_render);

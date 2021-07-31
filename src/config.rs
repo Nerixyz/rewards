@@ -86,7 +86,7 @@ impl TryFrom<&DbConfig> for PgConnectOptions {
 }
 
 lazy_static! {
-    pub static ref CONFIG: Config = { read_config().unwrap() };
+    pub static ref CONFIG: Config = read_config().unwrap();
 }
 
 /// This blocks!
