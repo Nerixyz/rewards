@@ -12,7 +12,7 @@ use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToke
 
 use crate::{
     actors::irc::{IrcActor, SayMessage},
-    log_err,
+    log_discord, log_err,
     models::{reward::Reward, user::User},
     services::twitch::requests::{get_reward_for_broadcaster_by_id, update_reward},
 };
@@ -44,7 +44,10 @@ impl LiveActor {
         pool: &PgPool,
         irc: &Addr<IrcActor>,
     ) -> AnyResult<Vec<UnpauseInfo>> {
-        let user_token = User::get_by_id(user_id, pool).await?.into();
+        let user_token: UserToken = User::get_by_id(user_id, pool).await?.into();
+
+        log_discord!(format!("🔴 {} is now live", user_token.login));
+
         let live = Reward::get_all_live_for_user(user_id, pool).await?;
         if live.is_empty() {
             return Ok(vec![]);
@@ -118,8 +121,10 @@ impl LiveActor {
     }
 
     async fn on_offline(user_id: &str, pool: &PgPool) -> AnyResult<()> {
-        let user_token = User::get_by_id(user_id, pool).await?.into();
+        let user_token: UserToken = User::get_by_id(user_id, pool).await?.into();
         let pending = Reward::get_all_pending_live_for_user(user_id, pool).await?;
+
+        log_discord!(format!("📴 {} is now offline", user_token.login));
 
         log::info!("Unpausing {} rewards", pending.len());
 

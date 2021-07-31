@@ -1,4 +1,5 @@
 use crate::{
+    log_discord,
     models::editor::Editor,
     services::{jwt::JwtClaims, twitch::requests::get_users},
 };
@@ -38,6 +39,12 @@ async fn add_editor(
     editor: web::Path<String>,
 ) -> Result<HttpResponse> {
     Editor::add_editor(claims.user_id(), &editor, &pool).await?;
+    log_discord!(
+        "Editors",
+        format!("✏ Added editor for {}", claims.user_id()),
+        "editor_name" = editor.as_ref()
+    );
+
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -48,6 +55,12 @@ async fn delete_editor(
     editor: web::Path<String>,
 ) -> Result<HttpResponse> {
     Editor::delete_editor(claims.user_id(), &editor, &pool).await?;
+    log_discord!(
+        "Editors",
+        format!("🗑 Removed editor for {}", claims.user_id()),
+        "editor_name" = editor.as_ref()
+    );
+
     Ok(HttpResponse::Ok().finish())
 }
 

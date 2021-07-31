@@ -48,3 +48,9 @@ client-secret = ""
 [bot]
 # defaults to "::"
 # prefix = "::"
+
+# optional
+[log]
+webhook-url = ""
+# default is true
+announce-start = true

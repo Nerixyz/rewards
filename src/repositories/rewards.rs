@@ -1,4 +1,5 @@
 use crate::{
+    log_discord,
     models::reward::{Reward, RewardData},
     services::{
         jwt::JwtClaims,
@@ -90,6 +91,16 @@ async fn create(
         )));
     }
 
+    log_discord!(
+        "Rewards",
+        "🎉 Created reward",
+        0x9355fb,
+        "User" = reward.broadcaster_login.clone().into_string(),
+        "Title" = reward.title.clone(),
+        "Type" = body.data.to_string(),
+        "Id" = reward.id.clone().into_string()
+    );
+
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
         twitch: reward,
         data: db_reward.data.0,
@@ -135,8 +146,19 @@ async fn update(
     }
 
     let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;
+    let data_type = body.data.to_string();
     let db_reward = Reward::from_response(&reward, body.data, body.live_delay);
     db_reward.update(&pool).await?;
+
+    log_discord!(
+        "Rewards",
+        "🔁 Updated reward",
+        0xf99500,
+        "User" = reward.broadcaster_login.clone().into_string(),
+        "Title" = reward.title.clone(),
+        "Type" = data_type,
+        "Id" = reward.id.clone().into_string()
+    );
 
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
         twitch: reward,
@@ -159,6 +181,14 @@ async fn delete(
     delete_reward(&broadcaster_id, reward_id.clone(), &token).await?;
     // this has to be done afterwards as only then the reward is removed
     Reward::delete(&reward_id, &pool).await?;
+
+    log_discord!(
+        "Rewards",
+        "🗑 Deleted reward",
+        0xff0a12,
+        "User" = token.login,
+        "Id" = reward_id
+    );
 
     Ok(HttpResponse::Ok().finish())
 }

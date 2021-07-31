@@ -1,5 +1,5 @@
 use crate::{
-    log_err,
+    log_discord, log_err,
     models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User},
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
@@ -87,6 +87,14 @@ impl SlotActor {
                         .await,
                         "Could not save logs"
                     );
+                    log_discord!(
+                        "Slots",
+                        "🗑 Cleared slot",
+                        0x00e676,
+                        "UserId" = p.user_id.clone(),
+                        "Platform" = format!("{:?}", p.platform),
+                        "Emote" = emote
+                    );
                 }
                 Err(e) => {
                     log::warn!(
@@ -102,6 +110,15 @@ impl SlotActor {
                         )
                         .await,
                         "Could not save logs"
+                    );
+                    log_discord!(
+                        "Slots",
+                        "🗑 Cleared slot but there's no emote data",
+                        0x00e676,
+                        "UserId" = p.user_id.clone(),
+                        "Platform" = format!("{:?}", p.platform),
+                        "EmoteId" = emote_id,
+                        "Error" = e.to_string()
                     );
                 }
             }

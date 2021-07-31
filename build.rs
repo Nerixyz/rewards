@@ -47,4 +47,5 @@ fn add_rustc_info() {
 
 fn add_build_info() {
     set_env("RW_BUILD_INFO", env::var("TARGET").expect("No TARGET"));
+    set_env("RW_BUILD_PROFILE", env::var("PROFILE").expect("No PROFILE"));
 }

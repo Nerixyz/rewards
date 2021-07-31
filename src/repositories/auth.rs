@@ -17,6 +17,7 @@ use crate::{
         pubsub::{PubSubActor, SubMessage},
     },
     config::CONFIG,
+    log_discord,
     models::{reward::Reward, user::User},
     services::{
         eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
@@ -91,6 +92,11 @@ async fn twitch_callback(
     register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool).await?;
 
     log::info!("AUTH: Registered {}", user.name);
+    log_discord!(
+        "Auth",
+        format!("🎉 Registered {}", user.name),
+        "scopes" = user.scopes
+    );
 
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
@@ -177,6 +183,7 @@ async fn revoke(
     }
 
     log::info!("AUTH: Revoked {}", user_name);
+    log_discord!("Auth", format!("❌ Revoked {}", user_name),);
 
     irc.do_send(PartMessage(user_name));
 
