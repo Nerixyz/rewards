@@ -1,4 +1,5 @@
 pub mod bttv;
+pub mod discord;
 pub mod emotes;
 pub mod errors;
 pub mod eventsub;
