@@ -18,6 +18,7 @@ use crate::{
         irc::{IrcActor, WhisperMessage},
         timeout::TimeoutActor,
     },
+    log_discord,
     models::{reward::Reward, user::User},
     services::{rewards::execute::execute_reward, twitch::eventsub::update_reward_redemption},
 };
@@ -58,6 +59,12 @@ async fn reward_redemption(
                 if let (Ok(reward), Ok(user_token)) =
                     (reward, User::get_by_id(&broadcaster_id, &pool).await)
                 {
+                    let broadcaster_login: String = redemption
+                        .event
+                        .broadcaster_user_login
+                        .clone()
+                        .into_string();
+                    let reward_name: String = redemption.event.reward.title.clone();
                     let reward_type = reward.data.0.to_string();
                     let status = match execute_reward(
                         redemption,
@@ -73,6 +80,15 @@ async fn reward_redemption(
                         Ok(_) => CustomRewardRedemptionStatus::Fulfilled,
                         Err(e) => {
                             log::warn!("Could not execute reward: {:?}", e);
+
+                            log_discord!(
+                                "Rewards",
+                                format!("⚠ Failed to execute reward in {}", broadcaster_login),
+                                0xfab43e,
+                                "Reward" = reward_name.clone(),
+                                "Type" = reward_type.clone(),
+                                "Error" = e.to_string()
+                            );
 
                             match irc.send(WhisperMessage(executing_user_login, "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
                                 Err(e) => log::warn!("MailboxError on sending chat: {}", e),
@@ -95,6 +111,16 @@ async fn reward_redemption(
                         execution.as_secs_f64(),
                         "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
                         "reward" => reward_type.clone()
+                    );
+
+                    log_discord!(
+                        "Rewards",
+                        format!("🗒 Executed reward in {}", broadcaster_login),
+                        0x1ed760,
+                        "Reward" = reward_name,
+                        "Type" = reward_type,
+                        "Status" = format!("{:?}", status),
+                        "Execution Time" = execution.as_secs_f64().to_string()
                     );
 
                     match update_reward_redemption(
@@ -126,6 +152,14 @@ async fn reward_redemption(
         }
         Payload::UserAuthorizationRevokeV1(re) => {
             log::warn!("auth revoke: {:?}", re);
+            log_discord!(
+                "Auth",
+                "Unhandled revocation",
+                "User Login/Id" = match re.event.user_login {
+                    Some(login) => login.into_string(),
+                    None => re.event.user_id.into_string(),
+                }
+            );
             // TODO
             Ok(HttpResponse::Ok().finish())
         }

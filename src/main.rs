@@ -50,9 +50,22 @@ mod services;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    lazy_static::initialize(&CONFIG);
     dotenv::dotenv().ok();
     env_logger::builder().format_timestamp(None).init();
+
+    log::info!("Initializing config");
+
+    lazy_static::initialize(&CONFIG);
+
+    if CONFIG.log.announce_start {
+        log_discord!(format!(
+            "Running. [{build_profile}] 🏗 {git_info} 🖥 {build_info} 🛠 rustc {rustc_info}",
+            git_info = env!("RW_GIT_INFO"),
+            rustc_info = env!("RW_RUSTC_INFO"),
+            build_info = env!("RW_BUILD_INFO"),
+            build_profile = env!("RW_BUILD_PROFILE")
+        ));
+    }
 
     let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
     let prom_handle = prom_recorder.handle();
