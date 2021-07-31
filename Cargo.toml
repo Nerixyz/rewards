@@ -33,6 +33,7 @@ futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.8.3"
+toml = "0.5.8"
 
 dotenv_codegen = "0.15"
 dotenv = "0.15.0"

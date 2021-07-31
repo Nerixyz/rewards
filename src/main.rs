@@ -26,6 +26,7 @@ use crate::{
         chat::ChatActor, db::DbActor, irc::IrcActor, live::LiveActor, pubsub::PubSubActor,
         slot::SlotActor, timeout::TimeoutActor, token_refresher::TokenRefresher,
     },
+    config::CONFIG,
     constants::{DATABASE_URL, SERVER_URL, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET},
     middleware::useragent::UserAgentGuard,
     models::user::User,
@@ -42,6 +43,7 @@ use crate::{
 
 mod actors;
 mod chat;
+mod config;
 mod constants;
 mod extractors;
 mod middleware;
@@ -51,6 +53,7 @@ mod services;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    lazy_static::initialize(&CONFIG);
     dotenv::dotenv().ok();
     env_logger::builder().format_timestamp(None).init();
 
