@@ -92,4 +92,37 @@ impl SwapEmote {
         .await?;
         Ok(emote)
     }
+
+    pub async fn all_emote_names(user_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
+        // language=PostgreSQL
+        let emotes = sqlx::query_scalar!(
+            r#"
+            SELECT name
+            FROM swap_emotes
+            WHERE user_id = $1"#,
+            user_id,
+        )
+        .fetch_all(pool)
+        .await?;
+        Ok(emotes)
+    }
+
+    pub async fn platform_emote_names(
+        user_id: &str,
+        platform: SlotPlatform,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
+        // language=PostgreSQL
+        let emotes = sqlx::query_scalar!(
+            r#"
+            SELECT name
+            FROM swap_emotes
+            WHERE user_id = $1 AND platform = $2"#,
+            user_id,
+            platform as _
+        )
+        .fetch_all(pool)
+        .await?;
+        Ok(emotes)
+    }
 }
