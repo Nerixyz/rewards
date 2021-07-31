@@ -2568,6 +2568,7 @@ dependencies = [
  "serde",
  "tokio",
  "tokio-postgres",
+ "toml",
  "twitch_oauth2 0.5.1",
 ]
 

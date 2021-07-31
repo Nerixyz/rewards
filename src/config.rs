@@ -6,6 +6,7 @@ use std::{convert::TryFrom, str::FromStr};
 
 #[derive(Deserialize)]
 pub struct Config {
+    // keep in sync with /setup
     pub db: DbConfig,
     pub server: ServerConfig,
     pub auth: AuthConfig,
@@ -17,6 +18,7 @@ pub struct Config {
 
 #[derive(Deserialize)]
 pub struct DbConfig {
+    // keep in sync with /setup
     pub url: String,
 }
 
@@ -40,6 +42,7 @@ pub struct AuthConfig {
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TwitchConfig {
+    // keep in sync with /setup
     pub client_id: String,
     pub client_secret: String,
     pub login: String,
