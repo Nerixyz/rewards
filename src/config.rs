@@ -12,6 +12,7 @@ pub struct Config {
     pub twitch: TwitchConfig,
     pub emotes: EmoteConfig,
     pub spotify: SpotifyConfig,
+    pub bot: BotConfig,
 }
 
 #[derive(Deserialize)]
@@ -22,7 +23,12 @@ pub struct DbConfig {
 #[derive(Deserialize)]
 pub struct ServerConfig {
     pub url: String,
-    pub port: u16,
+    #[serde(default = "default_bind_addr")]
+    pub bind_addr: String,
+}
+
+fn default_bind_addr() -> String {
+    "127.0.0.1:8082".to_string()
 }
 
 #[derive(Deserialize)]
@@ -75,6 +81,16 @@ pub struct SevenTvConfig {
 pub struct SpotifyConfig {
     pub client_id: String,
     pub client_secret: String,
+}
+
+#[derive(Deserialize)]
+pub struct BotConfig {
+    #[serde(default = "default_prefix")]
+    pub prefix: String,
+}
+
+fn default_prefix() -> String {
+    "::".to_string()
 }
 
 impl TryFrom<&DbConfig> for PgConnectOptions {

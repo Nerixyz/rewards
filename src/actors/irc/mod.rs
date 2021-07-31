@@ -336,13 +336,13 @@ impl Handler<ChatMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
-        if !msg.0.message_text.starts_with("::")
-            || msg.0.message_text.len() < 2
+        if !msg.0.message_text.starts_with(&CONFIG.bot.prefix)
+            || msg.0.message_text.len() < CONFIG.bot.prefix.len()
             || !self.check_update_cooldown(&msg.0.channel_login)
         {
             return;
         }
-        let (command, args) = opt_next_space(&msg.0.message_text[2..]);
+        let (command, args) = opt_next_space(msg.0.message_text[CONFIG.bot.prefix.len()..].trim());
         match try_parse_command(command, args) {
             Some(Ok(ex)) => {
                 self.executor

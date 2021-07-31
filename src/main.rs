@@ -149,7 +149,7 @@ async fn main() -> std::io::Result<()> {
             .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
             .default_service(NamedFile::open("web/dist/index.html").unwrap())
     })
-    .bind("127.0.0.1:8082")?
+    .bind(&CONFIG.server.bind_addr)?
     .run()
     .await
 }
