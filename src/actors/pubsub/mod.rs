@@ -12,7 +12,8 @@ use twitch_pubsub::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, ListenError, PubsubClient, ServerMessage, Topic, TopicData, TopicDef,
+    ClientConfig, ConnectionClosed, ListenError, PubsubClient, ServerMessage, Topic, TopicData,
+    TopicDef,
 };
 
 use crate::{
@@ -28,6 +29,7 @@ mod messages;
 mod token_provider;
 use crate::actors::timeout::RemoveTimeoutMessage;
 pub use messages::*;
+use std::string::ParseError;
 
 pub struct PubSubActor {
     live_addr: Addr<LiveActor>,
@@ -137,6 +139,27 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                     0xffcc4d,
                     "error" = error.to_string(),
                     "topics" = format!("`{:?}`", topics)
+                );
+            }
+            ServerMessage::ParseError(ParseError { raw, error }) => {
+                log_discord!(
+                    "Pubsub",
+                    "Couldn't parse message",
+                    0xffce49,
+                    "Raw" = format!("`{}`", raw),
+                    "Error" = error.to_string()
+                );
+            }
+            ServerMessage::ConnectionClosed(ConnectionClosed {
+                connection_id,
+                cause,
+            }) => {
+                log_discord!(
+                    "Pubsub",
+                    "Connection closed",
+                    0xfdd0ae,
+                    "Connection Id" = connection_id.to_string(),
+                    "Cause" = cause.to_string()
                 );
             }
             _ => (),
