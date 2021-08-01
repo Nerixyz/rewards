@@ -28,6 +28,39 @@ impl TokenProvider for PubsubTokenProvider {
         &self,
         topics: Vec<Topic>,
     ) -> Result<Vec<(Vec<Topic>, Option<String>)>, Self::Error> {
-        Ok(vec![(topics, Some(self.get_token().await?))])
+        // here, we need to split up topics that don't need a token and topics that do
+        // that's because topics that need one may error and we want to catch each error separately
+
+        let (required, no_token): (Vec<Topic>, Vec<Topic>) =
+            topics.into_iter().partition(|t| match t {
+                Topic::AutoModQueue(_)
+                | Topic::ChatModeratorActions(_)
+                | Topic::UserModerationNotifications(_) => true,
+                Topic::VideoPlayback(_) | Topic::VideoPlaybackById(_) => false,
+                _ => {
+                    log::error!(
+                        "Invalid topic to be partitioned, providing token though: {:?}",
+                        t
+                    );
+                    true
+                }
+            });
+
+        if required.is_empty() {
+            Ok(vec![(no_token, None)])
+        } else {
+            let token = self.get_token().await?;
+
+            let mut provided: Vec<(Vec<Topic>, Option<String>)> = required
+                .into_iter()
+                .map(|topic| (vec![topic], Some(token.clone())))
+                .collect();
+
+            if !no_token.is_empty() {
+                provided.push((no_token, None));
+            }
+
+            Ok(provided)
+        }
     }
 }
