@@ -135,7 +135,7 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                     "Pubsub",
                     "Couldn't listen on some topics",
                     0xffcc4d,
-                    "error" = error.to_string(),
+                    "error" = error,
                     "topics" = format!("`{:?}`", topics)
                 );
             }

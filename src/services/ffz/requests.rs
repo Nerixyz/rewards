@@ -165,7 +165,7 @@ fn check_for_success(text: &str, success: &Regex, reason: &Regex) -> AnyResult<(
         Ok(())
     } else {
         let reason = reason
-            .captures(&text)
+            .captures(text)
             .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
             .flatten()
             .unwrap_or_else(|| "No reason found".to_string());
