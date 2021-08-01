@@ -52,5 +52,7 @@ client-secret = ""
 # optional
 [log]
 webhook-url = ""
-# default is true
-announce-start = true
+
+[log.announce]
+discord = true
+twitch = { channel = "nerixyz", prefix = "Running."}

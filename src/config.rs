@@ -94,24 +94,28 @@ pub struct BotConfig {
     pub prefix: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 #[serde(rename_all = "kebab-case", default)]
 pub struct LogConfig {
     pub webhook_url: Option<String>,
-    pub announce_start: bool,
-}
-
-impl Default for LogConfig {
-    fn default() -> Self {
-        Self {
-            webhook_url: None,
-            announce_start: true,
-        }
-    }
+    pub announce: Option<AnnounceConfig>,
 }
 
 fn default_prefix() -> String {
     "::".to_string()
+}
+
+#[derive(Deserialize, Default)]
+pub struct AnnounceConfig {
+    pub discord: bool,
+    pub twitch: Option<AnnounceTwitchConfig>,
+}
+
+#[derive(Deserialize)]
+pub struct AnnounceTwitchConfig {
+    pub channel: String,
+    #[serde(default)]
+    pub prefix: Option<String>,
 }
 
 impl TryFrom<&DbConfig> for PgConnectOptions {

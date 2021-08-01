@@ -1,4 +1,4 @@
-use actix::Actor;
+use actix::{Actor, Addr};
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_metrics::Metrics;
@@ -21,8 +21,14 @@ use actors::{irc::JoinAllMessage, pubsub::SubAllMessage};
 
 use crate::{
     actors::{
-        chat::ChatActor, db::DbActor, irc::IrcActor, live::LiveActor, pubsub::PubSubActor,
-        slot::SlotActor, timeout::TimeoutActor, token_refresher::TokenRefresher,
+        chat::ChatActor,
+        db::DbActor,
+        irc::{IrcActor, JoinMessage, SayMessage},
+        live::LiveActor,
+        pubsub::PubSubActor,
+        slot::SlotActor,
+        timeout::TimeoutActor,
+        token_refresher::TokenRefresher,
     },
     config::CONFIG,
     middleware::useragent::UserAgentGuard,
@@ -57,16 +63,6 @@ async fn main() -> std::io::Result<()> {
 
     lazy_static::initialize(&CONFIG);
 
-    if CONFIG.log.announce_start {
-        log_discord!(format!(
-            "Running. [{build_profile}] 🏗 {git_info} 🖥 {build_info} 🛠 rustc {rustc_info}",
-            git_info = env!("RW_GIT_INFO"),
-            rustc_info = env!("RW_RUSTC_INFO"),
-            build_info = env!("RW_BUILD_INFO"),
-            build_profile = env!("RW_BUILD_PROFILE")
-        ));
-    }
-
     let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
     let prom_handle = prom_recorder.handle();
     metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
@@ -96,6 +92,10 @@ async fn main() -> std::io::Result<()> {
     )
     .start();
     let _slot_actor = SlotActor::new(pool.clone()).start();
+
+    log::info!("Announcing on twitch and discord");
+
+    announce_start(irc_actor.clone());
 
     log::info!("Joining all channels");
 
@@ -199,4 +199,40 @@ async fn make_initial_pubsub_listens(pool: &PgPool) -> Result<Vec<String>, AnyEr
     let users = User::get_all(pool).await?;
 
     Ok(users.into_iter().map(|user| user.id).collect())
+}
+
+fn announce_start(addr: Addr<IrcActor>) {
+    let announce = match CONFIG.log.announce {
+        Some(ref a) => a,
+        _ => return,
+    };
+    let instance_str = format!(
+        "[{build_profile}] 🏗 {git_info} 🖥 {build_info} 🛠 rustc {rustc_info}",
+        git_info = env!("RW_GIT_INFO"),
+        rustc_info = env!("RW_RUSTC_INFO"),
+        build_info = env!("RW_BUILD_INFO"),
+        build_profile = env!("RW_BUILD_PROFILE")
+    );
+
+    if announce.discord {
+        log_discord!(format!("Running. {}", instance_str));
+    }
+    if let Some(ref twitch) = announce.twitch {
+        let channel = twitch.channel.to_string();
+        let prefix = twitch
+            .prefix
+            .to_owned()
+            .unwrap_or_else(|| "Running.".to_string());
+        tokio::spawn(async move {
+            log_err!(
+                addr.send(JoinMessage(channel.clone())).await,
+                "Could not join announce channel"
+            );
+            log_err!(
+                addr.send(SayMessage(channel, format!("{} {}", prefix, instance_str)))
+                    .await,
+                "Could not announce in channel"
+            );
+        });
+    }
 }
