@@ -9,12 +9,13 @@ pub struct Ping;
 #[async_trait]
 impl ChatCommand for Ping {
     async fn execute(&mut self, msg: PrivmsgMessage, _pool: &PgPool) -> AnyResult<String> {
-        Ok(format!("@{}, Pong! Uptime: {uptime} Git: {git_info} Compiled with Rust {rustc_info} on {build_info}",
+        Ok(format!("@{}, 🤖 Pong! ⏱ Uptime: {uptime} 📜 Git: {git_info} 🛠 Compiled with Rust {rustc_info} on 🖥 {build_info} 📦 {build_profile}",
                    msg.sender.login,
                    uptime = humantime::format_duration(uptimer::get_async().await.unwrap_or_default()),
                    git_info = env!("RW_GIT_INFO"),
                    rustc_info = env!("RW_RUSTC_INFO"),
-                   build_info = env!("RW_BUILD_INFO")
+                   build_info = env!("RW_BUILD_INFO"),
+                   build_profile = env!("RW_BUILD_PROFILE")
         ))
     }
 
