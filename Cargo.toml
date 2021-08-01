@@ -21,8 +21,8 @@ actix-utils = "3.0.0"
 actix-metrics = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "actix-metrics-v0.1.0" }
 
 twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls", "metrics-collection"] }
-twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "1b6d1b9", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "unsupported"], default-features = false }
-twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "1c967b3", features = ["native-tls", "unsupported"], default-features = false }
+twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "71a4c0f", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "unsupported"], default-features = false }
+twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "a97f5a6", features = ["native-tls", "unsupported"], default-features = false }
 eventsub = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "eventsub-v0.1.0" }
 
 tokio = { version = "1", features = ["rt", "time", "sync"] }

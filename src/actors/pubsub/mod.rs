@@ -4,7 +4,6 @@ use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,
 };
-use futures::{future, stream::StreamExt};
 use sqlx::PgPool;
 use token_provider::PubsubTokenProvider;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -73,8 +72,8 @@ impl Actor for PubSubActor {
     type Context = Context<Self>;
 }
 
-impl StreamHandler<ServerMessage> for PubSubActor {
-    fn handle(&mut self, item: ServerMessage, ctx: &mut Self::Context) {
+impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
+    fn handle(&mut self, item: ServerMessage<PubsubTokenProvider>, ctx: &mut Self::Context) {
         match item {
             ServerMessage::Data(TopicData::ChatModeratorActions { topic, reply }) => {
                 if let ChatModeratorActionsReply::ModerationAction(ModerationAction {
