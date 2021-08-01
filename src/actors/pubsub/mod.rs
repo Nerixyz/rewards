@@ -12,14 +12,14 @@ use twitch_pubsub::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, ConnectionClosed, ListenError, PubsubClient, ServerMessage, Topic, TopicData,
-    TopicDef,
+    ClientConfig, ConnectionClosed, ListenError, ParseError, PubsubClient, ServerMessage, Topic,
+    TopicData, TopicDef,
 };
 
 use crate::{
     actors::{
         live::{LiveActor, LiveMessage, OfflineMessage},
-        timeout::TimeoutActor,
+        timeout::{RemoveTimeoutMessage, TimeoutActor},
     },
     config::CONFIG,
     log_discord, log_err,
@@ -27,9 +27,7 @@ use crate::{
 
 mod messages;
 mod token_provider;
-use crate::actors::timeout::RemoveTimeoutMessage;
 pub use messages::*;
-use std::string::ParseError;
 
 pub struct PubSubActor {
     live_addr: Addr<LiveActor>,
