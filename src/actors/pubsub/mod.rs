@@ -4,7 +4,6 @@ use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,
 };
-use futures::{future, stream::StreamExt};
 use sqlx::PgPool;
 use token_provider::PubsubTokenProvider;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -13,7 +12,8 @@ use twitch_pubsub::{
         ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, PubsubClient, ServerMessage, Topic, TopicData, TopicDef,
+    ClientConfig, ConnectionClosed, ListenError, PubsubClient, ServerMessage, Topic, TopicData,
+    TopicDef,
 };
 
 use crate::{
@@ -22,13 +22,14 @@ use crate::{
         timeout::TimeoutActor,
     },
     config::CONFIG,
-    log_err,
+    log_discord, log_err,
 };
 
 mod messages;
 mod token_provider;
 use crate::actors::timeout::RemoveTimeoutMessage;
 pub use messages::*;
+use std::string::ParseError;
 
 pub struct PubSubActor {
     live_addr: Addr<LiveActor>,
@@ -47,13 +48,7 @@ impl PubSubActor {
         let (incoming, client) = PubsubClient::new(config);
 
         Self::create(|ctx| {
-            let stream = UnboundedReceiverStream::new(incoming).filter_map(|s| {
-                future::ready(match s {
-                    ServerMessage::Message { data } => Some(data),
-                    _ => None,
-                })
-            });
-            ctx.add_stream(stream);
+            ctx.add_stream(UnboundedReceiverStream::new(incoming));
 
             Self {
                 live_addr,
@@ -79,10 +74,10 @@ impl Actor for PubSubActor {
     type Context = Context<Self>;
 }
 
-impl StreamHandler<TopicData> for PubSubActor {
-    fn handle(&mut self, item: TopicData, ctx: &mut Self::Context) {
+impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
+    fn handle(&mut self, item: ServerMessage<PubsubTokenProvider>, ctx: &mut Self::Context) {
         match item {
-            TopicData::ChatModeratorActions { topic, reply } => {
+            ServerMessage::Data(TopicData::ChatModeratorActions { topic, reply }) => {
                 if let ChatModeratorActionsReply::ModerationAction(ModerationAction {
                     moderation_action: ModerationActionCommand::Untimeout,
                     target_user_id,
@@ -102,7 +97,7 @@ impl StreamHandler<TopicData> for PubSubActor {
                         .spawn(ctx);
                 }
             }
-            TopicData::VideoPlaybackById { topic, reply } => match *reply {
+            ServerMessage::Data(TopicData::VideoPlaybackById { topic, reply }) => match *reply {
                 VideoPlaybackReply::StreamUp { .. } => {
                     log::info!("{} is now live", topic.channel_id);
 
@@ -132,6 +127,41 @@ impl StreamHandler<TopicData> for PubSubActor {
                 }
                 _ => (),
             },
+            ServerMessage::ListenError(ListenError { error, topics }) => {
+                log::warn!(
+                    "Couldn't listen on some topics error={} topics={:?}",
+                    error,
+                    topics
+                );
+                log_discord!(
+                    "Pubsub",
+                    "Couldn't listen on some topics",
+                    0xffcc4d,
+                    "error" = error.to_string(),
+                    "topics" = format!("`{:?}`", topics)
+                );
+            }
+            ServerMessage::ParseError(ParseError { raw, error }) => {
+                log_discord!(
+                    "Pubsub",
+                    "Couldn't parse message",
+                    0xffce49,
+                    "Raw" = format!("`{}`", raw),
+                    "Error" = error.to_string()
+                );
+            }
+            ServerMessage::ConnectionClosed(ConnectionClosed {
+                connection_id,
+                cause,
+            }) => {
+                log_discord!(
+                    "Pubsub",
+                    "Connection closed",
+                    0xfdd0ae,
+                    "Connection Id" = connection_id.to_string(),
+                    "Cause" = cause.to_string()
+                );
+            }
             _ => (),
         };
     }

@@ -3172,8 +3172,8 @@ dependencies = [
 
 [[package]]
 name = "twitch-pubsub"
-version = "0.1.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs?rev=b6ba82b#b6ba82bd73532f9a827e84fb1391c036c6b1b6bd"
+version = "0.2.0"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs?rev=835841b#835841b17a1d49133afcc520a1799a3ee7841af1"
 dependencies = [
  "async-trait",
  "async-tungstenite",
@@ -3191,7 +3191,7 @@ dependencies = [
 [[package]]
 name = "twitch_api2"
 version = "0.6.0-rc.1"
-source = "git+https://github.com/emilgardis/twitch_api2?rev=1b6d1b9#1b6d1b9c7aede3b01f6ce0c27671b3e484080bc9"
+source = "git+https://github.com/emilgardis/twitch_api2?rev=71a4c0f#71a4c0f7a7088b964932191bd07f59cc1a08d827"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3230,7 +3230,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.5.2"
-source = "git+https://github.com/emilgardis/twitch_api2?rev=1b6d1b9#1b6d1b9c7aede3b01f6ce0c27671b3e484080bc9"
+source = "git+https://github.com/emilgardis/twitch_api2?rev=71a4c0f#71a4c0f7a7088b964932191bd07f59cc1a08d827"
 dependencies = [
  "async-trait",
  "displaydoc",
