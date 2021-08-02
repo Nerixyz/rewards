@@ -59,7 +59,6 @@
               pt-4
               select-none
             "
-            @click="removeEditor(editor.login)"
           >
             <img
               :src="editor.profile_image_url"
