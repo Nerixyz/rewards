@@ -1,3 +1,4 @@
+pub mod about;
 pub mod emote_info;
 pub mod emotes;
 pub mod ping;
