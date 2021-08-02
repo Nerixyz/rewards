@@ -13,27 +13,43 @@
     <div
       v-if="!userLoading"
       class="flex gap-2 h-5/6 px-2 rounded-lg justify-center items-center select-none cursor-pointer hover:bg-gray-350"
-      @click="openMenu"
+      @click="toggleMenu"
     >
       <span>{{ userName }}</span>
       <img :src="userImage" alt="Profile Image" class="h-8 w-8 rounded-full" />
-      <ChevronDown :class="[userMenuState.menuOpen ? 'rotate-180' : '', 'transform transition transition-transform']" />
-      <div v-if="userMenuState.menuOpen" class="absolute block top-16 bg-gray-350 rounded-lg">
+      <ChevronDown :class="[state.menuOpen ? 'rotate-180' : '', 'transform transition transition-transform']" />
+      <div v-if="state.menuOpen" class="absolute block top-16 bg-gray-350 rounded-lg flex flex-col">
         <button
           class="uppercase bg-red m-2 rounded-md py-1 px-3 text-black font-bold hover:bg-red-dark"
-          @click.stop="toggleDialog"
+          @click.stop="openLogout"
         >
           Logout
         </button>
+        <button
+          class="uppercase m-2 rounded-md py-1 px-3 text-sm text-red font-bold hover:bg-gray-400"
+          @click.stop="openDelete"
+        >
+          Delete Account
+        </button>
       </div>
+
+      <!-- Logout Dialog -->
+      <CDialog title="Are you sure?" :open="state.logoutDialogOpen">
+        <DialogButtons>
+          <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
+          <CButton @click="logout">Logout</CButton>
+        </DialogButtons>
+      </CDialog>
+
+      <!-- Delete Account Dialog -->
       <CDialog
         title="Are you sure?"
-        subtitle="All rewards and connections will be deleted"
-        :open="userMenuState.dialogOpen"
+        subtitle="All rewards and connections will be deleted!"
+        :open="state.deleteDialogOpen"
       >
         <DialogButtons>
-          <OutlinedButton @click="toggleDialog">Cancel</OutlinedButton>
-          <CButton @click="logout">Logout</CButton>
+          <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
+          <CButton @click="deleteAccount">Delete Account</CButton>
         </DialogButtons>
       </CDialog>
     </div>
@@ -60,23 +76,35 @@ export default defineComponent({
     const store = useDataStore();
     const api = useApi();
 
-    const userMenuState = reactive({
-      dialogOpen: false,
+    const state = reactive({
       menuOpen: false,
+      deleteDialogOpen: false,
+      logoutDialogOpen: false,
     });
-    const openMenu = () => {
-      userMenuState.menuOpen = !userMenuState.menuOpen;
+    const withClose = (fn: () => unknown) => () => {
+      state.menuOpen = false;
+      state.deleteDialogOpen = false;
+      state.logoutDialogOpen = false;
+      fn();
     };
-    const toggleDialog = () => {
-      userMenuState.menuOpen = false;
-      userMenuState.dialogOpen = !userMenuState.dialogOpen;
-    };
-    const logout = () => {
-      api.logout().then(() => {
+
+    const openDelete = withClose(() => (state.deleteDialogOpen = true));
+    const openLogout = withClose(() => (state.logoutDialogOpen = true));
+
+    const logout = withClose(() => {
+      api.logout();
+      router.replace('/');
+    });
+    const deleteAccount = withClose(() => {
+      api.deleteAccount().then(() => {
         store.user.value = null;
         router.replace('/');
       });
-    };
+    });
+
+    const toggleMenu = () => (state.menuOpen = !state.menuOpen);
+
+    const closeAll = withClose(() => undefined);
 
     return {
       routes: router.getRoutes().filter(r => !!r.name && !r.meta.ignoreNav),
@@ -85,10 +113,15 @@ export default defineComponent({
       userLoading: computed(() => !store.user.value),
       userName: computed(() => store.user.value?.login),
       isAuthenticated: api.isAuthenticated,
-      userMenuState,
-      openMenu,
-      toggleDialog,
+
+      state,
+      openDelete,
+      openLogout,
+      toggleMenu,
+      closeAll,
+
       logout,
+      deleteAccount,
     };
   },
 });

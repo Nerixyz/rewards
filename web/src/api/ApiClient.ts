@@ -11,8 +11,9 @@ import {
 import { BaseClient } from './BaseClient';
 
 class HttpClient extends BaseClient {
-  getTwitchAuthUrl() {
-    return this.get<{ url: string }>('auth', 'twitch-auth-url');
+  async deleteAccount(): Promise<void> {
+    await this.delete('auth').catch(console.error);
+    this.logout();
   }
 
   getCurrentUser() {

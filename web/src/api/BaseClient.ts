@@ -11,8 +11,7 @@ export class BaseClient {
 
   isAuthenticated = ref(!!this.authToken);
 
-  async logout(): Promise<void> {
-    await this.delete('auth').catch(console.error);
+  logout(): void {
     this.authToken = undefined;
     localStorage.removeItem('authToken');
     this.isAuthenticated.value = false;
