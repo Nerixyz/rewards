@@ -52,7 +52,9 @@ pub struct IrcActor {
     notice_rx: Receiver<Option<NoticeChannelMessage>>,
 
     executor: Recipient<ExecuteCommandMessage>,
-    last_message: Option<String>,
+
+    last_messages: HashMap<String, String>,
+    // TODO: redis
     command_cooldown: HashMap<String, Instant>,
 
     timeout_handler: Addr<TimeoutActor>,
@@ -87,7 +89,7 @@ impl IrcActor {
             notice_rx,
 
             executor,
-            last_message: None,
+            last_messages: HashMap::new(),
             command_cooldown: HashMap::new(),
 
             timeout_handler,
@@ -168,6 +170,7 @@ impl Handler<PartMessage> for IrcActor {
 
     fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
         self.command_cooldown.remove(&msg.0);
+        self.last_messages.remove(&msg.0);
         self.client.part(msg.0)
     }
 }
@@ -205,11 +208,14 @@ impl Handler<SayMessage> for IrcActor {
     fn handle(&mut self, mut msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
 
-        if self.last_message.as_ref() == Some(&msg.1) {
-            log::info!("eq");
-            msg.1.push('\u{180d}');
+        if let Some(last) = self.last_messages.get_mut(&msg.0) {
+            if *last == msg.1 {
+                msg.1.push('\u{180d}');
+            }
+            *last = msg.1.clone();
+        } else {
+            self.last_messages.insert(msg.0.clone(), msg.1.clone());
         }
-        self.last_message = Some(msg.1.clone());
 
         log::info!("Send message login={}; message={}", msg.0, msg.1);
         Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
