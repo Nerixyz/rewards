@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
+  <MainLayout>
     <div v-if="state.loading"><CLoader /></div>
     <div v-else-if="state.error">
       Failed!
@@ -26,8 +26,7 @@
               transform
               transition-transform transition-shadow
               drop-shadow-none
-              hover:scale-105
-              hover:shadow-light
+              hover:scale-105 hover:shadow-light
             "
           >
             <img
@@ -45,7 +44,7 @@
         <img class="w-5 h-5 inline" alt="FeelsOkayMan" src="https://cdn.frankerfacez.com/emote/145947/2" />
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script lang="ts">
@@ -54,10 +53,11 @@ import { useApi } from '../api/plugin';
 import { TwitchUser } from '../api/types';
 import { asyncState, tryAsync } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
+import MainLayout from '../components/MainLayout.vue';
 
 export default defineComponent({
   name: 'BroadcastersDashboard',
-  components: { CLoader },
+  components: { MainLayout, CLoader },
   setup() {
     const api = useApi();
 

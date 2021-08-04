@@ -15,15 +15,10 @@
       text-red
       font-bold
       shadow-md
-      disabled:text-gray-600
-      disabled:border-gray-600
-      disabled:cursor-not-allowed
-      disabled:ring-gray-600
-      hover:border-red-dark
-      hover:text-red-dark
+      disabled:text-gray-600 disabled:border-gray-600 disabled:cursor-not-allowed disabled:ring-gray-600
+      hover:border-red-dark hover:text-red-dark
       transition transition-colors
-      focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest
-      focus:outline-none
+      focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest focus:outline-none
     "
     @click.capture="tryClick"
   >

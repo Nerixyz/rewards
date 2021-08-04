@@ -17,13 +17,10 @@
       text-black
       font-bold
       shadow-md
-      disabled:bg-gray-600
-      disabled:cursor-not-allowed
-      disabled:ring-gray-600
+      disabled:bg-gray-600 disabled:cursor-not-allowed disabled:ring-gray-600
       hover:bg-red-dark
       transition-colors
-      focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest
-      focus:outline-none
+      focus:ring-2 focus:ring-offset-2 focus:ring-pink-700 focus:ring-offset-gray-darkest focus:outline-none
     "
     @click.capture="tryClick"
   >

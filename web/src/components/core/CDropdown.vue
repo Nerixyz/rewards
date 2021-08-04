@@ -11,10 +11,8 @@
           text-left
           bg-transparent
           border border-gray-900 border-opacity-30
-          focus:border-opacity-100 focus:border-red
-          focus:bg-gray-350
-          hover:bg-gray-350
-          hover:border-red
+          focus:border-opacity-100 focus:border-red focus:bg-gray-350
+          hover:bg-gray-350 hover:border-red
           transition-colors
           rounded-md
           shadow-md

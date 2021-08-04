@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
+  <MainLayout>
     <div v-if="state.loading"><CLoader /></div>
     <div v-else-if="state.error">
       Failed!
@@ -41,7 +41,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script lang="ts">
@@ -55,10 +55,11 @@ import { Connections } from '../api/types';
 import Heading from '../components/core/Heading.vue';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import CSwitch from '../components/core/CSwitch.vue';
+import MainLayout from '../components/MainLayout.vue';
 
 export default defineComponent({
   name: 'ConnectionsDashboard',
-  components: { CSwitch, OutlinedButton, Heading, SpotifyIcon, CButton, CLoader },
+  components: { MainLayout, CSwitch, OutlinedButton, Heading, SpotifyIcon, CButton, CLoader },
   setup() {
     const api = useApi();
     const { state } = asyncState<Connections>({ spotify: undefined });

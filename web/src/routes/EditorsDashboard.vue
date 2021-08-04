@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
+  <MainLayout>
     <div class="flex gap-5 flex-col">
       <form class="w-full min-w-10rem border-b border-gray-900 border-opacity-20 pb-6" @submit="addEditor">
         <h3 class="ml-1 mb-3 font-serif text-xl">Add an editor</h3>
@@ -76,11 +76,8 @@
                 px-7
                 py-2
                 transition transition-colors
-                hover:bg-transparent
-                hover:text-red
-                focus:bg-transparent
-                focus:text-red
-                focus:outline-none
+                hover:bg-transparent hover:text-red
+                focus:bg-transparent focus:text-red focus:outline-none
               "
               @click="removeEditor(editor.login)"
             >
@@ -90,7 +87,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script lang="ts">
@@ -102,10 +99,11 @@ import { TwitchUser } from '../api/types';
 import PlaneIcon from '../components/icons/PlaneIcon.vue';
 import { asyncState, tryAsync } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
+import MainLayout from '../components/MainLayout.vue';
 
 export default defineComponent({
   name: 'EditorsDashboard',
-  components: { CLoader, PlaneIcon, TextField, OutlinedButton },
+  components: { MainLayout, CLoader, PlaneIcon, TextField, OutlinedButton },
 
   setup() {
     const api = useApi();

@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
+  <MainLayout>
     <!-- Loading handler -->
     <div v-if="rewards.loading"><CLoader /></div>
 
@@ -75,7 +75,7 @@
         </DialogButtons>
       </CDialog>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script lang="ts">
@@ -96,10 +96,12 @@ import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-stat
 import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
 import LogIcon from '../components/icons/LogIcon.vue';
+import MainLayout from '../components/MainLayout.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    MainLayout,
     LogIcon,
     TickIcon,
     CLoader,

@@ -1,5 +1,5 @@
 <template>
-  <div class="px-20 pt-5 xl:max-w-7xl mx-auto">
+  <MainLayout>
     <div class="flex flex-col gap-5">
       <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
         <router-link :to="`/rewards/${broadcasterId}`">
@@ -28,7 +28,7 @@
         </template>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script lang="ts">
@@ -42,10 +42,11 @@ import { LogEntry } from '../api/types';
 import CLoader from '../components/core/CLoader.vue';
 import BackIcon from '../components/icons/BackIcon.vue';
 import ReloadIcon from '../components/icons/ReloadIcon.vue';
+import MainLayout from '../components/MainLayout.vue';
 
 export default defineComponent({
   name: 'LogViewer',
-  components: { ReloadIcon, BackIcon, CLoader, OutlinedButton },
+  components: { MainLayout, ReloadIcon, BackIcon, CLoader, OutlinedButton },
   setup() {
     const route = useRoute();
     const api = useApi();
