@@ -11,5 +11,6 @@ pub mod rewards;
 pub mod seven_tv;
 pub mod spotify;
 pub mod sql;
+pub mod supinic;
 pub mod timed_mode;
 pub mod twitch;
