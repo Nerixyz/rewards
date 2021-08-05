@@ -56,3 +56,10 @@ webhook-url = ""
 [log.announce]
 discord = true
 twitch = { channel = "nerixyz", prefix = "Running."}
+
+# optional
+[supinic]
+# the supibot user-ID of the chat user
+id = 123
+# the token (https://supinic.com/user/auth-key)
+key = ""

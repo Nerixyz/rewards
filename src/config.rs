@@ -16,6 +16,8 @@ pub struct Config {
     pub bot: BotConfig,
     #[serde(default)]
     pub log: LogConfig,
+    #[serde(default)]
+    pub supinic: Option<SupinicConfig>,
 }
 
 #[derive(Deserialize)]
@@ -116,6 +118,12 @@ pub struct AnnounceTwitchConfig {
     pub channel: String,
     #[serde(default)]
     pub prefix: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct SupinicConfig {
+    pub id: u64,
+    pub key: String,
 }
 
 impl TryFrom<&DbConfig> for PgConnectOptions {

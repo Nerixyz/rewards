@@ -27,6 +27,7 @@ use crate::{
         live::LiveActor,
         pubsub::PubSubActor,
         slot::SlotActor,
+        supinic::SupinicActor,
         timeout::TimeoutActor,
         token_refresher::TokenRefresher,
     },
@@ -117,6 +118,8 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("sql thingy");
     pubsub.do_send(SubAllMessage(initial_listens));
+
+    SupinicActor.start();
 
     log::info!("Clearing old rewards");
 
