@@ -12,7 +12,7 @@
       <span v-else>It seems like you don't have the rewards feature available.</span>
       <br />
       <br />
-      <span class="break-words font-mono">Error: {{ rewards.error }}</span>
+      <span class="break-words font-mono">{{ rewards.error }}</span>
     </div>
 
     <!-- The main page -->
