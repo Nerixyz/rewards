@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDataStore } from '../store';
 import { useApi } from '../api/plugin';
@@ -112,29 +112,20 @@ export default defineComponent({
     // core stuff to ensure we have a user id
 
     const { state: rewards } = asyncState<Reward[]>([]);
-    const broadcasterId = ref<string>(((route.params.id as string | undefined) || store.user.value?.id) ?? '');
-    const thisUserId = ref<undefined | string>(undefined);
+    const broadcasterId = computed(() => {
+      const routeId = route.params.id as string | undefined;
+      const storeId = store.user.value?.id;
+      return (routeId || storeId) ?? '';
+    });
+    const thisUserId = computed(() => store.user.value?.id);
 
-    const updateBroadcaster = () =>
+    watchEffect(() => {
+      const id = broadcasterId.value ?? '';
+      if (!id) return;
       tryAsync(async rewards => {
-        const id = (route.params.id as string | undefined) || store.user.value?.id;
-
-        thisUserId.value = store.user.value?.id;
-        broadcasterId.value = id ?? '';
-
-        rewards.value = await api.getRewards(id ?? '');
+        rewards.value = await api.getRewards(id);
       }, rewards);
-
-    watch(() => route.params.id, updateBroadcaster);
-
-    if (!store.user.value) {
-      const stop = watch(store.user, () => {
-        stop();
-        updateBroadcaster();
-      });
-    } else {
-      updateBroadcaster();
-    }
+    });
 
     const coreExports = { rewards, broadcasterId, thisUserId };
 
