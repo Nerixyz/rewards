@@ -1,8 +1,9 @@
 import { ref, Plugin, inject } from 'vue';
-import { TwitchUser } from './api/types';
+import { Reward, TwitchUser } from './api/types';
 
-class DataStore {
+export class DataStore {
   user = ref<null | TwitchUser>(null);
+  rewards = ref<null | { id: string; items: Reward[] }>(null);
 }
 
 const injectKey = 're:data-store';

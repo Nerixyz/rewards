@@ -123,7 +123,6 @@ export default defineComponent({
 
     const rewardState = reactive<VRewardModel>(defaultNewReward());
     const assignToState = (newData?: Reward) => {
-      console.log('update data', newData);
       if (!newData) {
         assignDefaultToModel(rewardState);
       } else {

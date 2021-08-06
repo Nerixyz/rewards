@@ -70,9 +70,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref, watchEffect } from 'vue';
-import { useRoute } from 'vue-router';
-import { useDataStore } from '../store';
+import { defineComponent, ref } from 'vue';
 import { useApi } from '../api/plugin';
 import { Reward } from '../api/types';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
@@ -81,12 +79,15 @@ import AddOrEditRewardDialog from '../components/AddOrEditRewardDialog.vue';
 import CButton from '../components/core/CButton.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
-import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
+import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
 import LogIcon from '../components/icons/LogIcon.vue';
 import MainLayout from '../components/MainLayout.vue';
 import RewardComponent from '../components/Reward.vue';
+import { useBroadcaster } from '../hooks/use-broadcaster';
+import { useDataStore } from '../store';
+import { useRewards } from '../hooks/use-rewards';
 
 export default defineComponent({
   name: 'RewardsDashboard',
@@ -104,28 +105,13 @@ export default defineComponent({
     OutlinedButton,
   },
   setup() {
-    // TODO: explain
-    const route = useRoute();
-    const store = useDataStore();
     const api = useApi();
+    const store = useDataStore();
 
     // core stuff to ensure we have a user id
 
-    const { state: rewards } = asyncState<Reward[]>([]);
-    const broadcasterId = computed(() => {
-      const routeId = route.params.id as string | undefined;
-      const storeId = store.user.value?.id;
-      return (routeId || storeId) ?? '';
-    });
-    const thisUserId = computed(() => store.user.value?.id);
-
-    watchEffect(() => {
-      const id = broadcasterId.value ?? '';
-      if (!id) return;
-      tryAsync(async rewards => {
-        rewards.value = await api.getRewards(id);
-      }, rewards);
-    });
+    const { thisUserId, broadcasterId } = useBroadcaster({ store });
+    const { rewards, updateRewards } = useRewards({ broadcasterId, store, api });
 
     const coreExports = { rewards, broadcasterId, thisUserId };
 
@@ -143,13 +129,9 @@ export default defineComponent({
       addEditDialogOpen.value = true;
     };
 
-    const rewardAdded = (reward: Reward) => {
-      rewards.value = [...rewards.value, reward];
-    };
-    const rewardUpdated = (reward: Reward) => {
-      // replace the old one
-      rewards.value = rewards.value.map(r => (r.twitch.id === reward.twitch.id ? reward : r));
-    };
+    const rewardAdded = (reward: Reward) => updateRewards([...rewards.value, reward]);
+    const rewardUpdated = (reward: Reward) =>
+      updateRewards(rewards.value.map(r => (r.twitch.id === reward.twitch.id ? reward : r)));
 
     const addExports = { addEditDialogOpen, openAddDialog, openEditDialog, rewardAdded, rewardUpdated, editRewardData };
 
@@ -165,7 +147,7 @@ export default defineComponent({
     const deleteReward = (reward: Reward) => {
       tryAsyncDialog(async () => {
         await api.deleteReward(broadcasterId.value ?? '', reward);
-        rewards.value = rewards.value.filter(r => r.twitch.id !== reward.twitch.id);
+        updateRewards(rewards.value.filter(r => r.twitch.id !== reward.twitch.id));
 
         closeDeleteDialog();
       }, deleteDialog);
