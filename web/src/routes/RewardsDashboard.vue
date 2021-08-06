@@ -23,8 +23,8 @@
           <OutlinedButton><LogIcon /> Logs</OutlinedButton>
         </router-link>
       </div>
-      <div class="w-full flex flex-col gap-5">
-        <div v-if="rewards.value.length">
+      <div class="w-full flex flex-col">
+        <div v-if="rewards.value.length" class="flex flex-wrap justify-center gap-6">
           <Reward
             v-for="reward of rewards.value"
             :key="reward.twitch.id"
@@ -79,8 +79,6 @@ import OutlinedButton from '../components/core/OutlinedButton.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
 import AddOrEditRewardDialog from '../components/AddOrEditRewardDialog.vue';
 import CButton from '../components/core/CButton.vue';
-import EditIcon from '../components/icons/EditIcon.vue';
-import TrashIcon from '../components/icons/TrashIcon.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
 import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
@@ -88,20 +86,18 @@ import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
 import LogIcon from '../components/icons/LogIcon.vue';
 import MainLayout from '../components/MainLayout.vue';
-import Reward from '../components/Reward.vue';
+import RewardComponent from '../components/Reward.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
-    Reward,
+    Reward: RewardComponent,
     MainLayout,
     LogIcon,
     TickIcon,
     CLoader,
     DialogButtons,
     CDialog,
-    TrashIcon,
-    EditIcon,
     CButton,
     AddOrEditRewardDialog,
     PlusIcon,
