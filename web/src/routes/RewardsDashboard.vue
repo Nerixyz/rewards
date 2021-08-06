@@ -25,22 +25,13 @@
       </div>
       <div class="w-full flex flex-col gap-5">
         <div v-if="rewards.value.length">
-          <div v-for="reward of rewards.value" :key="reward.twitch.id" class="flex">
-            <div>
-              <h3 class="font-serif text-2xl">{{ reward.twitch.title }}</h3>
-              <h4 class="font-serif italic text-sm">{{ reward.data.type }}</h4>
-            </div>
-            <div class="ml-auto">
-              <CButton @click="openEditDialog(reward)">
-                <EditIcon />
-                edit
-              </CButton>
-              <OutlinedButton @click="openDeleteDialogForReward(reward)">
-                <TrashIcon />
-                delete
-              </OutlinedButton>
-            </div>
-          </div>
+          <Reward
+            v-for="reward of rewards.value"
+            :key="reward.twitch.id"
+            :reward="reward"
+            @delete-reward="openDeleteDialogForReward"
+            @edit-reward="openEditDialog"
+          />
         </div>
         <div v-else>
           It looks like you haven't created any rewards here yet. How about creating some?
@@ -97,10 +88,12 @@ import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
 import LogIcon from '../components/icons/LogIcon.vue';
 import MainLayout from '../components/MainLayout.vue';
+import Reward from '../components/Reward.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    Reward,
     MainLayout,
     LogIcon,
     TickIcon,
