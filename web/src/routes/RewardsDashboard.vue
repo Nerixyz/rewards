@@ -18,7 +18,12 @@
     <!-- The main page -->
     <div v-else class="flex flex-col gap-5">
       <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
-        <OutlinedButton @click="openAddDialog"> <PlusIcon /> Add Reward </OutlinedButton>
+        <router-link :to="`/rewards/${encodeURIComponent(broadcasterId || '')}/new`">
+          <OutlinedButton>
+            <PlusIcon />
+            New Reward
+          </OutlinedButton>
+        </router-link>
         <router-link :to="`/rewards/logs/${encodeURIComponent(broadcasterId || thisUserId || '')}`">
           <OutlinedButton><LogIcon /> Logs</OutlinedButton>
         </router-link>
@@ -30,7 +35,6 @@
             :key="reward.twitch.id"
             :reward="reward"
             @delete-reward="openDeleteDialogForReward"
-            @edit-reward="openEditDialog"
           />
         </div>
         <div v-else>
@@ -42,14 +46,6 @@
           />
         </div>
       </div>
-
-      <AddOrEditRewardDialog
-        v-model:open="addEditDialogOpen"
-        :broadcaster-id="broadcasterId"
-        :reward-data="editRewardData"
-        @added="rewardAdded"
-        @updated="rewardUpdated"
-      />
 
       <CDialog title="Delete Reward" :open="deleteDialog.value" @dialogClosed="clearDeleteDialog">
         <div v-if="deleteDialog.loading"><CLoader /></div>
@@ -75,7 +71,6 @@ import { useApi } from '../api/plugin';
 import { Reward } from '../api/types';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
-import AddOrEditRewardDialog from '../components/AddOrEditRewardDialog.vue';
 import CButton from '../components/core/CButton.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
@@ -100,7 +95,6 @@ export default defineComponent({
     DialogButtons,
     CDialog,
     CButton,
-    AddOrEditRewardDialog,
     PlusIcon,
     OutlinedButton,
   },
@@ -114,26 +108,6 @@ export default defineComponent({
     const { rewards, updateRewards } = useRewards({ broadcasterId, store, api });
 
     const coreExports = { rewards, broadcasterId, thisUserId };
-
-    // Add/Edit Dialog
-
-    const editRewardData = ref<undefined | Reward>(undefined);
-    const addEditDialogOpen = ref(false);
-
-    const openAddDialog = () => {
-      editRewardData.value = undefined; // important!
-      addEditDialogOpen.value = true;
-    };
-    const openEditDialog = (reward: Reward) => {
-      editRewardData.value = reward;
-      addEditDialogOpen.value = true;
-    };
-
-    const rewardAdded = (reward: Reward) => updateRewards([...rewards.value, reward]);
-    const rewardUpdated = (reward: Reward) =>
-      updateRewards(rewards.value.map(r => (r.twitch.id === reward.twitch.id ? reward : r)));
-
-    const addExports = { addEditDialogOpen, openAddDialog, openEditDialog, rewardAdded, rewardUpdated, editRewardData };
 
     // Delete actions
     const { state: deleteDialog, reset: resetDeleteDialog } = asyncDialog(ref(false));
@@ -175,7 +149,7 @@ export default defineComponent({
       clearDeleteDialog,
     };
 
-    return { ...coreExports, ...addExports, ...deleteExports };
+    return { ...coreExports, ...deleteExports };
   },
 });
 </script>

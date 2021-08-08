@@ -3,7 +3,7 @@
     <div
       :class="[
         `bg-transparent
-      rounded-t-lg
+        rounded-lg overflow-hidden
       border border-gray-900
       border-opacity-30
       bg-opacity-50
@@ -132,6 +132,10 @@ export default defineComponent({
   transition: transform 150ms;
   transform-origin: right;
   top: 0.05rem;
+}
+
+.nerix-underline-tf.overflow-hidden::after {
+  top: 0;
 }
 
 .nerix-underline-tf:hover::after,

@@ -129,5 +129,6 @@ export function defaultNewReward(): VRewardModel {
       data: StaticRewardData.Timeout.defaultOptions,
     },
     liveDelay: '',
+    imageUrl: null,
   };
 }

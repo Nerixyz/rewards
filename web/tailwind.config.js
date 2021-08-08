@@ -57,6 +57,9 @@ module.exports = {
       '30vw': '30vw',
       '40vw': '40vw',
     },
+    maxHeight: {
+      '75vh': '75vh',
+    },
     transitionTimingFunction: {
       'hyper-out': 'cubic-bezier(0.000, 0.875, 0.065, 1.000)',
       'hyper-in': 'cubic-bezier(0.650, 0.000, 1.000, 0.095)',
@@ -64,6 +67,15 @@ module.exports = {
     },
     gridTemplateColumns: {
       logs: 'auto 1fr',
+    },
+    keyframes: {
+      bing: {
+        '0%, 100%': { transform: 'scale(100%) rotate(0)' },
+        '50%': { transform: 'scale(105%) rotate(20deg)' },
+      },
+    },
+    animation: {
+      bing: 'bing 1s ease-out infinite',
     },
   },
   variants: {

@@ -1,58 +1,59 @@
 <template>
-  <div
-    class="
-      flex flex-col
-      gap-2
-      transition transition-transform transition-opacity
-      transform
-      bg-gray-300
-      rounded-xl
-      overflow-hidden
-      cursor-pointer
-      border border-transparent border-opacity-5 border-white
-      hover:scale-105 hover:border-opacity-20
-    "
-    @click="$emit('editReward', reward)"
-  >
-    <div class="flex flex-col p-4 w-60">
-      <div v-if="imageUrl" class="flex items-center justify-center">
-        <img :src="imageUrl" alt="Reward Icon" class="w-24 h-auto" />
+  <router-link :to="`/rewards/${reward.twitch.broadcaster_id}/${reward.twitch.id}`">
+    <div
+      class="
+        flex flex-col
+        gap-2
+        transition transition-transform transition-opacity
+        transform
+        bg-gray-300
+        rounded-xl
+        overflow-hidden
+        cursor-pointer
+        border border-transparent border-opacity-5 border-white
+        hover:scale-105 hover:border-opacity-20
+      "
+    >
+      <div class="flex flex-col p-4 w-60">
+        <div v-if="imageUrl" class="flex items-center justify-center">
+          <img :src="imageUrl" alt="Reward Icon" class="w-24 h-auto" />
+        </div>
+        <div>
+          <h3 class="font-serif text-2xl mb-4 whitespace-nowrap overflow-hidden overflow-ellipsis">
+            {{ reward.twitch.title }}
+          </h3>
+          <h4 class="font-serif text-sm mt-2 text-gray-700">Prompt</h4>
+          <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis">
+            {{ reward.twitch.prompt }}
+          </h4>
+          <h4 class="font-serif text-sm mt-2 text-gray-700">Action</h4>
+          <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis">
+            {{ reward.data.type }} <span class="ml-2 text-gray-700">{{ actionDescription }}</span>
+          </h4>
+        </div>
       </div>
-      <div>
-        <h3 class="font-serif text-2xl mb-4 whitespace-nowrap overflow-hidden overflow-ellipsis">
-          {{ reward.twitch.title }}
-        </h3>
-        <h4 class="font-serif text-sm mt-2 text-gray-700">Prompt</h4>
-        <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis">
-          {{ reward.twitch.prompt }}
-        </h4>
-        <h4 class="font-serif text-sm mt-2 text-gray-700">Action</h4>
-        <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis">
-          {{ reward.data.type }} <span class="ml-2 text-gray-700">{{ actionDescription }}</span>
-        </h4>
+      <div class="">
+        <button
+          class="
+            py-2
+            px-3
+            uppercase
+            font-bold
+            flex
+            items-center
+            w-full
+            justify-center
+            transition transition-colors
+            border-t border-red
+            hover:bg-red-dark hover:text-black hover:border-transparent
+          "
+          @click.prevent="$emit('deleteReward', reward)"
+        >
+          <TrashIcon /> Delete
+        </button>
       </div>
     </div>
-    <div class="">
-      <button
-        class="
-          py-2
-          px-3
-          uppercase
-          font-bold
-          flex
-          items-center
-          w-full
-          justify-center
-          transition transition-colors
-          border-t border-red
-          hover:bg-red-dark hover:text-black hover:border-transparent
-        "
-        @click.stop="$emit('deleteReward', reward)"
-      >
-        <TrashIcon /> Delete
-      </button>
-    </div>
-  </div>
+  </router-link>
 </template>
 
 <script lang="ts">
@@ -71,7 +72,6 @@ export default defineComponent({
   },
   emits: {
     deleteReward: (reward: Reward) => reward,
-    editReward: (reward: Reward) => reward,
   },
   setup(props) {
     const { reward } = toRefs(props);

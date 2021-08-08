@@ -12,7 +12,7 @@ export function useRewards({
   store: DataStore;
   broadcasterId: ComputedRef<string | undefined>;
   api: typeof ApiClient;
-}) {
+}): { rewards: Readonly<AsyncState<Reward[]>>; updateRewards: (items: Reward[]) => void } {
   const { state } = asyncState<Reward[]>([]);
 
   watch(
@@ -42,7 +42,7 @@ export function useRewards({
 
   return {
     rewards: state as Readonly<AsyncState<Reward[]>>,
-    updateRewards: (items: Reward[]) => {
+    updateRewards: items => {
       state.value = items;
       store.rewards.value = { id: broadcasterId.value ?? '?', items };
     },
