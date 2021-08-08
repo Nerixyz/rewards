@@ -69,6 +69,11 @@ impl IrcActor {
     ) -> Self {
         let config = ClientConfig {
             metrics_identifier: Some("rewardmore".into()),
+
+            // TODO: improve this but the user isn't a verified bot yet FeelsMan
+            new_connection_every: Duration::from_secs(12),
+            max_channels_per_connection: 20,
+
             ..ClientConfig::new_simple(IrcCredentials::new(
                 CONFIG.twitch.login.to_string(),
                 CONFIG.twitch.client_id.to_string(),
