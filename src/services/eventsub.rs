@@ -1,5 +1,6 @@
 use crate::{
     config::CONFIG,
+    log_err,
     models::{reward::RewardToUpdate, user::User},
     services::twitch::{
         eventsub::{delete_subscription, subscribe_to_rewards},
@@ -139,7 +140,10 @@ pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
 
     while let Some(reward_with_user) = stream.try_next().await? {
         if let Ok((reward_id, token)) = reward_with_user.try_into() {
-            clear_unfulfilled_redemptions_for_id(reward_id, &token, &client).await?;
+            log_err!(
+                clear_unfulfilled_redemptions_for_id(reward_id, &token, &client).await,
+                "Could not clear redemptions for id"
+            );
         }
     }
 
