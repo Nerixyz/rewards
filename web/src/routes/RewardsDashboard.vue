@@ -12,35 +12,30 @@
       <span v-else>It seems like you don't have the rewards feature available.</span>
       <br />
       <br />
-      <span class="break-words font-mono">Error: {{ rewards.error }}</span>
+      <span class="break-words font-mono">{{ rewards.error }}</span>
     </div>
 
     <!-- The main page -->
     <div v-else class="flex flex-col gap-5">
       <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
-        <OutlinedButton @click="openAddDialog"> <PlusIcon /> Add Reward </OutlinedButton>
+        <router-link :to="`/rewards/${encodeURIComponent(broadcasterId || '')}/new`">
+          <OutlinedButton>
+            <PlusIcon />
+            New Reward
+          </OutlinedButton>
+        </router-link>
         <router-link :to="`/rewards/logs/${encodeURIComponent(broadcasterId || thisUserId || '')}`">
           <OutlinedButton><LogIcon /> Logs</OutlinedButton>
         </router-link>
       </div>
-      <div class="w-full flex flex-col gap-5">
-        <div v-if="rewards.value.length">
-          <div v-for="reward of rewards.value" :key="reward.twitch.id" class="flex">
-            <div>
-              <h3 class="font-serif text-2xl">{{ reward.twitch.title }}</h3>
-              <h4 class="font-serif italic text-sm">{{ reward.data.type }}</h4>
-            </div>
-            <div class="ml-auto">
-              <CButton @click="openEditDialog(reward)">
-                <EditIcon />
-                edit
-              </CButton>
-              <OutlinedButton @click="openDeleteDialogForReward(reward)">
-                <TrashIcon />
-                delete
-              </OutlinedButton>
-            </div>
-          </div>
+      <div class="w-full flex flex-col">
+        <div v-if="rewards.value.length" class="flex flex-wrap justify-center gap-6">
+          <Reward
+            v-for="reward of rewards.value"
+            :key="reward.twitch.id"
+            :reward="reward"
+            @delete-reward="openDeleteDialogForReward"
+          />
         </div>
         <div v-else>
           It looks like you haven't created any rewards here yet. How about creating some?
@@ -51,14 +46,6 @@
           />
         </div>
       </div>
-
-      <AddOrEditRewardDialog
-        v-model:open="addEditDialogOpen"
-        :broadcaster-id="broadcasterId"
-        :reward-data="editRewardData"
-        @added="rewardAdded"
-        @updated="rewardUpdated"
-      />
 
       <CDialog title="Delete Reward" :open="deleteDialog.value" @dialogClosed="clearDeleteDialog">
         <div v-if="deleteDialog.loading"><CLoader /></div>
@@ -79,99 +66,48 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useDataStore } from '../store';
+import { defineComponent, ref } from 'vue';
 import { useApi } from '../api/plugin';
 import { Reward } from '../api/types';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import PlusIcon from '../components/icons/PlusIcon.vue';
-import AddOrEditRewardDialog from '../components/AddOrEditRewardDialog.vue';
 import CButton from '../components/core/CButton.vue';
-import EditIcon from '../components/icons/EditIcon.vue';
-import TrashIcon from '../components/icons/TrashIcon.vue';
 import CDialog from '../components/core/CDialog.vue';
 import DialogButtons from '../components/DialogButtons.vue';
-import { asyncDialog, asyncState, tryAsync, tryAsyncDialog } from '../async-state';
+import { asyncDialog, tryAsyncDialog } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
 import TickIcon from '../components/icons/TickIcon.vue';
 import LogIcon from '../components/icons/LogIcon.vue';
 import MainLayout from '../components/MainLayout.vue';
+import RewardComponent from '../components/Reward.vue';
+import { useBroadcaster } from '../hooks/use-broadcaster';
+import { useDataStore } from '../store';
+import { useRewards } from '../hooks/use-rewards';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    Reward: RewardComponent,
     MainLayout,
     LogIcon,
     TickIcon,
     CLoader,
     DialogButtons,
     CDialog,
-    TrashIcon,
-    EditIcon,
     CButton,
-    AddOrEditRewardDialog,
     PlusIcon,
     OutlinedButton,
   },
   setup() {
-    // TODO: explain
-    const route = useRoute();
-    const store = useDataStore();
     const api = useApi();
+    const store = useDataStore();
 
     // core stuff to ensure we have a user id
 
-    const { state: rewards } = asyncState<Reward[]>([]);
-    const broadcasterId = ref<string>(((route.params.id as string | undefined) || store.user.value?.id) ?? '');
-    const thisUserId = ref<undefined | string>(undefined);
-
-    const updateBroadcaster = () =>
-      tryAsync(async rewards => {
-        const id = (route.params.id as string | undefined) || store.user.value?.id;
-
-        thisUserId.value = store.user.value?.id;
-        broadcasterId.value = id ?? '';
-
-        rewards.value = await api.getRewards(id ?? '');
-      }, rewards);
-
-    watch(() => route.params.id, updateBroadcaster);
-
-    if (!store.user.value) {
-      const stop = watch(store.user, () => {
-        stop();
-        updateBroadcaster();
-      });
-    } else {
-      updateBroadcaster();
-    }
+    const { thisUserId, broadcasterId } = useBroadcaster({ store });
+    const { rewards, updateRewards } = useRewards({ broadcasterId, store, api });
 
     const coreExports = { rewards, broadcasterId, thisUserId };
-
-    // Add/Edit Dialog
-
-    const editRewardData = ref<undefined | Reward>(undefined);
-    const addEditDialogOpen = ref(false);
-
-    const openAddDialog = () => {
-      editRewardData.value = undefined; // important!
-      addEditDialogOpen.value = true;
-    };
-    const openEditDialog = (reward: Reward) => {
-      editRewardData.value = reward;
-      addEditDialogOpen.value = true;
-    };
-
-    const rewardAdded = (reward: Reward) => {
-      rewards.value = [...rewards.value, reward];
-    };
-    const rewardUpdated = (reward: Reward) => {
-      // replace the old one
-      rewards.value = rewards.value.map(r => (r.twitch.id === reward.twitch.id ? reward : r));
-    };
-
-    const addExports = { addEditDialogOpen, openAddDialog, openEditDialog, rewardAdded, rewardUpdated, editRewardData };
 
     // Delete actions
     const { state: deleteDialog, reset: resetDeleteDialog } = asyncDialog(ref(false));
@@ -185,7 +121,7 @@ export default defineComponent({
     const deleteReward = (reward: Reward) => {
       tryAsyncDialog(async () => {
         await api.deleteReward(broadcasterId.value ?? '', reward);
-        rewards.value = rewards.value.filter(r => r.twitch.id !== reward.twitch.id);
+        updateRewards(rewards.value.filter(r => r.twitch.id !== reward.twitch.id));
 
         closeDeleteDialog();
       }, deleteDialog);
@@ -213,7 +149,7 @@ export default defineComponent({
       clearDeleteDialog,
     };
 
-    return { ...coreExports, ...addExports, ...deleteExports };
+    return { ...coreExports, ...deleteExports };
   },
 });
 </script>

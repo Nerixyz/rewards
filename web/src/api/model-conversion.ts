@@ -10,10 +10,40 @@ export interface VRewardModel {
   usesPerUser: string;
   cooldown: string;
   color: string;
+  imageUrl: string | null;
 
   liveDelay: string;
 
   action: RewardData;
+}
+
+function getImageUrl(reward: Reward): string | null {
+  return reward.twitch.image?.url_4x ?? reward.twitch.default_image?.url_4x ?? null;
+}
+
+export function toVRewardModel(reward: Reward): VRewardModel {
+  return {
+    cost: reward.twitch.cost.toString(),
+    cooldown: reward.twitch.global_cooldown_setting?.global_cooldown_seconds.toString() ?? '',
+    title: reward.twitch.title,
+    usesPerStream: reward.twitch.max_per_stream_setting?.max_per_stream.toString() ?? '',
+    usesPerUser: reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '',
+    prompt: reward.twitch.prompt,
+    color: reward.twitch.background_color,
+    imageUrl: getImageUrl(reward),
+
+    action: {
+      type: reward.data.type,
+      data:
+        typeof reward.data.data === 'object' && reward.data.data !== null
+          ? {
+              ...reward.data.data,
+            }
+          : reward.data.data,
+    },
+
+    liveDelay: reward.live_delay ?? '',
+  };
 }
 
 export function assignToVRewardModel(reward: Reward, model: VRewardModel): void {
@@ -24,6 +54,7 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   model.usesPerUser = reward.twitch.max_per_user_per_stream_setting?.max_per_user_per_stream.toString() ?? '';
   model.prompt = reward.twitch.prompt;
   model.color = reward.twitch.background_color;
+  model.imageUrl = getImageUrl(reward);
 
   model.action = {
     type: reward.data.type,
@@ -74,7 +105,18 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
 }
 
 export function assignDefaultToModel(model: VRewardModel): void {
-  for (const [key, value] of Object.entries(defaultNewReward())) {
-    model[key as keyof VRewardModel] = value;
+  copyModel(defaultNewReward(), model);
+}
+
+export function copyModel(from: VRewardModel, to: VRewardModel): void {
+  for (const [key, value] of Object.entries(from)) {
+    to[key as keyof VRewardModel] = value;
   }
+}
+
+export function simpleClone<T>(value: T): T {
+  if (typeof value === 'object' && value !== null) {
+    return { ...value };
+  }
+  return value;
 }

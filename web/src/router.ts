@@ -8,6 +8,8 @@ const EditorsDashboard = () => import('./routes/EditorsDashboard.vue');
 const BroadcasterDashboard = () => import('./routes/BroadcasterDashboard.vue');
 const ConnectionsDashboard = () => import('./routes/ConnectionsDashboard.vue');
 const LogViewer = () => import('./routes/LogViewer.vue');
+const EditReward = () => import('./routes/EditReward.vue');
+const NewReward = () => import('./routes/NewReward.vue');
 
 const router = createRouter({
   routes: [
@@ -37,6 +39,22 @@ const router = createRouter({
       name: 'Logs',
       path: '/rewards/logs/:id?',
       component: LogViewer,
+      meta: {
+        ignoreNav: true,
+      },
+    },
+    {
+      name: 'New Reward',
+      path: '/rewards/:id/new',
+      component: NewReward,
+      meta: {
+        ignoreNav: true,
+      },
+    },
+    {
+      name: 'Edit Reward',
+      path: '/rewards/:id/:rewardId',
+      component: EditReward,
       meta: {
         ignoreNav: true,
       },
