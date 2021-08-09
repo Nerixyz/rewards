@@ -50,6 +50,7 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Setup a [`postgres`](https://www.postgresql.org/) database.
 * Create a new application on the [Twitch Console](https://dev.twitch.tv/console/apps).
 * Copy `config.toml.example` to `config.toml` and set the appropriate values.
+* Copy `.env.example` to `.env` and set the `DATABASE_URL` to the one you configured.
 * Run `setup.sh` or `setup.bat` depending on your platform.
 * Setup nginx to proxy `8082`.
 * Add the following entry to your nginx config:
