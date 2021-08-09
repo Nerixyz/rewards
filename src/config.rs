@@ -9,6 +9,7 @@ pub struct Config {
     // keep in sync with /setup
     pub db: DbConfig,
     pub server: ServerConfig,
+    pub redis: RedisConfig,
     pub auth: AuthConfig,
     pub twitch: TwitchConfig,
     pub emotes: EmoteConfig,
@@ -35,6 +36,11 @@ pub struct ServerConfig {
 
 fn default_bind_addr() -> String {
     "127.0.0.1:8082".to_string()
+}
+
+#[derive(Deserialize)]
+pub struct RedisConfig {
+    pub url: String,
 }
 
 #[derive(Deserialize)]

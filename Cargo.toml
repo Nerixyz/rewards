@@ -36,6 +36,8 @@ serde_qs = "0.8.3"
 # also used in setup
 toml = "0.5.8"
 
+deadpool-redis = { version = "0.8.1", default-features = false, features = ["rt_tokio_1"] }
+
 dotenv_codegen = "0.15"
 dotenv = "0.15.0"
 
@@ -64,6 +66,7 @@ hex = "0.4.3"
 rand = "0.8.3"
 regex = "1.5.4"
 percent-encoding = "2.1.0"
+either = "1.6.1"
 
 lazy_static = "1.4.0"
 
