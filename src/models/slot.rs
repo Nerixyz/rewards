@@ -1,9 +1,10 @@
 use crate::models::emote::SlotPlatform;
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-#[derive(FromRow, Debug)]
+#[derive(FromRow, Debug, Serialize, Deserialize)]
 pub struct Slot {
     pub id: i32,
     pub user_id: String,

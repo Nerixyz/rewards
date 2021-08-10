@@ -1,4 +1,4 @@
-use crate::{chat::command::ChatCommand, models::slot::Slot};
+use crate::{chat::command::ChatCommand, models::slot::Slot, RedisConn};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -8,7 +8,12 @@ pub struct SlotsCommand;
 
 #[async_trait]
 impl ChatCommand for SlotsCommand {
-    async fn execute(&mut self, msg: PrivmsgMessage, pool: &PgPool) -> AnyResult<String> {
+    async fn execute(
+        &mut self,
+        msg: PrivmsgMessage,
+        pool: &PgPool,
+        _: &mut RedisConn,
+    ) -> AnyResult<String> {
         let occupation = Slot::get_occupation(&msg.channel_id, pool)
             .await
             .map_err(|_| AnyError::msg("Some kind of internal error"))?;

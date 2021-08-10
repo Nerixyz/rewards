@@ -1,4 +1,4 @@
-use crate::chat::command::ChatCommand;
+use crate::{chat::command::ChatCommand, RedisConn};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -8,7 +8,12 @@ pub struct About;
 
 #[async_trait]
 impl ChatCommand for About {
-    async fn execute(&mut self, msg: PrivmsgMessage, _pool: &PgPool) -> AnyResult<String> {
+    async fn execute(
+        &mut self,
+        msg: PrivmsgMessage,
+        _pool: &PgPool,
+        _: &mut RedisConn,
+    ) -> AnyResult<String> {
         Ok(format!("@{}, I'm a bot made for rewards.nerixyz.de by @nerixyz in Rust {rustc_info} ({build_profile}) 📝 github.com/Nerixyz/rewards",
                    msg.sender.login,
                    rustc_info = env!("RW_RUSTC_INFO"),
