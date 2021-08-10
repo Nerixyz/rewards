@@ -1,41 +1,25 @@
-use std::time::Duration;
+use actix::{
+    Actor, AsyncContext, Context, ContextFutureSpawner, Handler, ResponseFuture, WrapFuture,
+};
 
-use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture, WrapFuture};
-use chrono::Utc;
-use sqlx::PgPool;
-
-use crate::{log_err, models::timeout::Timeout};
+use crate::{log_err, RedisPool};
 
 mod messages;
+use deadpool_redis::redis::AsyncCommands;
 pub use messages::*;
 
 pub struct TimeoutActor {
-    pool: PgPool,
+    pool: RedisPool,
 }
 
 impl TimeoutActor {
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(pool: RedisPool) -> Self {
         Self { pool }
     }
 }
 
 impl Actor for TimeoutActor {
     type Context = Context<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        ctx.run_interval(Duration::from_secs(60), |this, ctx| {
-            let pool = this.pool.clone();
-            ctx.spawn(
-                async move {
-                    log_err!(
-                        Timeout::delete_inactive(&pool).await,
-                        "Could not clear timeouts"
-                    );
-                }
-                .into_actor(this),
-            );
-        });
-    }
 }
 
 impl Handler<ChannelTimeoutMessage> for TimeoutActor {
@@ -43,11 +27,8 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
 
     fn handle(&mut self, msg: ChannelTimeoutMessage, ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
-        ctx.spawn(
-            async move {
-                let chrono_duration = chrono::Duration::from_std(msg.duration)
-                    .unwrap_or_else(|_| chrono::Duration::minutes(0));
-
+        async move {
+            if let Ok(mut conn) = pool.get().await {
                 log::info!(
                     "Timeout in {} for {} for {:?}",
                     msg.channel_id,
@@ -55,27 +36,19 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
                     msg.duration
                 );
 
-                if chrono_duration > chrono::Duration::seconds(30) {
-                    // only save timeouts longer than 30s
-                    log_err!(
-                        Timeout::create(
-                            &msg.channel_id,
-                            &msg.user_id,
-                            Utc::now() + chrono_duration,
-                            &pool
-                        )
-                        .await,
-                        "Couldn't save timeout"
-                    );
-                } else {
-                    log_err!(
-                        Timeout::delete_specific(&msg.channel_id, &msg.user_id, &pool).await,
-                        "Couldn't remove timeout"
-                    );
-                }
+                log_err!(
+                    conn.set_ex::<_, _, ()>(
+                        format!("rewards:timeout:{}:{}", msg.channel_id, msg.user_id),
+                        1,
+                        msg.duration.as_secs() as usize
+                    )
+                    .await,
+                    "Couldn't set timeout"
+                );
             }
-            .into_actor(self),
-        );
+        }
+        .into_actor(self)
+        .spawn(ctx);
     }
 }
 
@@ -85,13 +58,15 @@ impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
     fn handle(&mut self, msg: CheckValidTimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
         Box::pin(async move {
-            let timeout = Timeout::get_timeout(&msg.channel_id, &msg.user_id, &pool).await?;
+            let mut conn = pool.get().await?;
+            let exists: bool = conn
+                .exists(format!(
+                    "rewards:timeout:{}:{}",
+                    msg.channel_id, msg.user_id
+                ))
+                .await?;
 
-            Ok(if let Some(timeout) = timeout {
-                timeout < Utc::now()
-            } else {
-                true
-            })
+            Ok(exists)
         })
     }
 }
@@ -102,16 +77,22 @@ impl Handler<RemoveTimeoutMessage> for TimeoutActor {
     fn handle(&mut self, msg: RemoveTimeoutMessage, ctx: &mut Self::Context) -> Self::Result {
         ctx.run_later(msg.later, |this, ctx| {
             let pool = this.pool.clone();
-            ctx.spawn(
-                async move {
+            async move {
+                if let Ok(mut conn) = pool.get().await {
                     log::info!("Clear in {} for {}", msg.channel_id, msg.user_id);
+
                     log_err!(
-                        Timeout::delete_specific(&msg.channel_id, &msg.user_id, &pool).await,
-                        "Could not clear specific"
+                        conn.del::<_, ()>(format!(
+                            "rewards:timeout:{}:{}",
+                            msg.channel_id, msg.user_id
+                        ))
+                        .await,
+                        "Couldn't delete timeout"
                     );
                 }
-                .into_actor(this),
-            );
+            }
+            .into_actor(this)
+            .spawn(ctx);
         });
     }
 }

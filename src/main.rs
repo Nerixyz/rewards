@@ -98,7 +98,7 @@ async fn main() -> std::io::Result<()> {
 
     let chat_actor = ChatActor::new(pg_pool.clone()).start();
 
-    let timeout_actor = TimeoutActor::new(pg_pool.clone()).start();
+    let timeout_actor = TimeoutActor::new(redis_pool.clone()).start();
 
     let db_actor = DbActor::new(pg_pool.clone()).start();
     let irc_actor = IrcActor::new(
