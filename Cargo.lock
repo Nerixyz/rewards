@@ -576,6 +576,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "combine"
+version = "4.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2d47c1b11006b87e492b53b313bb699ce60e16613c4dddaa91f8f7c220ab2fa"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "memchr",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "config"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -870,6 +883,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "deadpool"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef82259c587bceda08349f28ff00f69ae4c897898f254140af6021eb218e8232"
+dependencies = [
+ "async-trait",
+ "num_cpus",
+ "tokio",
+]
+
+[[package]]
 name = "deadpool-postgres"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -877,12 +901,24 @@ checksum = "5452506f60a0ceca624c4becc948f9f0ae67f35fc0ae471b9dcb841d110cf70a"
 dependencies = [
  "async-trait",
  "config",
- "deadpool",
+ "deadpool 0.7.0",
  "futures",
  "log",
  "serde",
  "tokio",
  "tokio-postgres",
+]
+
+[[package]]
+name = "deadpool-redis"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "637b3ef314fe3393113b2fbf2c98eb557aad7110dcf6b1a7e9b40bdd2589abc0"
+dependencies = [
+ "async-trait",
+ "deadpool 0.8.2",
+ "log",
+ "redis",
 ]
 
 [[package]]
@@ -983,6 +1019,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "dtoa"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
 name = "either"
@@ -2242,6 +2284,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4f0ceb2ec0dd769483ecd283f6615aa83dcd0be556d5294c6e659caefe7cc54"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "combine",
+ "dtoa",
+ "futures-util",
+ "itoa",
+ "percent-encoding",
+ "pin-project-lite",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2341,9 +2402,11 @@ dependencies = [
  "chrono",
  "cookie 0.15.0",
  "deadpool-postgres",
+ "deadpool-redis",
  "derive_more",
  "dotenv",
  "dotenv_codegen",
+ "either",
  "env_logger",
  "errors 0.1.1",
  "eventsub",

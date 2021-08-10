@@ -1,13 +1,18 @@
 use crate::{
     log_discord,
     models::editor::Editor,
-    services::{jwt::JwtClaims, twitch::requests::get_users},
+    services::{jwt::JwtClaims, twitch::get_many_users},
+    RedisPool,
 };
 use actix_web::{delete, get, put, web, HttpResponse, Result};
 use sqlx::PgPool;
 
 #[get("")]
-async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
+async fn get_my_editors(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    redis: web::Data<RedisPool>,
+) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
     let editors = Editor::get_editors(claims.user_id(), &pool).await?;
 
@@ -16,11 +21,20 @@ async fn get_my_editors(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<Ht
         return Ok(HttpResponse::Ok().json(&data));
     }
 
-    Ok(HttpResponse::Ok().json(get_users(editors, &token).await?))
+    let mut redis_conn = redis
+        .get()
+        .await
+        .map_err(|_| errors::ErrorInternalServerError("Redis is dead"))?;
+
+    Ok(HttpResponse::Ok().json(get_many_users(editors, &token, &mut redis_conn).await?))
 }
 
 #[get("/broadcasters")]
-async fn get_broadcasters(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
+async fn get_broadcasters(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    redis: web::Data<RedisPool>,
+) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
     let broadcasters = Editor::get_broadcasters(claims.user_id(), &pool).await?;
 
@@ -29,7 +43,12 @@ async fn get_broadcasters(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<
         return Ok(HttpResponse::Ok().json(&data));
     }
 
-    Ok(HttpResponse::Ok().json(get_users(broadcasters, &token).await?))
+    let mut redis_conn = redis
+        .get()
+        .await
+        .map_err(|_| errors::ErrorInternalServerError("Redis is dead"))?;
+
+    Ok(HttpResponse::Ok().json(get_many_users(broadcasters, &token, &mut redis_conn).await?))
 }
 
 #[put("/{editor_name}")]

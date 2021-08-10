@@ -46,6 +46,9 @@ use crate::{
 };
 use std::convert::TryInto;
 
+pub type RedisPool = deadpool_redis::Pool;
+pub type RedisConn = deadpool_redis::ConnectionWrapper;
+
 mod actors;
 mod chat;
 mod config;
@@ -74,25 +77,38 @@ async fn main() -> std::io::Result<()> {
 
     let mut pool_options: PgConnectOptions = (&CONFIG.db).try_into().expect("invalid db config");
     pool_options.log_statements(LevelFilter::Debug);
-    let pool = PgPool::connect_with(pool_options)
+    let pg_pool = PgPool::connect_with(pool_options)
         .await
         .expect("Could not connect to database");
 
+    log::info!("Connecting to redis");
+
+    let redis_pool = deadpool_redis::Config {
+        url: Some(CONFIG.redis.url.clone()),
+        connection: None,
+        ..Default::default()
+    }
+    .create_pool()
+    .expect("Could not create redis pool");
+
+    // make sure the connection is working and there's at least one connected client
+    let _ = redis_pool.get().await.unwrap();
+
     log::info!("Starting Db, Irc and Slot-Actor");
 
-    let chat_actor = ChatActor::new(pool.clone()).start();
+    let chat_actor = ChatActor::new(pg_pool.clone()).start();
 
-    let timeout_actor = TimeoutActor::new(pool.clone()).start();
+    let timeout_actor = TimeoutActor::new(pg_pool.clone()).start();
 
-    let db_actor = DbActor::new(pool.clone()).start();
+    let db_actor = DbActor::new(pg_pool.clone()).start();
     let irc_actor = IrcActor::new(
         db_actor.clone(),
-        pool.clone(),
+        pg_pool.clone(),
         chat_actor.recipient(),
         timeout_actor.clone(),
     )
     .start();
-    let _slot_actor = SlotActor::new(pool.clone()).start();
+    SlotActor::new(pg_pool.clone()).start();
 
     log::info!("Announcing on twitch and discord");
 
@@ -100,7 +116,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Joining all channels");
 
-    let names = User::get_all_names(&pool)
+    let names = User::get_all_names(&pg_pool)
         .await
         .expect("Could not get users");
     irc_actor.do_send(JoinAllMessage(names));
@@ -111,10 +127,10 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not get app access token");
     let app_access_token = web::Data::new(RwLock::new(app_access_token));
-    let _refresh_actor = TokenRefresher::new(pool.clone()).start();
-    let live_actor = LiveActor::new(pool.clone(), irc_actor.clone()).start();
-    let pubsub = PubSubActor::run(pool.clone(), live_actor, timeout_actor.clone());
-    let initial_listens = make_initial_pubsub_listens(&pool)
+    let _refresh_actor = TokenRefresher::new(pg_pool.clone()).start();
+    let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
+    let pubsub = PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
+    let initial_listens = make_initial_pubsub_listens(&pg_pool)
         .await
         .expect("sql thingy");
     pubsub.do_send(SubAllMessage(initial_listens));
@@ -123,17 +139,17 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Clearing old rewards");
 
-    clear_invalid_rewards(&app_access_token, &pool)
+    clear_invalid_rewards(&app_access_token, &pg_pool)
         .await
         .expect("Could not clear invalid rewards");
 
     log::info!("Registering eventsub callbacks");
 
-    register_eventsub_for_all_unregistered(&app_access_token, &pool)
+    register_eventsub_for_all_unregistered(&app_access_token, &pg_pool)
         .await
         .expect("Could not register eventsub FeelsMan");
 
-    let clear_pool = pool.clone();
+    let clear_pool = pg_pool.clone();
     let clear_irc = irc_actor.clone();
     actix::spawn(async move {
         let (redemptions, timed_mode) = futures::future::join(
@@ -147,7 +163,8 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(pg_pool.clone()))
+            .app_data(web::Data::new(redis_pool.clone()))
             .app_data(web::Data::new(irc_actor.clone()))
             .app_data(web::Data::new(timeout_actor.clone()))
             .app_data(web::Data::new(pubsub.clone()))
