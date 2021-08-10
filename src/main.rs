@@ -108,7 +108,7 @@ async fn main() -> std::io::Result<()> {
         timeout_actor.clone(),
     )
     .start();
-    SlotActor::new(pg_pool.clone()).start();
+    SlotActor::new(pg_pool.clone(), redis_pool.clone()).start();
 
     log::info!("Announcing on twitch and discord");
 

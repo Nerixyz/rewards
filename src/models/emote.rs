@@ -1,4 +1,6 @@
-#[derive(sqlx::Type, Debug, derive_more::Display)]
+use serde::{Deserialize, Serialize};
+
+#[derive(sqlx::Type, Debug, derive_more::Display, Serialize, Deserialize)]
 #[sqlx(type_name = "slot_platform", rename_all = "snake_case")]
 pub enum SlotPlatform {
     #[display(fmt = "BTTV")]

@@ -5,20 +5,23 @@ use crate::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
         twitch::requests::update_reward,
     },
+    RedisPool,
 };
 use actix::{Actor, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
+use deadpool_redis::redis::AsyncCommands;
 use sqlx::PgPool;
 use std::time::Duration;
 use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
 
 pub struct SlotActor {
     pool: PgPool,
+    redis: RedisPool,
 }
 
 impl SlotActor {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, redis: RedisPool) -> Self {
+        Self { pool, redis }
     }
 
     async fn delete_emote(
@@ -40,7 +43,7 @@ impl SlotActor {
         }
     }
 
-    async fn queue_rewards(pool: PgPool) {
+    async fn queue_rewards(pool: PgPool, redis: RedisPool) {
         let pending = Slot::get_pending(&pool).await;
         let pending = match pending {
             Ok(p) => p,
@@ -144,6 +147,22 @@ impl SlotActor {
                 Ok(_) => log::info!("Enabled {:?}", p),
                 Err(e) => log::warn!("Could not enable: reward={:?} error={}", p, e),
             }
+
+            if let (Some(name), Ok(json), Ok(mut conn)) = (
+                p.name.as_ref(),
+                serde_json::to_string(&p),
+                redis.get().await,
+            ) {
+                log_err!(
+                    conn.set_ex::<_, _, ()>(
+                        format!("rewards:exp-slots:{}:{}", p.user_id, name.to_lowercase()),
+                        json,
+                        5 * 60 * 60
+                    )
+                    .await,
+                    "Could not set slot on redis"
+                );
+            }
         }
     }
 }
@@ -153,7 +172,7 @@ impl Actor for SlotActor {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(2 * 60), |this, ctx| {
-            ctx.spawn(Self::queue_rewards(this.pool.clone()).into_actor(this));
+            ctx.spawn(Self::queue_rewards(this.pool.clone(), this.redis.clone()).into_actor(this));
         });
     }
 }
