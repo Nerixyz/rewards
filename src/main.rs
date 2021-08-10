@@ -96,7 +96,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Starting Db, Irc and Slot-Actor");
 
-    let chat_actor = ChatActor::new(pg_pool.clone()).start();
+    let chat_actor = ChatActor::new(pg_pool.clone(), redis_pool.clone()).start();
 
     let timeout_actor = TimeoutActor::new(redis_pool.clone()).start();
 
