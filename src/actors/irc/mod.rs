@@ -54,8 +54,6 @@ pub struct IrcActor {
     executor: Recipient<ExecuteCommandMessage>,
 
     last_messages: HashMap<String, String>,
-    // TODO: redis
-    command_cooldown: HashMap<String, Instant>,
 
     timeout_handler: Addr<TimeoutActor>,
 }
@@ -95,25 +93,8 @@ impl IrcActor {
 
             executor,
             last_messages: HashMap::new(),
-            command_cooldown: HashMap::new(),
 
             timeout_handler,
-        }
-    }
-
-    /// Returns true if there's _no_ cooldown for the channel.
-    fn check_update_cooldown(&mut self, login: &str) -> bool {
-        let now = Instant::now();
-        if let Some(v) = self.command_cooldown.get_mut(login) {
-            if now.duration_since(*v) < Duration::from_secs(4) {
-                false
-            } else {
-                *v = now;
-                true
-            }
-        } else {
-            self.command_cooldown.insert(login.to_string(), now);
-            true
         }
     }
 }
@@ -174,7 +155,6 @@ impl Handler<PartMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
-        self.command_cooldown.remove(&msg.0);
         self.last_messages.remove(&msg.0);
         self.client.part(msg.0)
     }
@@ -349,7 +329,6 @@ impl Handler<ChatMessage> for IrcActor {
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
         if !msg.0.message_text.starts_with(&CONFIG.bot.prefix)
             || msg.0.message_text.len() < CONFIG.bot.prefix.len()
-            || !self.check_update_cooldown(&msg.0.channel_login)
         {
             return;
         }
