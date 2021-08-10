@@ -7,6 +7,9 @@ url = "https://rewards.nerixyz.de"
 # defaults to 127.0.0.1:8082
 # bind_addr = "127.0.0.1:8082"
 
+[redis]
+url = "redis://user:passwors@host:port/db"
+
 [auth]
 # a secret used for JWT tokens
 # e.g. generate it with `openssl rand -base64 <len>`
