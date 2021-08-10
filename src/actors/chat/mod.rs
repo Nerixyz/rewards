@@ -77,7 +77,7 @@ async fn try_handle_command(
 
     let broadcaster = msg.raw.channel_login.clone();
     let sender = msg.raw.sender.login.clone();
-    let message = match msg.executor.execute(msg.raw, &db).await {
+    let message = match msg.executor.execute(msg.raw, &db, &mut conn).await {
         Ok(res) => SayMessage(broadcaster, res),
         Err(e) => SayMessage(broadcaster, format!("@{}, ⚠ {}", sender, e)),
     };

@@ -1,6 +1,7 @@
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
     models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote},
+    RedisConn,
 };
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
@@ -22,7 +23,12 @@ pub struct Emotes {
 
 #[async_trait]
 impl ChatCommand for Emotes {
-    async fn execute(&mut self, msg: PrivmsgMessage, pool: &PgPool) -> AnyResult<String> {
+    async fn execute(
+        &mut self,
+        msg: PrivmsgMessage,
+        pool: &PgPool,
+        _: &mut RedisConn,
+    ) -> AnyResult<String> {
         let resp = match self.requested {
             None => future::try_join(
                 Slot::get_occupied_emotes(&msg.channel_id, pool),

@@ -1,4 +1,4 @@
-use crate::chat::command::ChatCommand;
+use crate::{chat::command::ChatCommand, RedisConn};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -8,7 +8,12 @@ pub struct Ping;
 
 #[async_trait]
 impl ChatCommand for Ping {
-    async fn execute(&mut self, msg: PrivmsgMessage, _pool: &PgPool) -> AnyResult<String> {
+    async fn execute(
+        &mut self,
+        msg: PrivmsgMessage,
+        _pool: &PgPool,
+        _: &mut RedisConn,
+    ) -> AnyResult<String> {
         Ok(format!("@{}, 🤖 Pong! ⏱ Uptime: {uptime} 📜 Git: {git_info} 🛠 Compiled with Rust {rustc_info} on 🖥 {build_info} 📦 {build_profile}",
                    msg.sender.login,
                    uptime = humantime::format_duration(uptimer::get_async().await.unwrap_or_default()),
