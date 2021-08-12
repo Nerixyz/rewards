@@ -127,7 +127,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not get app access token");
     let app_access_token = web::Data::new(RwLock::new(app_access_token));
-    let _refresh_actor = TokenRefresher::new(pg_pool.clone()).start();
+    TokenRefresher::new(pg_pool.clone()).start();
     let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
     let pubsub = PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
     let initial_listens = make_initial_pubsub_listens(&pg_pool)
