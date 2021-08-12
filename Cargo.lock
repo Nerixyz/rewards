@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "actix"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "543c47e7827f8fcc9d1445bd98ba402137bfce80ee2187429de49c52b5131bd3"
+checksum = "3720d0064a0ce5c0de7bd93bdb0a6caebab2a9b5668746145d7b3b0c5da02914"
 dependencies = [
  "actix-rt",
  "actix_derive",
@@ -118,7 +118,7 @@ dependencies = [
  "serde",
  "sha-1",
  "smallvec",
- "time 0.2.26",
+ "time 0.2.27",
  "tokio",
  "zstd",
 ]
@@ -261,7 +261,7 @@ dependencies = [
  "serde_urlencoded",
  "smallvec",
  "socket2",
- "time 0.2.26",
+ "time 0.2.27",
  "url",
 ]
 
@@ -590,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b076e143e1d9538dde65da30f8481c2a6c44040edb8e02b9bf1351edb92ce3"
+checksum = "1b1b9d958c2b1368a663f05538fc1b5975adce1e19f435acceae987aceeeb369"
 dependencies = [
  "lazy_static",
  "nom 5.1.2",
@@ -639,7 +639,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03a5d7b21829bc7b4bf4754a978a241ae54ea55a40f92bb20216e54096f4b951"
 dependencies = [
  "percent-encoding",
- "time 0.2.26",
+ "time 0.2.27",
  "version_check",
 ]
 
@@ -650,7 +650,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffdf8865bac3d9a3bde5bde9088ca431b11f5d37c7a578b8086af77248b76627"
 dependencies = [
  "percent-encoding",
- "time 0.2.26",
+ "time 0.2.27",
  "version_check",
 ]
 
@@ -666,7 +666,7 @@ dependencies = [
  "publicsuffix",
  "serde",
  "serde_json",
- "time 0.2.26",
+ "time 0.2.27",
  "url",
 ]
 
@@ -870,38 +870,26 @@ dependencies = [
 
 [[package]]
 name = "deadpool"
-version = "0.7.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d126179d86aee4556e54f5f3c6bf6d9884e7cc52cef82f77ee6f90a7747616d"
+checksum = "ef82259c587bceda08349f28ff00f69ae4c897898f254140af6021eb218e8232"
 dependencies = [
  "async-trait",
  "config",
- "crossbeam-queue 0.3.1",
  "num_cpus",
  "serde",
  "tokio",
 ]
 
 [[package]]
-name = "deadpool"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef82259c587bceda08349f28ff00f69ae4c897898f254140af6021eb218e8232"
-dependencies = [
- "async-trait",
- "num_cpus",
- "tokio",
-]
-
-[[package]]
 name = "deadpool-postgres"
-version = "0.7.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5452506f60a0ceca624c4becc948f9f0ae67f35fc0ae471b9dcb841d110cf70a"
+checksum = "1586368a579e26f158266d0a415bcb5df04a64b65913b2a31715d97987bd4d44"
 dependencies = [
  "async-trait",
  "config",
- "deadpool 0.7.0",
+ "deadpool",
  "futures",
  "log",
  "serde",
@@ -916,7 +904,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "637b3ef314fe3393113b2fbf2c98eb557aad7110dcf6b1a7e9b40bdd2589abc0"
 dependencies = [
  "async-trait",
- "deadpool 0.8.2",
+ "deadpool",
  "log",
  "redis",
 ]
@@ -1067,9 +1055,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.8.3"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17392a012ea30ef05a610aa97dfb49496e71c9f676b27879922ea5bdf60d9d3f"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
 dependencies = [
  "atty",
  "humantime",
@@ -1594,9 +1582,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.94"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
+checksum = "a7f823d141fe0a24df1e23b4af4e3c7ba9e5966ec514ea068c93024aa7deb765"
 
 [[package]]
 name = "local-channel"
@@ -2375,7 +2363,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
- "time 0.2.26",
+ "time 0.2.27",
  "tokio",
  "tokio-native-tls",
  "url",
@@ -2435,7 +2423,7 @@ dependencies = [
  "serde_qs",
  "sha2",
  "sqlx",
- "time 0.2.26",
+ "time 0.2.27",
  "tokio",
  "tokio-stream",
  "toml",
@@ -3007,9 +2995,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.2.26"
+version = "0.2.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08a8cbfbf47955132d0202d1662f49b2423ae35862aee471f3ba4b133358f372"
+checksum = "4752a97f8eebd6854ff91f1c1824cd6160626ac4bd44287f7f4ea2035a02a242"
 dependencies = [
  "const_fn",
  "libc",
