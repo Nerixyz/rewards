@@ -66,7 +66,7 @@ impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
                 ))
                 .await?;
 
-            Ok(exists)
+            Ok(!exists)
         })
     }
 }
