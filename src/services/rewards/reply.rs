@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use actix::Addr;
 use anyhow::Result as AnyResult;
 
@@ -13,7 +11,7 @@ pub enum SpotifyAction {
 pub async fn send_spotify_reply(
     action: SpotifyAction,
     data: AnyResult<String>,
-    irc: &Arc<Addr<IrcActor>>,
+    irc: Addr<IrcActor>,
     broadcaster: String,
     user: String,
 ) -> AnyResult<()> {

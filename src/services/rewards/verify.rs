@@ -5,7 +5,7 @@ use twitch_api2::twitch_oauth2::UserToken;
 use crate::{
     models::reward::RewardData,
     services::{
-        bttv, ffz::is_editor_in, rewards, seven_tv, spotify::rewards as spotify,
+        bttv, ffz::is_editor_in, rewards::extract, seven_tv, spotify::rewards as spotify,
         twitch::requests::get_user,
     },
 };
@@ -20,7 +20,7 @@ pub async fn verify_reward(
         RewardData::EmoteOnly(duration)
         | RewardData::Timeout(duration)
         | RewardData::SubOnly(duration) => {
-            rewards::get_duration(duration)?;
+            extract::duration(duration)?;
         }
 
         // verify editor
@@ -43,7 +43,7 @@ pub async fn verify_reward(
                 return Err(AnyError::msg("50 slots is the max"));
             }
 
-            rewards::get_duration(&slot.expiration)?;
+            extract::duration(&slot.expiration)?;
         }
         RewardData::FfzSlot(slot) => {
             let user = get_user(broadcaster_id.to_string(), token).await?;
@@ -55,7 +55,7 @@ pub async fn verify_reward(
                 return Err(AnyError::msg("50 slots is the max"));
             }
 
-            rewards::get_duration(&slot.expiration)?;
+            extract::duration(&slot.expiration)?;
         }
         RewardData::SevenTvSlot(slot) => {
             seven_tv::verify_user(broadcaster_id, pool).await?;
@@ -64,7 +64,7 @@ pub async fn verify_reward(
                 return Err(AnyError::msg("100 slots is the max"));
             }
 
-            rewards::get_duration(&slot.expiration)?;
+            extract::duration(&slot.expiration)?;
         }
         RewardData::SpotifySkip(_) | RewardData::SpotifyQueue(_) | RewardData::SpotifyPlay(_) => {
             spotify::get_spotify_token(broadcaster_id, pool).await?;

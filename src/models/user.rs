@@ -4,7 +4,7 @@ use sqlx::{FromRow, PgPool};
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
 
-#[derive(FromRow)]
+#[derive(FromRow, Clone)]
 pub struct User {
     pub id: String,
     pub access_token: String,

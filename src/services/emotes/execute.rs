@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use actix::Addr;
 use anyhow::Result as AnyResult;
@@ -19,7 +19,7 @@ pub async fn execute_swap<RW, F, I, E, EI>(
     redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
     reward_data: SwapRewardData,
     pool: &PgPool,
-    irc: &Arc<Addr<IrcActor>>,
+    irc: Addr<IrcActor>,
 ) -> AnyResult<()>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
@@ -31,7 +31,7 @@ where
     let platform_id = extract_id(
         extractor,
         &redemption.event.user_input,
-        irc,
+        &irc,
         redemption
             .event
             .broadcaster_user_login
@@ -88,7 +88,7 @@ pub async fn execute_slot<RW, F, I, E, EI>(
     redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
     slot_data: SlotRewardData,
     pool: &PgPool,
-    irc: &Arc<Addr<IrcActor>>,
+    irc: Addr<IrcActor>,
 ) -> AnyResult<()>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
@@ -99,7 +99,7 @@ where
     let platform_id = extract_id(
         extractor,
         &redemption.event.user_input,
-        irc,
+        &irc,
         redemption
             .event
             .broadcaster_user_login
@@ -162,7 +162,7 @@ where
 async fn extract_id<'a, F>(
     extractor: F,
     input: &'a str,
-    irc: &Arc<Addr<IrcActor>>,
+    irc: &Addr<IrcActor>,
     broadcaster: String,
     user: &str,
 ) -> AnyResult<&'a str>
