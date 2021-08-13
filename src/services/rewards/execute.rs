@@ -5,10 +5,7 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
-use twitch_api2::{
-    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload},
-    twitch_oauth2::AppAccessToken,
-};
+use twitch_api2::twitch_oauth2::AppAccessToken;
 
 use crate::{
     actors::{
@@ -25,14 +22,16 @@ use crate::{
             execute::{execute_slot, execute_swap},
             Emote, EmoteRW,
         },
-        rewards::{extract, reply, reply::SpotifyAction},
+        rewards::{
+            extract,
+            reply::{format_spotify_result, get_reply_data, reply_to_redemption, SpotifyAction},
+            Redemption,
+        },
         spotify::rewards as spotify,
         twitch::requests::get_user_by_login,
     },
 };
 use std::{fmt::Display, str::FromStr};
-
-type Redemption = NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>;
 
 pub async fn timeout(
     timeout: String,
@@ -103,8 +102,9 @@ where
     EI: Display + Clone + FromStr + Default,
     E: Emote<EI>,
 {
-    execute_swap::<RW, F, I, E, EI>(extractor, redemption, data, &db, irc).await?;
-    Ok(())
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = execute_swap::<RW, F, I, E, EI>(extractor, redemption, data, &db).await;
+    reply_to_redemption(res, &irc, broadcaster, user).await
 }
 
 pub async fn slot<RW, F, I, E, EI>(
@@ -119,24 +119,24 @@ where
     E: Emote<EI>,
     EI: Display,
 {
-    execute_slot::<RW, F, I, E, EI>(extractor, redemption, slot, &db, irc).await?;
-    Ok(())
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = execute_slot::<RW, F, I, E, EI>(extractor, redemption, slot, &db).await;
+    reply_to_redemption(res, &irc, broadcaster, user).await
 }
 
 pub async fn spotify_skip(
     redemption: Redemption,
     (db, irc): (PgPool, Addr<IrcActor>),
 ) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
     let res = spotify::skip_track(redemption.event.broadcaster_user_id.as_ref(), &db).await;
-    reply::send_spotify_reply(
-        SpotifyAction::Skip,
-        res,
-        irc,
-        redemption.event.broadcaster_user_login.into_string(),
-        redemption.event.user_login.into_string(),
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Skip),
+        &irc,
+        broadcaster,
+        user,
     )
-    .await?;
-    Ok(())
+    .await
 }
 
 pub async fn spotify_play(
@@ -144,6 +144,7 @@ pub async fn spotify_play(
     redemption: Redemption,
     (db, irc): (PgPool, Addr<IrcActor>),
 ) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
         &redemption.event.user_input,
         redemption.event.broadcaster_user_id.as_ref(),
@@ -154,15 +155,13 @@ pub async fn spotify_play(
         spotify::play_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
     })
     .await;
-    reply::send_spotify_reply(
-        SpotifyAction::Play,
-        res,
-        irc,
-        redemption.event.broadcaster_user_login.into_string(),
-        redemption.event.user_login.into_string(),
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Play),
+        &irc,
+        broadcaster,
+        user,
     )
-    .await?;
-    Ok(())
+    .await
 }
 
 pub async fn spotify_queue(
@@ -170,6 +169,7 @@ pub async fn spotify_queue(
     redemption: Redemption,
     (db, irc): (PgPool, Addr<IrcActor>),
 ) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
         &redemption.event.user_input,
         redemption.event.broadcaster_user_id.as_ref(),
@@ -180,13 +180,11 @@ pub async fn spotify_queue(
         spotify::queue_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
     })
     .await;
-    reply::send_spotify_reply(
-        SpotifyAction::Queue,
-        res,
-        irc,
-        redemption.event.broadcaster_user_login.into_string(),
-        redemption.event.user_login.into_string(),
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Queue),
+        &irc,
+        broadcaster,
+        user,
     )
-    .await?;
-    Ok(())
+    .await
 }
