@@ -5,10 +5,7 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
-use twitch_api2::{
-    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload},
-    twitch_oauth2::AppAccessToken,
-};
+use twitch_api2::twitch_oauth2::AppAccessToken;
 
 use crate::{
     actors::{
@@ -16,174 +13,178 @@ use crate::{
         timeout::{CheckValidTimeoutMessage, TimeoutActor},
     },
     models::{
-        reward::{Reward, RewardData},
+        reward::{SlotRewardData, SpotifyPlayOptions, SwapRewardData},
         timed_mode,
         user::User,
     },
     services::{
         emotes::{
-            bttv::BttvEmotes,
             execute::{execute_slot, execute_swap},
-            ffz::FfzEmotes,
-            seven_tv::SevenTvEmotes,
+            Emote, EmoteRW,
         },
-        rewards,
         rewards::{
-            extract_bttv_id, extract_ffz_id, extract_seventv_id, reply, reply::SpotifyAction,
+            extract,
+            reply::{format_spotify_result, get_reply_data, reply_to_redemption, SpotifyAction},
+            Redemption,
         },
         spotify::rewards as spotify,
         twitch::requests::get_user_by_login,
     },
 };
+use std::{fmt::Display, str::FromStr};
 
-/// This doesn't update the reward-redemption on twitch!
-pub async fn execute_reward(
-    redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
-    reward: Reward,
+pub async fn timeout(
+    timeout: String,
+    redemption: Redemption,
     broadcaster: User,
-    pool: &PgPool,
-    irc: Arc<Addr<IrcActor>>,
-    timeout_handler: Arc<Addr<TimeoutActor>>,
-    app_token: Arc<RwLock<AppAccessToken>>,
+    (irc, app_token, timeout_handler): (
+        Addr<IrcActor>,
+        Arc<RwLock<AppAccessToken>>,
+        Addr<TimeoutActor>,
+    ),
 ) -> AnyResult<()> {
-    match reward.data.0 {
-        RewardData::Timeout(timeout) => {
-            // check timeout
-            let username = rewards::extract_username(&redemption.event.user_input)?.to_lowercase();
-            let user = get_user_by_login(username.clone(), &*app_token.read().await)
-                .await
-                .map_err(|_| AnyError::msg("Could not get user"))?;
+    // check timeout
+    let username = extract::username(&redemption.event.user_input)?.to_lowercase();
+    let user = get_user_by_login(username.clone(), &*app_token.read().await)
+        .await
+        .map_err(|_| AnyError::msg("Could not get user"))?;
 
-            let ok_timeout = timeout_handler
-                .send(CheckValidTimeoutMessage {
-                    channel_id: redemption.event.broadcaster_user_id.clone().into_string(),
-                    user_id: user.id.clone().into_string(),
-                })
-                .await
-                .map_err(|_| AnyError::msg("Too much traffic"))?
-                .map_err(|_| AnyError::msg("Internal error"))?;
+    let ok_timeout = timeout_handler
+        .send(CheckValidTimeoutMessage {
+            channel_id: redemption.event.broadcaster_user_id.clone().into_string(),
+            user_id: user.id.clone().into_string(),
+        })
+        .await
+        .map_err(|_| AnyError::msg("Too much traffic"))?
+        .map_err(|_| AnyError::msg("Internal error"))?;
 
-            if !ok_timeout {
-                return Err(AnyError::msg("Can't timeout this user"));
-            }
-
-            irc.send(TimeoutMessage {
-                user: rewards::extract_username(&redemption.event.user_input)?,
-                user_id: user.id.into_string(),
-                duration: rewards::get_duration(&timeout)?,
-                broadcaster: broadcaster.name,
-                broadcaster_id: redemption.event.broadcaster_user_id.into_string(),
-            })
-            .await??
-        }
-        RewardData::EmoteOnly(duration) => {
-            irc.send(TimedModeMessage {
-                duration: rewards::get_duration(&duration)?,
-                broadcaster: broadcaster.name,
-                broadcaster_id: broadcaster.id,
-                mode: timed_mode::Mode::Emoteonly,
-            })
-            .await?
-        }
-        RewardData::SubOnly(duration) => {
-            irc.send(TimedModeMessage {
-                duration: rewards::get_duration(&duration)?,
-                broadcaster: broadcaster.name,
-                broadcaster_id: broadcaster.id,
-                mode: timed_mode::Mode::Subonly,
-            })
-            .await?
-        }
-        RewardData::BttvSwap(data) => {
-            execute_swap::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, data, pool, &irc)
-                .await?;
-        }
-        RewardData::FfzSwap(data) => {
-            execute_swap::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, data, pool, &irc)
-                .await?;
-        }
-        RewardData::SevenTvSwap(data) => {
-            execute_swap::<SevenTvEmotes, _, _, _, _>(
-                extract_seventv_id,
-                redemption,
-                data,
-                pool,
-                &irc,
-            )
-            .await?;
-        }
-        RewardData::BttvSlot(slot) => {
-            execute_slot::<BttvEmotes, _, _, _, _>(extract_bttv_id, redemption, slot, pool, &irc)
-                .await?;
-        }
-        RewardData::FfzSlot(slot) => {
-            execute_slot::<FfzEmotes, _, _, _, _>(extract_ffz_id, redemption, slot, pool, &irc)
-                .await?;
-        }
-        RewardData::SevenTvSlot(slot) => {
-            execute_slot::<SevenTvEmotes, _, _, _, _>(
-                extract_seventv_id,
-                redemption,
-                slot,
-                pool,
-                &irc,
-            )
-            .await?;
-        }
-        RewardData::SpotifySkip(_) => {
-            let res =
-                spotify::skip_track(redemption.event.broadcaster_user_id.as_ref(), pool).await;
-            reply::send_spotify_reply(
-                SpotifyAction::Skip,
-                res,
-                &irc,
-                redemption.event.broadcaster_user_login.into_string(),
-                redemption.event.user_login.into_string(),
-            )
-            .await?;
-        }
-        RewardData::SpotifyPlay(opts) => {
-            let res = spotify::get_track_uri_from_input(
-                &redemption.event.user_input,
-                redemption.event.broadcaster_user_id.as_ref(),
-                &opts,
-                pool,
-            )
-            .and_then(|track| async {
-                spotify::play_track(redemption.event.broadcaster_user_id.as_ref(), track, pool)
-                    .await
-            })
-            .await;
-            reply::send_spotify_reply(
-                SpotifyAction::Play,
-                res,
-                &irc,
-                redemption.event.broadcaster_user_login.into_string(),
-                redemption.event.user_login.into_string(),
-            )
-            .await?;
-        }
-        RewardData::SpotifyQueue(opts) => {
-            let res = spotify::get_track_uri_from_input(
-                &redemption.event.user_input,
-                redemption.event.broadcaster_user_id.as_ref(),
-                &opts,
-                pool,
-            )
-            .and_then(|track| async {
-                spotify::queue_track(redemption.event.broadcaster_user_id.as_ref(), track, pool)
-                    .await
-            })
-            .await;
-            reply::send_spotify_reply(
-                SpotifyAction::Queue,
-                res,
-                &irc,
-                redemption.event.broadcaster_user_login.into_string(),
-                redemption.event.user_login.into_string(),
-            )
-            .await?;
-        }
+    if !ok_timeout {
+        return Err(AnyError::msg("Can't timeout this user"));
     }
+
+    irc.send(TimeoutMessage {
+        user: extract::username(&redemption.event.user_input)?,
+        user_id: user.id.into_string(),
+        duration: extract::duration(&timeout)?,
+        broadcaster: broadcaster.name,
+        broadcaster_id: redemption.event.broadcaster_user_id.into_string(),
+    })
+    .await??;
     Ok(())
+}
+
+pub async fn timed_mode(
+    mode: timed_mode::Mode,
+    duration: String,
+    broadcaster: User,
+    irc: Addr<IrcActor>,
+) -> AnyResult<()> {
+    irc.send(TimedModeMessage {
+        duration: extract::duration(&duration)?,
+        broadcaster: broadcaster.name,
+        broadcaster_id: broadcaster.id,
+        mode,
+    })
+    .await?;
+    Ok(())
+}
+
+pub async fn swap<RW, F, I, E, EI>(
+    extractor: F,
+    redemption: Redemption,
+    data: SwapRewardData,
+    (db, irc): (PgPool, Addr<IrcActor>),
+) -> AnyResult<()>
+where
+    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
+    F: FnOnce(&str) -> AnyResult<&str>,
+    I: Display,
+    EI: Display + Clone + FromStr + Default,
+    E: Emote<EI>,
+{
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = execute_swap::<RW, F, I, E, EI>(extractor, redemption, data, &db).await;
+    reply_to_redemption(res, &irc, broadcaster, user).await
+}
+
+pub async fn slot<RW, F, I, E, EI>(
+    extractor: F,
+    redemption: Redemption,
+    slot: SlotRewardData,
+    (db, irc): (PgPool, Addr<IrcActor>),
+) -> AnyResult<()>
+where
+    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
+    F: FnOnce(&str) -> AnyResult<&str>,
+    E: Emote<EI>,
+    EI: Display,
+{
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = execute_slot::<RW, F, I, E, EI>(extractor, redemption, slot, &db).await;
+    reply_to_redemption(res, &irc, broadcaster, user).await
+}
+
+pub async fn spotify_skip(
+    redemption: Redemption,
+    (db, irc): (PgPool, Addr<IrcActor>),
+) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = spotify::skip_track(redemption.event.broadcaster_user_id.as_ref(), &db).await;
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Skip),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
+}
+
+pub async fn spotify_play(
+    opts: SpotifyPlayOptions,
+    redemption: Redemption,
+    (db, irc): (PgPool, Addr<IrcActor>),
+) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = spotify::get_track_uri_from_input(
+        &redemption.event.user_input,
+        redemption.event.broadcaster_user_id.as_ref(),
+        &opts,
+        &db,
+    )
+    .and_then(|track| async {
+        spotify::play_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
+    })
+    .await;
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Play),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
+}
+
+pub async fn spotify_queue(
+    opts: SpotifyPlayOptions,
+    redemption: Redemption,
+    (db, irc): (PgPool, Addr<IrcActor>),
+) -> AnyResult<()> {
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let res = spotify::get_track_uri_from_input(
+        &redemption.event.user_input,
+        redemption.event.broadcaster_user_id.as_ref(),
+        &opts,
+        &db,
+    )
+    .and_then(|track| async {
+        spotify::queue_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
+    })
+    .await;
+    reply_to_redemption(
+        format_spotify_result(res, SpotifyAction::Queue),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
 }

@@ -26,6 +26,7 @@ use crate::{
         irc::{IrcActor, JoinMessage, SayMessage},
         live::LiveActor,
         pubsub::PubSubActor,
+        rewards::RewardsActor,
         slot::SlotActor,
         supinic::SupinicActor,
         timeout::TimeoutActor,
@@ -135,6 +136,15 @@ async fn main() -> std::io::Result<()> {
         .expect("sql thingy");
     pubsub.do_send(SubAllMessage(initial_listens));
 
+    let rewards_actor = RewardsActor {
+        db: pg_pool.clone(),
+        irc: irc_actor.clone(),
+        app_access_token: app_access_token.clone().into_inner(),
+        timeout: timeout_actor.clone(),
+        redis: redis_pool.clone(),
+    }
+    .start();
+
     SupinicActor.start();
 
     log::info!("Clearing old rewards");
@@ -167,6 +177,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(redis_pool.clone()))
             .app_data(web::Data::new(irc_actor.clone()))
             .app_data(web::Data::new(timeout_actor.clone()))
+            .app_data(web::Data::new(rewards_actor.clone()))
             .app_data(web::Data::new(pubsub.clone()))
             .app_data(web::Data::new(prom_handle.clone()))
             .app_data(app_access_token.clone())

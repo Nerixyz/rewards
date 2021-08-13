@@ -7,20 +7,16 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use tokio::sync::RwLock;
-use twitch_api2::{
-    eventsub, eventsub::Payload, helix::points::CustomRewardRedemptionStatus,
-    twitch_oauth2::AppAccessToken,
-};
+use twitch_api2::{eventsub, eventsub::Payload, helix::points::CustomRewardRedemptionStatus};
 
 use crate::{
     actors::{
         irc::{IrcActor, WhisperMessage},
-        timeout::TimeoutActor,
+        rewards::{ExecuteRewardMessage, RewardsActor},
     },
     log_discord,
     models::{reward::Reward, user::User},
-    services::{rewards::execute::execute_reward, twitch::eventsub::update_reward_redemption},
+    services::twitch::eventsub::update_reward_redemption,
 };
 
 #[post("/reward")]
@@ -28,8 +24,7 @@ async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
     payload: web::Json<eventsub::Payload>,
-    app_token: web::Data<RwLock<AppAccessToken>>,
-    timeout_actor: web::Data<Addr<TimeoutActor>>,
+    executor: web::Data<Addr<RewardsActor>>,
 ) -> Result<HttpResponse> {
     match payload.into_inner() {
         Payload::VerificationRequest(rq) => {
@@ -45,9 +40,22 @@ async fn reward_redemption(
 
             let pool = pool.into_inner();
             let irc = irc.into_inner();
+            let executor = executor.into_inner();
             let redemption_received = Instant::now();
             actix_web::rt::spawn(async move {
                 let reward = Reward::get_by_id(redemption.event.reward.id.as_ref(), &pool).await;
+
+                let reward = match reward {
+                    Ok(r) => r,
+                    Err(_) => {
+                        log::warn!(
+                            "failed to get user or reward: userId: {}, rewardID: {}",
+                            redemption.event.broadcaster_user_id,
+                            redemption.event.reward.id
+                        );
+                        return;
+                    }
+                };
 
                 let broadcaster_id: String =
                     redemption.event.broadcaster_user_id.clone().into_string();
@@ -55,96 +63,89 @@ async fn reward_redemption(
                 let redemption_id: String = redemption.event.id.clone().into_string();
 
                 let executing_user_login: String = redemption.event.user_name.clone().into_string();
+                let broadcaster_login: String = redemption
+                    .event
+                    .broadcaster_user_login
+                    .clone()
+                    .into_string();
+                let reward_name: String = redemption.event.reward.title.clone();
+                let reward_type = reward.data.0.to_string();
 
-                if let (Ok(reward), Ok(user_token)) =
-                    (reward, User::get_by_id(&broadcaster_id, &pool).await)
-                {
-                    let broadcaster_login: String = redemption
-                        .event
-                        .broadcaster_user_login
-                        .clone()
-                        .into_string();
-                    let reward_name: String = redemption.event.reward.title.clone();
-                    let reward_type = reward.data.0.to_string();
-                    let status = match execute_reward(
+                let status = match executor
+                    .send(ExecuteRewardMessage {
                         redemption,
+                        broadcaster: user.clone(),
                         reward,
-                        user,
-                        &*pool,
-                        irc.clone(),
-                        timeout_actor.into_inner(),
-                        app_token.into_inner(),
-                    )
+                    })
                     .await
-                    {
-                        Ok(_) => CustomRewardRedemptionStatus::Fulfilled,
-                        Err(e) => {
-                            log::warn!("Could not execute reward: {:?}", e);
+                {
+                    Ok(Ok(_)) => CustomRewardRedemptionStatus::Fulfilled,
+                    e => {
+                        let (debug, display) = match e {
+                            Err(e) => (format!("{:?}", e), e.to_string()),
+                            Ok(Err(e)) => (format!("{:?}", e), e.to_string()),
+                            Ok(Ok(_)) => unreachable!(),
+                        };
 
-                            log_discord!(
-                                "Rewards",
-                                format!("⚠ Failed to execute reward in {}", broadcaster_login),
-                                0xfab43e,
-                                "Reward" = reward_name.clone(),
-                                "Type" = reward_type.clone(),
-                                "Error" = e.to_string()
-                            );
+                        log::warn!("Could not execute reward: {:?}", debug);
 
-                            match irc.send(WhisperMessage(executing_user_login, "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
-                                Err(e) => log::warn!("MailboxError on sending chat: {}", e),
-                                Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
-                                _ => ()
-                            }
+                        log_discord!(
+                            "Rewards",
+                            format!("⚠ Failed to execute reward in {}", broadcaster_login),
+                            0xfab43e,
+                            "Reward" = reward_name.clone(),
+                            "Type" = reward_type.clone(),
+                            "Error" = display
+                        );
 
-                            CustomRewardRedemptionStatus::Canceled
+                        match irc.send(WhisperMessage(executing_user_login, "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
+                            Err(e) => log::warn!("MailboxError on sending chat: {}", e),
+                            Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
+                            _ => ()
                         }
-                    };
-                    // here, the redemption is finally updated, so we'll log this
-                    metrics::increment_counter!("rewards_redemptions",
-                        "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
-                        "reward" => reward_type.clone()
-                    );
-                    let execution = Instant::now()
-                        .checked_duration_since(redemption_received)
-                        .unwrap_or_else(|| Duration::from_secs(0));
-                    metrics::histogram!("rewards_redemption_execution_duration",
-                        execution.as_secs_f64(),
-                        "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
-                        "reward" => reward_type.clone()
-                    );
 
-                    log_discord!(
-                        "Rewards",
-                        format!("🗒 Executed reward in {}", broadcaster_login),
-                        0x1ed760,
-                        "Reward" = reward_name,
-                        "Type" = reward_type,
-                        "Status" = format!("{:?}", status),
-                        "Execution Time" = execution.as_secs_f64().to_string()
-                    );
-
-                    match update_reward_redemption(
-                        &broadcaster_id,
-                        &reward_id,
-                        &redemption_id,
-                        status,
-                        &user_token.into(),
-                    )
-                    .await
-                    {
-                        Ok(redemption) => log::info!(
-                            "Final redemption: status={:?} {:?}",
-                            redemption.status,
-                            redemption
-                        ),
-                        Err(error) => log::warn!("Couldn't update reward redemption: {}", error),
+                        CustomRewardRedemptionStatus::Canceled
                     }
-                } else {
-                    log::warn!(
-                        "failed to get user or reward: userId: {}, rewardID: {}",
-                        redemption.event.broadcaster_user_id,
-                        redemption.event.reward.id
-                    );
+                };
+                // here, the redemption is finally updated, so we'll log this
+                metrics::increment_counter!("rewards_redemptions",
+                    "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
+                    "reward" => reward_type.clone()
+                );
+                let execution = Instant::now()
+                    .checked_duration_since(redemption_received)
+                    .unwrap_or_else(|| Duration::from_secs(0));
+                metrics::histogram!("rewards_redemption_execution_duration",
+                    execution.as_secs_f64(),
+                    "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
+                    "reward" => reward_type.clone()
+                );
+
+                log_discord!(
+                    "Rewards",
+                    format!("🗒 Executed reward in {}", broadcaster_login),
+                    0x1ed760,
+                    "Reward" = reward_name,
+                    "Type" = reward_type,
+                    "Status" = format!("{:?}", status),
+                    "Execution Time" = execution.as_secs_f64().to_string()
+                );
+
+                match update_reward_redemption(
+                    &broadcaster_id,
+                    &reward_id,
+                    &redemption_id,
+                    status,
+                    &user.into(),
+                )
+                .await
+                {
+                    Ok(redemption) => log::info!(
+                        "Final redemption: status={:?} {:?}",
+                        redemption.status,
+                        redemption
+                    ),
+                    Err(error) => log::warn!("Couldn't update reward redemption: {}", error),
                 }
             });
 

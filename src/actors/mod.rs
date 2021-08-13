@@ -3,6 +3,7 @@ pub mod db;
 pub mod irc;
 pub mod live;
 pub mod pubsub;
+pub mod rewards;
 pub mod slot;
 pub mod supinic;
 pub mod timeout;
