@@ -1,4 +1,5 @@
 pub mod config;
+pub mod discord;
 pub mod editor;
 pub mod emote;
 pub mod log_entry;
