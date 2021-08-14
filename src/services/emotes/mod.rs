@@ -67,4 +67,7 @@ pub trait EmoteRW {
         emote_id: &str,
         pool: &PgPool,
     ) -> AnyResult<String>;
+
+    fn format_emote_url(emote_id: &str) -> String;
+    fn format_emote_page(emote_id: &str) -> String;
 }

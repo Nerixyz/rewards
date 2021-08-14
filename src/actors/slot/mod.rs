@@ -1,13 +1,15 @@
 use crate::{
-    log_discord, log_err,
+    actors::discord::DiscordActor,
+    embed_builder, log_discord, log_err,
     models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User},
+    send_discord,
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
         twitch::requests::update_reward,
     },
     RedisPool,
 };
-use actix::{Actor, AsyncContext, Context, WrapFuture};
+use actix::{Actor, Addr, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
 use deadpool_redis::redis::AsyncCommands;
 use sqlx::PgPool;
@@ -17,11 +19,16 @@ use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToke
 pub struct SlotActor {
     pool: PgPool,
     redis: RedisPool,
+    discord: Addr<DiscordActor>,
 }
 
 impl SlotActor {
-    pub fn new(pool: PgPool, redis: RedisPool) -> Self {
-        Self { pool, redis }
+    pub fn new(pool: PgPool, redis: RedisPool, discord: Addr<DiscordActor>) -> Self {
+        Self {
+            pool,
+            redis,
+            discord,
+        }
     }
 
     async fn delete_emote(
@@ -43,7 +50,7 @@ impl SlotActor {
         }
     }
 
-    async fn queue_rewards(pool: PgPool, redis: RedisPool) {
+    async fn queue_rewards(pool: PgPool, redis: RedisPool, discord: Addr<DiscordActor>) {
         let pending = Slot::get_pending(&pool).await;
         let pending = match pending {
             Ok(p) => p,
@@ -96,7 +103,13 @@ impl SlotActor {
                         0x00e676,
                         "UserId" = p.user_id.clone(),
                         "Platform" = format!("{:?}", p.platform),
-                        "Emote" = emote
+                        "Emote" = emote.clone()
+                    );
+                    let discord = discord.clone();
+                    send_discord!(
+                        discord,
+                        p.user_id.clone(),
+                        embed_builder!("Emotes", format!("Removed {}", emote), 0xff5370,)
                     );
                 }
                 Err(e) => {
@@ -172,7 +185,10 @@ impl Actor for SlotActor {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(2 * 60), |this, ctx| {
-            ctx.spawn(Self::queue_rewards(this.pool.clone(), this.redis.clone()).into_actor(this));
+            ctx.spawn(
+                Self::queue_rewards(this.pool.clone(), this.redis.clone(), this.discord.clone())
+                    .into_actor(this),
+            );
         });
     }
 }

@@ -9,6 +9,7 @@ use twitch_api2::twitch_oauth2::AppAccessToken;
 
 use crate::{
     actors::{
+        discord::DiscordActor,
         irc::{IrcActor, TimedModeMessage, TimeoutMessage},
         timeout::{CheckValidTimeoutMessage, TimeoutActor},
     },
@@ -93,7 +94,7 @@ pub async fn swap<RW, F, I, E, EI>(
     extractor: F,
     redemption: Redemption,
     data: SwapRewardData,
-    (db, irc): (PgPool, Addr<IrcActor>),
+    (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
@@ -103,7 +104,7 @@ where
     E: Emote<EI>,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
-    let res = execute_swap::<RW, F, I, E, EI>(extractor, redemption, data, &db).await;
+    let res = execute_swap::<RW, F, I, E, EI>(extractor, redemption, data, &db, discord).await;
     reply_to_redemption(res, &irc, broadcaster, user).await
 }
 
@@ -111,7 +112,7 @@ pub async fn slot<RW, F, I, E, EI>(
     extractor: F,
     redemption: Redemption,
     slot: SlotRewardData,
-    (db, irc): (PgPool, Addr<IrcActor>),
+    (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
@@ -120,7 +121,7 @@ where
     EI: Display,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
-    let res = execute_slot::<RW, F, I, E, EI>(extractor, redemption, slot, &db).await;
+    let res = execute_slot::<RW, F, I, E, EI>(extractor, redemption, slot, &db, discord).await;
     reply_to_redemption(res, &irc, broadcaster, user).await
 }
 

@@ -156,4 +156,11 @@ impl EmoteRW for FfzEmotes {
 
         Ok(emote.name)
     }
+
+    fn format_emote_url(emote_id: &str) -> String {
+        format!("https://cdn.frankerfacez.com/emote/{}/4", emote_id)
+    }
+    fn format_emote_page(emote_id: &str) -> String {
+        format!("https://www.frankerfacez.com/emoticon/{}", emote_id)
+    }
 }

@@ -1,3 +1,5 @@
+pub mod macros;
+
 use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
@@ -28,6 +30,15 @@ pub struct Embed {
     pub description: String,
     pub fields: Vec<EmbedField>,
     pub color: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<EmbedImage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct EmbedImage {
+    pub url: String,
 }
 
 #[derive(Serialize)]
@@ -53,18 +64,22 @@ impl EmbedField {
 
 pub async fn send_webhook_message(req: &WebhookReq) -> AnyResult<()> {
     if let Some(ref url) = CONFIG.log.webhook_url {
-        let res = DISCORD_CLIENT.post(url).json(req).send().await?;
-        let status = res.status();
-        if status.is_success() {
-            Ok(())
-        } else {
-            Err(AnyError::msg(
-                res.text()
-                    .await
-                    .unwrap_or_else(|_| "Bad response".to_string()),
-            ))
-        }
+        send_user_webhook_message(url, req).await
     } else {
         Ok(())
+    }
+}
+
+pub async fn send_user_webhook_message(url: &str, req: &WebhookReq) -> AnyResult<()> {
+    let res = DISCORD_CLIENT.post(url).json(req).send().await?;
+    let status = res.status();
+    if status.is_success() {
+        Ok(())
+    } else {
+        Err(AnyError::msg(
+            res.text()
+                .await
+                .unwrap_or_else(|_| "Bad response".to_string()),
+        ))
     }
 }

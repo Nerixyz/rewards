@@ -1,5 +1,6 @@
 pub mod chat;
 pub mod db;
+pub mod discord;
 pub mod irc;
 pub mod live;
 pub mod pubsub;

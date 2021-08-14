@@ -143,6 +143,14 @@ impl EmoteRW for BttvEmotes {
     async fn get_platform_id(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Self::PlatformId> {
         get_or_fetch_id(broadcaster_id, pool).await
     }
+
+    fn format_emote_url(emote_id: &str) -> String {
+        format!("https://cdn.betterttv.net/emote/{}/3x", emote_id)
+    }
+
+    fn format_emote_page(emote_id: &str) -> String {
+        format!("https://betterttv.com/emotes/{}", emote_id)
+    }
 }
 
 async fn get_user_limits(bttv_id: &str) -> AnyResult<bttv::BttvLimits> {
