@@ -23,6 +23,7 @@ use crate::{
     actors::{
         chat::ChatActor,
         db::DbActor,
+        discord::DiscordActor,
         irc::{IrcActor, JoinMessage, SayMessage},
         live::LiveActor,
         pubsub::PubSubActor,
@@ -109,7 +110,14 @@ async fn main() -> std::io::Result<()> {
         timeout_actor.clone(),
     )
     .start();
-    SlotActor::new(pg_pool.clone(), redis_pool.clone()).start();
+    let discord_user_actor = DiscordActor::new(pg_pool.clone()).start();
+
+    SlotActor::new(
+        pg_pool.clone(),
+        redis_pool.clone(),
+        discord_user_actor.clone(),
+    )
+    .start();
 
     log::info!("Announcing on twitch and discord");
 
@@ -142,6 +150,7 @@ async fn main() -> std::io::Result<()> {
         app_access_token: app_access_token.clone().into_inner(),
         timeout: timeout_actor.clone(),
         redis: redis_pool.clone(),
+        discord: discord_user_actor,
     }
     .start();
 

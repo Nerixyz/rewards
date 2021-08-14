@@ -1,6 +1,6 @@
 mod messages;
 use crate::{
-    actors::{irc::IrcActor, timeout::TimeoutActor},
+    actors::{discord::DiscordActor, irc::IrcActor, timeout::TimeoutActor},
     models::{reward::RewardData, timed_mode},
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes},
@@ -23,6 +23,7 @@ pub struct RewardsActor {
     pub redis: RedisPool,
     pub app_access_token: Arc<RwLock<AppAccessToken>>,
     pub timeout: Addr<TimeoutActor>,
+    pub discord: Addr<DiscordActor>,
 }
 
 impl RewardsActor {}
@@ -65,42 +66,42 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                 extract::bttv_id,
                 msg.redemption,
                 data,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::FfzSwap(data) => execute::swap::<FfzEmotes, _, _, _, _>(
                 extract::ffz_id,
                 msg.redemption,
                 data,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::SevenTvSwap(data) => execute::swap::<SevenTvEmotes, _, _, _, _>(
                 extract::seventv_id,
                 msg.redemption,
                 data,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::BttvSlot(slot) => execute::slot::<BttvEmotes, _, _, _, _>(
                 extract::bttv_id,
                 msg.redemption,
                 slot,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::FfzSlot(slot) => execute::slot::<FfzEmotes, _, _, _, _>(
-                extract::bttv_id,
+                extract::ffz_id,
                 msg.redemption,
                 slot,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::SevenTvSlot(slot) => execute::slot::<SevenTvEmotes, _, _, _, _>(
-                extract::bttv_id,
+                extract::seventv_id,
                 msg.redemption,
                 slot,
-                (self.db.clone(), self.irc.clone()),
+                (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::SpotifySkip(_) => {

@@ -125,4 +125,12 @@ impl EmoteRW for SevenTvEmotes {
 
         Ok(emote.name)
     }
+
+    fn format_emote_url(emote_id: &str) -> String {
+        format!("https://cdn.7tv.app/emote/{}/4x", emote_id)
+    }
+
+    fn format_emote_page(emote_id: &str) -> String {
+        format!("https://7tv.app/emotes/{}", emote_id)
+    }
 }
