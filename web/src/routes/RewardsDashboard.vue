@@ -17,7 +17,7 @@
 
     <!-- The main page -->
     <div v-else class="flex flex-col gap-5">
-      <div class="w-full pb-5 border-b border-opacity-30 border-gray-900">
+      <div class="w-full flex pb-5 border-b border-opacity-30 border-gray-900">
         <router-link :to="`/rewards/${encodeURIComponent(broadcasterId || '')}/new`">
           <OutlinedButton>
             <PlusIcon />
@@ -27,6 +27,7 @@
         <router-link :to="`/rewards/logs/${encodeURIComponent(broadcasterId || thisUserId || '')}`">
           <OutlinedButton><LogIcon /> Logs</OutlinedButton>
         </router-link>
+        <DiscordSettings v-if="broadcasterId" :broadcaster-id="broadcasterId" />
       </div>
       <div class="w-full flex flex-col">
         <div v-if="rewards.value.length" class="flex flex-wrap justify-center gap-6">
@@ -83,10 +84,12 @@ import RewardComponent from '../components/Reward.vue';
 import { useBroadcaster } from '../hooks/use-broadcaster';
 import { useDataStore } from '../store';
 import { useRewards } from '../hooks/use-rewards';
+import DiscordSettings from '../components/DiscordSettings.vue';
 
 export default defineComponent({
   name: 'RewardsDashboard',
   components: {
+    DiscordSettings,
     Reward: RewardComponent,
     MainLayout,
     LogIcon,

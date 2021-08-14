@@ -97,6 +97,18 @@ class HttpClient extends BaseClient {
   deleteReward(broadcasterId: string, reward: Reward) {
     return this.delete('rewards', broadcasterId, reward.twitch.id);
   }
+
+  setDiscordUrl(broadcasterId: string, url: string) {
+    return this.patch({ url }, 'logs', broadcasterId, 'discord');
+  }
+
+  getDiscordUrl(broadcasterId: string): Promise<string> {
+    return this.get<{ url: string } | null>('logs', broadcasterId, 'discord').then(x => x?.url || '');
+  }
+
+  deleteDiscordUrl(broadcasterId: string) {
+    return this.delete('logs', broadcasterId, 'discord');
+  }
 }
 
 const ApiClient = new HttpClient();
