@@ -152,12 +152,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // language=PostgreSQL
     pg.execute(
-        r#"
+        "
             INSERT INTO config (key, value)
             VALUES ('user_token', $1)
              ON CONFLICT (key)
                  DO UPDATE SET value = $1
-     "#,
+     ",
         &[&Json(config_value)],
     )
     .await?;

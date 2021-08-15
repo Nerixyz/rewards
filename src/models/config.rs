@@ -44,11 +44,11 @@ impl ConfigEntry {
         // language=PostgreSQL
         let entry: Self = sqlx::query_as!(
             ConfigEntry,
-            r#"
+            "
             SELECT key, value as "value: Json<ConfigValue>"
             FROM config
             WHERE key = $1
-            "#,
+            ",
             key
         )
         .fetch_one(pool)

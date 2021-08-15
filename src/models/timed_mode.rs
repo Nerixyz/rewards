@@ -39,9 +39,7 @@ impl TimedMode {
 
         // language=PostgreSQL
         let id = sqlx::query_scalar!(
-            r#"
-            INSERT INTO timed_modes (user_id, mode, end_ts) VALUES ($1, $2, $3) RETURNING id
-        "#,
+            "INSERT INTO timed_modes (user_id, mode, end_ts) VALUES ($1, $2, $3) RETURNING id",
             user_id,
             mode as _,
             end
@@ -70,7 +68,7 @@ impl TimedMode {
 
     pub async fn delete_mode(id: i32, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
-        sqlx::query!(r#"DELETE FROM timed_modes WHERE id = $1"#, id)
+        sqlx::query!("DELETE FROM timed_modes WHERE id = $1", id)
             .execute(pool)
             .await?;
         Ok(())

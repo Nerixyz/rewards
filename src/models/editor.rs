@@ -8,11 +8,11 @@ impl Editor {
     pub async fn get_editors(broadcaster_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
         let editors = sqlx::query_scalar!(
             // language=PostgreSQL
-            r#"
+            "
                 SELECT editor_id
                 FROM editors
                 WHERE broadcaster_id = $1
-            "#,
+            ",
             broadcaster_id
         )
         .fetch_all(pool)
@@ -24,11 +24,11 @@ impl Editor {
     pub async fn get_broadcasters(editor_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
         let broadcasters = sqlx::query_scalar!(
             // language=PostgreSQL
-            r#"
+            "
                 SELECT broadcaster_id
                 FROM editors
                 WHERE editor_id = $1
-            "#,
+            ",
             editor_id
         )
         .fetch_all(pool)
@@ -45,12 +45,12 @@ impl Editor {
         let user = sqlx::query_as!(
             User,
             // language=PostgreSQL
-            r#"
+            "
                 SELECT u.id, access_token, refresh_token, scopes, name, eventsub_id
                 FROM editors
                     LEFT JOIN users u on u.id = editors.broadcaster_id
                 WHERE broadcaster_id = $2 and editor_id = $1
-            "#,
+            ",
             editor_id,
             broadcaster_id,
         )
@@ -67,12 +67,12 @@ impl Editor {
     ) -> SqlResult<()> {
         let _ = sqlx::query!(
             // language=PostgreSQL
-            r#"
+            "
             INSERT INTO editors
                 (editor_id, broadcaster_id)
              VALUES
                     ((SELECT id from users WHERE name = $1), $2)
-            "#,
+            ",
             editor_name,
             broadcaster_id
         )
@@ -89,10 +89,10 @@ impl Editor {
         let mut tx = pool.begin().await?;
         let _ = sqlx::query!(
             // language=PostgreSQL
-            r#"
+            "
             DELETE FROM editors
                    WHERE editor_id = (SELECT id from users WHERE name = $2) AND broadcaster_id = $1
-            "#,
+            ",
             broadcaster_id,
             editor_name
         )

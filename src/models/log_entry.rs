@@ -14,7 +14,7 @@ impl LogEntry {
         // language=PostgreSQL
         let logs = sqlx::query_as!(
             Self,
-            r#"SELECT date, content FROM logs WHERE user_id = $1 ORDER BY date desc"#,
+            "SELECT date, content FROM logs WHERE user_id = $1 ORDER BY date desc",
             id
         )
         .fetch_all(pool)
@@ -26,7 +26,7 @@ impl LogEntry {
     pub async fn create(id: &str, content: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
-            r#"INSERT INTO logs (user_id, date, content) VALUES ($1, $2, $3)"#,
+            "INSERT INTO logs (user_id, date, content) VALUES ($1, $2, $3)",
             id,
             Utc::now(),
             content

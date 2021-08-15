@@ -103,11 +103,11 @@ impl Reward {
         // language=PostgreSQL
         let reward: Self = sqlx::query_as!(
             Reward,
-            r#"
+            "
             SELECT id, user_id, data as "data: Json<RewardData>", live_delay
             FROM rewards
             WHERE id = $1
-            "#,
+            ",
             id
         )
         .fetch_one(pool)
@@ -120,11 +120,11 @@ impl Reward {
         // language=PostgreSQL
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
-            r#"
+            "
             SELECT id, user_id, data as "data: Json<RewardData>", live_delay
             FROM rewards
             WHERE user_id = $1
-            "#,
+            ",
             user_id
         )
         .fetch_all(pool)
@@ -137,11 +137,11 @@ impl Reward {
         // language=PostgreSQL
         let rewards = sqlx::query_as!(
             LiveReward,
-            r#"
+            "
             SELECT id, user_id, live_delay
             FROM rewards
             WHERE user_id = $1 AND live_delay is not null
-            "#,
+            ",
             user_id
         )
         .fetch_all(pool)
@@ -157,11 +157,11 @@ impl Reward {
         // language=PostgreSQL
         let rewards = sqlx::query_as!(
             LiveReward,
-            r#"
+            "
             SELECT id, user_id, live_delay
             FROM rewards
             WHERE user_id = $1 AND live_delay is not null AND unpause_at is not null
-            "#,
+            ",
             user_id
         )
         .fetch_all(pool)
@@ -174,12 +174,12 @@ impl Reward {
         // language=PostgreSQL
         let rewards = sqlx::query_as!(
             LiveRewardAT,
-            r#"
+            "
             SELECT rewards.id as "id!", user_id as "user_id!", live_delay as "live_delay!", access_token as "access_token!"
             FROM rewards
             LEFT JOIN users u on u.id = rewards.user_id
             WHERE live_delay is not null AND unpause_at is not null
-            "#
+            "
         )
         .fetch_all(pool)
         .await?;
@@ -266,11 +266,11 @@ impl RewardToUpdate {
         // language=PostgreSQL
         sqlx::query_as!(
             RewardToUpdate,
-            r#"
+            "
             SELECT u.id as broadcaster_id, access_token, refresh_token, rewards.id as reward_id
             FROM rewards
                 LEFT JOIN users u on u.id = rewards.user_id
-        "#
+        "
         )
         .fetch(pool)
     }

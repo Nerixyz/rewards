@@ -19,7 +19,7 @@ pub struct SpotifySettings {
 impl SpotifyData {
     pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
-        let data = sqlx::query_as!(Self, r#"SELECT * FROM spotify WHERE user_id=$1"#, id)
+        let data = sqlx::query_as!(Self, "SELECT * FROM spotify WHERE user_id=$1", id)
             .fetch_optional(pool)
             .await?;
 
@@ -28,7 +28,7 @@ impl SpotifyData {
 
     pub async fn get_all(pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
-        let data = sqlx::query_as!(Self, r#"SELECT * FROM spotify"#)
+        let data = sqlx::query_as!(Self, "SELECT * FROM spotify")
             .fetch_all(pool)
             .await?;
 
@@ -38,10 +38,10 @@ impl SpotifyData {
     pub async fn add(id: &str, token: &AccessTokenResponse, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
-            r#"
+            "
             INSERT INTO spotify (user_id, access_token, refresh_token)
             VALUES ($1, $2, $3)
-            "#,
+            ",
             id,
             token.access_token,
             token.refresh_token
@@ -58,11 +58,7 @@ impl SpotifyData {
     ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
-            r#"
-            UPDATE spotify
-            SET access_token=$2
-            WHERE user_id=$1
-            "#,
+            "UPDATE spotify SET access_token=$2 WHERE user_id=$1",
             id,
             token.access_token
         )
@@ -74,7 +70,7 @@ impl SpotifyData {
 
     pub async fn remove_for_id(id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
-        sqlx::query!(r#"DELETE FROM spotify WHERE user_id = $1"#, id,)
+        sqlx::query!("DELETE FROM spotify WHERE user_id = $1", id,)
             .execute(pool)
             .await?;
 
@@ -87,7 +83,7 @@ impl SpotifySettings {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             Self,
-            r#"SELECT only_while_live FROM spotify WHERE user_id=$1"#,
+            "SELECT only_while_live FROM spotify WHERE user_id=$1",
             id
         )
         .fetch_optional(pool)
@@ -100,7 +96,7 @@ impl SpotifySettings {
         // language=PostgreSQL
         sqlx::query_as!(
             Self,
-            r#"UPDATE spotify SET only_while_live = $2 WHERE user_id = $1"#,
+            "UPDATE spotify SET only_while_live = $2 WHERE user_id = $1",
             user_id,
             self.only_while_live
         )

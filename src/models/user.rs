@@ -52,10 +52,7 @@ impl User {
     pub async fn get_all_names(pool: &PgPool) -> SqlResult<Vec<String>> {
         let names = sqlx::query_scalar!(
             // language=PostgreSQL
-            r#"
-                SELECT name
-                FROM users
-            "#
+            "SELECT name FROM users"
         )
         .fetch_all(pool)
         .await?;
@@ -76,11 +73,7 @@ impl User {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             UserBttvData,
-            r#"
-            SELECT id, bttv_id
-            FROM users
-            WHERE id = $1
-            "#,
+            "SELECT id, bttv_id FROM users WHERE id = $1",
             user_id
         )
         .fetch_one(pool)
@@ -93,11 +86,7 @@ impl User {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             UserSevenTvData,
-            r#"
-            SELECT id, name, seventv_id
-            FROM users
-            WHERE id = $1
-            "#,
+            "SELECT id, name, seventv_id FROM users WHERE id = $1",
             user_id
         )
         .fetch_one(pool)
@@ -110,13 +99,13 @@ impl User {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            r#"
+            "
             INSERT
             INTO users (id, access_token, refresh_token, scopes, name)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT(id)
                 DO UPDATE SET access_token= $2, refresh_token=$3
-                "#,
+                ",
             self.id,
             self.access_token,
             self.refresh_token,
@@ -139,11 +128,7 @@ impl User {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            r#"
-            UPDATE users
-            SET access_token = $2, refresh_token = $3
-            WHERE id = $1
-            "#,
+            "UPDATE users SET access_token = $2, refresh_token = $3 WHERE id = $1",
             id,
             access_token,
             refresh_token
@@ -184,14 +169,9 @@ impl User {
     pub async fn delete(id: &str, pool: &PgPool) -> SqlResult<()> {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
-        let _ = sqlx::query!(
-            r#"
-            DELETE FROM users WHERE id = $1
-                "#,
-            id
-        )
-        .execute(&mut tx)
-        .await?;
+        let _ = sqlx::query!("DELETE FROM users WHERE id = $1", id)
+            .execute(&mut tx)
+            .await?;
 
         tx.commit().await?;
         Ok(())
@@ -200,11 +180,7 @@ impl User {
     pub async fn set_eventsub_id(user_id: &str, eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
-            r#"
-            UPDATE users
-            SET eventsub_id = $2
-            WHERE id = $1
-            "#,
+            "UPDATE users SET eventsub_id = $2 WHERE id = $1",
             user_id,
             eventsub_id
         )
@@ -216,11 +192,7 @@ impl User {
     pub async fn clear_eventsub_id(eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
-            r#"
-            UPDATE users
-            SET eventsub_id = null
-            WHERE eventsub_id = $1
-            "#,
+            "UPDATE users SET eventsub_id = null WHERE eventsub_id = $1",
             eventsub_id
         )
         .execute(pool)
@@ -233,12 +205,12 @@ impl User {
     ) -> SqlResult<Option<String>> {
         // language=PostgreSQL
         let old_id = sqlx::query_scalar!(
-            r#"
+            "
             UPDATE users
             SET eventsub_id = null
             WHERE id= $1
             RETURNING (SELECT eventsub_id FROM users WHERE id = $1)
-            "#,
+            ",
             user_id
         )
         .fetch_one(pool)
