@@ -1,5 +1,5 @@
 <template>
-  <OutlinedButton @click="open"> Discord Logging </OutlinedButton>
+  <OutlinedButton @click="open"> <DiscordIcon /> Discord Logging </OutlinedButton>
   <CDialog title="Discord Settings" :open="state.value">
     <div class="flex flex-col gap-4">
       <div v-if="state.loading">
@@ -33,10 +33,11 @@ import CButton from './core/CButton.vue';
 import CLoader from './core/CLoader.vue';
 import TickIcon from './icons/TickIcon.vue';
 import { useApi } from '../api/plugin';
+import DiscordIcon from './icons/DiscordIcon.vue';
 
 export default defineComponent({
   name: 'DiscordSettings',
-  components: { TickIcon, CLoader, CButton, TextField, CDialog, OutlinedButton },
+  components: { DiscordIcon, TickIcon, CLoader, CButton, TextField, CDialog, OutlinedButton },
   props: {
     broadcasterId: {
       type: String,
