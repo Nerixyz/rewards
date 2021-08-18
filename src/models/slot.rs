@@ -51,10 +51,10 @@ impl Slot {
         // language=PostgreSQL
         let available = sqlx::query_as!(
             Self,
-            "
+            r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE reward_id = $1 and user_id = $2 and emote_id is null and expires is null
-        ",
+        "#,
             reward_id,
             user_id
         )
@@ -90,10 +90,10 @@ impl Slot {
         // language=PostgreSQL
         let all = sqlx::query_as!(
             Self,
-            "
+            r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE reward_id = $1 and user_id = $2
-        ",
+        "#,
             reward_id,
             user_id
         )
@@ -104,10 +104,10 @@ impl Slot {
 
     pub async fn get_pending(pool: &PgPool) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
-        let pending = sqlx::query_as!(Self, "
+        let pending = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE emote_id is not null AND expires is not null AND expires < (now() + '1 minute'::interval)
-        ").fetch_all(pool).await?;
+        "#).fetch_all(pool).await?;
 
         Ok(pending)
     }
@@ -118,10 +118,10 @@ impl Slot {
         pool: &PgPool,
     ) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
-        let slot = sqlx::query_as!(Self, "
+        let slot = sqlx::query_as!(Self, r#"
             SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
             WHERE user_id = $1 AND lower(name) = lower($2)
-        ", user_id, name).fetch_optional(pool).await?;
+        "#, user_id, name).fetch_optional(pool).await?;
 
         Ok(slot)
     }

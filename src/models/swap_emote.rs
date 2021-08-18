@@ -23,12 +23,12 @@ impl SwapEmote {
         // language=PostgreSQL
         let emote = sqlx::query_as!(
             Self,
-            "
+            r#"
             SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
             FROM swap_emotes
             WHERE user_id = $1 AND platform = $2
             ORDER BY added_at
-            LIMIT 1",
+            LIMIT 1"#,
             user_id,
             platform as _
         )
@@ -81,10 +81,10 @@ impl SwapEmote {
         // language=PostgreSQL
         let emote = sqlx::query_as!(
             Self,
-            "
+            r#"
             SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
             FROM swap_emotes
-            WHERE user_id = $1 AND lower(name) = lower($2)",
+            WHERE user_id = $1 AND lower(name) = lower($2)"#,
             user_id,
             name
         )
