@@ -79,7 +79,7 @@ pub async fn register_eventsub_for_all_unregistered(
 ) -> AnyhowResult<()> {
     let non_subs = User::get_all_non_subscribers(pool).await?;
 
-    for user_id in non_subs
+    for user_id in non_subs {
         register_eventsub_for_id(&user_id, token, pool)
             .await
             .map_err(anyhow::Error::from)?;
