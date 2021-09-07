@@ -82,7 +82,7 @@ pub async fn register_eventsub_for_all_unregistered(
     for user_id in non_subs {
         register_eventsub_for_id(&user_id, token, pool)
             .await
-            .map_err(anyhow::Error::from)?;
+            .map_err(|e| anyhow::Error::msg(e.to_string()))?;
     }
 
     Ok(())
