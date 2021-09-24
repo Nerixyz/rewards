@@ -70,6 +70,7 @@ async fn reward_redemption(
                     .into_string();
                 let reward_name: String = redemption.event.reward.title.clone();
                 let reward_type = reward.data.0.to_string();
+                let user_input = redemption.event.user_input.clone();
 
                 let status = match executor
                     .send(ExecuteRewardMessage {
@@ -98,7 +99,7 @@ async fn reward_redemption(
                             "Error" = display
                         );
 
-                        match irc.send(WhisperMessage(executing_user_login, "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
+                        match irc.send(WhisperMessage(executing_user_login.clone(), "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
                             Err(e) => log::warn!("MailboxError on sending chat: {}", e),
                             Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
                             _ => ()
@@ -128,7 +129,9 @@ async fn reward_redemption(
                     "Reward" = reward_name,
                     "Type" = reward_type,
                     "Status" = format!("{:?}", status),
-                    "Execution Time" = execution.as_secs_f64().to_string()
+                    "Execution Time" = execution.as_secs_f64().to_string(),
+                    "User" = executing_user_login,
+                    "Input" = user_input
                 );
 
                 match update_reward_redemption(
