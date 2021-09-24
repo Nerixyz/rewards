@@ -2431,6 +2431,7 @@ dependencies = [
  "twitch-pubsub",
  "twitch_api2",
  "uptimer",
+ "url",
 ]
 
 [[package]]

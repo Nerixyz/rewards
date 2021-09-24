@@ -7,8 +7,10 @@ use actix_web::{
     web::{self, ServiceConfig},
     HttpResponse, Result,
 };
+use regex::Regex;
 use serde::Deserialize;
 use sqlx::PgPool;
+use url::Url;
 
 #[get("/{target_id}")]
 async fn get_logs(
@@ -33,6 +35,19 @@ async fn set_discord_url(
     body: web::Json<SetUrlBody>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse> {
+    lazy_static::lazy_static! {
+        static ref DISCORD_URL_REGEX: Regex = Regex::new("(^|\\.)discord\\.com$").unwrap();
+    }
+
+    let url = Url::parse(&body.url).map_err(|_| errors::ErrorBadRequest("Invalid url provided"))?;
+    let domain = url
+        .domain()
+        .ok_or_else(|| errors::ErrorBadRequest("Invalid url provided"))?;
+
+    if !DISCORD_URL_REGEX.is_match(domain) {
+        return Err(errors::ErrorBadRequest("Invalid url provided"));
+    }
+
     let user = get_user_or_editor(&claims, &target_id, &pool).await?;
 
     discord::set_discord_webhook_url(&user.id, &body.url, &pool).await?;
