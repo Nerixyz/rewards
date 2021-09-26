@@ -80,9 +80,8 @@ pub async fn register_eventsub_for_all_unregistered(
     let non_subs = User::get_all_non_subscribers(pool).await?;
 
     for user_id in non_subs {
-        register_eventsub_for_id(&user_id, token, pool)
-            .await
-            .map_err(|e| anyhow::Error::msg(e.to_string()))?;
+        log_err!(register_eventsub_for_id(&user_id, token, pool)
+            .await, "Could not register eventsub for id {} - {}", user_id);
     }
 
     Ok(())
