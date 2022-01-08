@@ -1,8 +1,8 @@
 [package]
 name = "rewards"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Nerixyz"]
-edition = "2018"
+edition = "2021"
 
 [workspace]
 members = [".", "setup"]
@@ -10,79 +10,79 @@ members = [".", "setup"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-deadpool-postgres = "0.9.0"
-sqlx = { version = "0.5.5", features = ["postgres", "runtime-actix-native-tls", "macros", "json", "chrono"] }
+deadpool-postgres = "0.10"
+sqlx = { version = "0.5.10", features = ["postgres", "runtime-actix-native-tls", "macros", "json", "chrono"] }
 
 actix = "0.12.0"
-actix-web = "4.0.0-beta.8"
-actix-files = "0.6.0-beta.6"
-actix-cors = "0.6.0-beta.2"
+actix-web = "4.0.0-beta.19"
+actix-files = "0.6.0-beta.13"
+actix-cors = "0.6.0-beta.8"
 actix-utils = "3.0.0"
-actix-metrics = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "actix-metrics-v0.1.0" }
+actix-metrics = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "actix-metrics-v0.3.1" }
 
 twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls", "metrics-collection"] }
-twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "71a4c0f", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "unsupported"], default-features = false }
-twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "835841b", features = ["native-tls", "unsupported"], default-features = false }
-eventsub = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "eventsub-v0.1.0" }
+twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "7194ec0", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "unsupported"], default-features = false }
+twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "754297b", features = ["native-tls", "unsupported"], default-features = false }
+eventsub = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "eventsub-v0.2.1" }
 
 tokio = { version = "1", features = ["rt", "time", "sync"] }
-tokio-stream = "0.1.7"
-futures-util = "0.3.16"
+tokio-stream = "0.1"
+futures-util = "0.3"
 futures = "0.3"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_qs = "0.8.3"
+serde_qs = "0.8"
 # also used in setup
 toml = "0.5.8"
 
-deadpool-redis = { version = "0.8.1", default-features = false, features = ["rt_tokio_1"] }
+deadpool-redis = { version = "0.10", default-features = false, features = ["rt_tokio_1"] }
 
 dotenv_codegen = "0.15"
-dotenv = "0.15.0"
+dotenv = "0.15"
 
-cookie = "0.15"
-reqwest = { version = "0.11.3", features = ["cookies"] }
+cookie = "0.16"
+reqwest = { version = "0.11", features = ["cookies"] }
 
-jsonwebtoken = "7.2.0"
+jsonwebtoken = "7.2"
 
-humantime = "2.1.0"
-chrono = "0.4.19"
-time = "0.2.27"
+humantime = "2.1"
+chrono = "0.4"
+time = "0.3"
 
-metrics = "0.16.0"
-metrics-exporter-prometheus = "0.5.0"
+metrics = "0.17.0"
+metrics-exporter-prometheus = "0.7"
 uptimer = { git = "https://github.com/Nerixyz/uptimer.git", rev = "04002e9", features = ["async"] }
 
-anyhow = "1.0.40"
-errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.1.1", features = ["sql-result", "sql-log"] }
-derive_more = "0.99.14"
-async-trait = "0.1.50"
+anyhow = "1.0"
+errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.2.1", features = ["sql-result", "sql-log"] }
+derive_more = "0.99"
+async-trait = "0.1"
 
 itertools = "0.10.0"
-paste = "1.0.5"
-base64 = "0.13.0"
-hex = "0.4.3"
-rand = "0.8.3"
-regex = "1.5.4"
-percent-encoding = "2.1.0"
-either = "1.6.1"
+paste = "1.0"
+base64 = "0.13"
+hex = "0.4"
+rand = "0.8"
+regex = "1.5"
+percent-encoding = "2.1"
+either = "1.6"
 url = "2.2"
 
-lazy_static = "1.4.0"
+lazy_static = "1.4"
 
-pin-project = "1.0.7"
-async-stream = "0.3.2"
+pin-project = "1.0"
+async-stream = "0.3"
 
 env_logger = "0.9.0"
-log = "0.4.14"
+log = "0.4"
 
 # todo: remove with nerix-utils
-sha2 = "0.9.5"
-hmac = "0.11.0"
+#sha2 = "0.9.5"
+#hmac = "0.11.0"
 
 # see https://github.com/tkaitchuck/aHash/issues/95#issuecomment-874150078
-indexmap = "=1.6.2"
+#indexmap = "=1.6.2"
 
 [build-dependencies]
 git_info = "0.1.2"

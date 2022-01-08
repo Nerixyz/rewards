@@ -14,6 +14,11 @@ pub mod requests;
 pub type RHelixClient<'a> = HelixClient<'a, reqwest::Client>;
 pub type HelixResult<T> = Result<T, TwitchApiError>;
 
+lazy_static::lazy_static! {
+    pub static ref CLIENT: reqwest::Client = reqwest::Client::default();
+    pub static ref HELIX_CLIENT: RHelixClient<'static> = RHelixClient::default();
+}
+
 pub async fn get_many_users(
     ids: Vec<String>,
     token: &UserToken,

@@ -3,7 +3,6 @@ use actix_web::{dev::Payload, http::header, Error, FromRequest, HttpRequest, Res
 use futures_util::future::{err, ready, Ready};
 
 impl FromRequest for JwtClaims {
-    type Config = ();
     type Error = Error;
     type Future = Ready<Result<Self, Self::Error>>;
 
@@ -11,8 +10,7 @@ impl FromRequest for JwtClaims {
         let auth: Result<&str> = req
             .headers()
             .get(header::AUTHORIZATION)
-            .map(|h| h.to_str().ok())
-            .flatten()
+            .and_then(|h| h.to_str().ok())
             .ok_or_else(|| errors::ErrorUnauthorized("No header"));
 
         let auth = match auth {

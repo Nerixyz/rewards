@@ -7,9 +7,10 @@ use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};
 use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::{
-    client::reqwest_http_client, tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret,
-    CsrfToken, RedirectUrl, Scope, TwitchToken, UserToken,
+    tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret, CsrfToken, Scope,
+    TwitchToken, UserToken,
 };
+use url::Url;
 
 use crate::{
     actors::{
@@ -22,6 +23,7 @@ use crate::{
     services::{
         eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
         jwt::{encode_jwt, JwtClaims},
+        twitch,
         twitch::requests::delete_reward,
     },
 };
@@ -59,28 +61,31 @@ async fn twitch_callback(
     let mut builder = UserTokenBuilder::new(
         ClientId::new(CONFIG.twitch.client_id.to_string()),
         ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
-        RedirectUrl::new(format!("{}/api/v1/auth/twitch-callback", CONFIG.server.url))
-            .expect("Invalid redirect-url"),
-    )
-    .expect("Invalid url");
+        Url::parse(&format!(
+            "{}/api/v1/auth/twitch-callback",
+            CONFIG.server.url
+        ))
+        .expect("Invalid redirect-url"),
+    );
 
     builder.set_csrf(CsrfToken::new("".to_string()));
 
     let user_token = builder
-        .get_user_token(reqwest_http_client, "", &code)
+        .get_user_token(&*twitch::CLIENT, "", &code)
         .await
         .map_err(|_| RedirectError::new("/failed-auth", Some("Could not get token")))?;
 
     let refresh_token = user_token
         .refresh_token
-        .ok_or_else(|| RedirectError::<&str, &str>::simple("/failed-auth"))?;
+        .ok_or_else(|| RedirectError::<&str, &str>::simple("/failed-auth"))?
+        .into_string();
 
     let user = User {
         id: user_token.user_id.clone(),
-        refresh_token: refresh_token.secret().clone(),
-        access_token: user_token.access_token.secret().clone(),
+        refresh_token,
+        access_token: user_token.access_token.into_string(),
         scopes: scope,
-        name: user_token.login.clone(),
+        name: user_token.login,
         eventsub_id: None,
     };
 
@@ -177,7 +182,7 @@ async fn revoke(
         }
     }
 
-    if let Err(e) = token.revoke_token(reqwest_http_client).await {
+    if let Err(e) = token.revoke_token(&*twitch::CLIENT).await {
         // we don't return the error, so me make sure everything is cleaned up
         log::warn!("Revoke token error: {}", e);
     }

@@ -1,5 +1,5 @@
 use crate::config::CONFIG;
-use actix_web::{HttpRequest, HttpResponse, Responder};
+use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
 use futures::Stream;
@@ -80,6 +80,8 @@ pub struct SpotifyPlayOptions {
 }
 
 impl Responder for Reward {
+    type Body = BoxBody;
+
     fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
         HttpResponse::Ok().json(&self)
     }

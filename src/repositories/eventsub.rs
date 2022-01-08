@@ -7,7 +7,11 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use twitch_api2::{eventsub, eventsub::Payload, helix::points::CustomRewardRedemptionStatus};
+use twitch_api2::{
+    eventsub,
+    eventsub::{user::UserAuthorizationRevokeV1Payload, Event, Message, Payload},
+    helix::points::CustomRewardRedemptionStatus,
+};
 
 use crate::{
     actors::{
@@ -23,58 +27,62 @@ use crate::{
 async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-    payload: web::Json<eventsub::Payload>,
+    payload: web::Json<eventsub::Event>,
     executor: web::Data<Addr<RewardsActor>>,
 ) -> Result<HttpResponse> {
     match payload.into_inner() {
-        Payload::VerificationRequest(rq) => {
-            log::info!("verification: {:?}", rq);
-            Ok(HttpResponse::Ok().body(rq.challenge))
+        Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
+            message: Message::VerificationRequest(req),
+            subscription,
+            ..
+        }) => {
+            log::info!("verification for sub: {:?}", subscription);
+            Ok(HttpResponse::Ok().body(req.challenge))
         }
-        Payload::ChannelPointsCustomRewardRedemptionAddV1(redemption) => {
+        Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
+            message: Message::Notification(notification),
+            subscription,
+            ..
+        }) => {
             // main path
-            let user =
-                User::get_by_id(redemption.event.broadcaster_user_id.as_ref(), &pool).await?;
+            let user = User::get_by_id(notification.broadcaster_user_id.as_ref(), &pool).await?;
 
-            log::info!("redemption: {:?}", redemption);
+            log::info!("redemption: {:?} - sub: {:?}", notification, subscription);
 
             let pool = pool.into_inner();
             let irc = irc.into_inner();
             let executor = executor.into_inner();
             let redemption_received = Instant::now();
             actix_web::rt::spawn(async move {
-                let reward = Reward::get_by_id(redemption.event.reward.id.as_ref(), &pool).await;
+                let reward = Reward::get_by_id(notification.reward.id.as_ref(), &pool).await;
 
                 let reward = match reward {
                     Ok(r) => r,
                     Err(_) => {
                         log::warn!(
                             "failed to get user or reward: userId: {}, rewardID: {}",
-                            redemption.event.broadcaster_user_id,
-                            redemption.event.reward.id
+                            notification.broadcaster_user_id,
+                            notification.reward.id
                         );
                         return;
                     }
                 };
 
-                let broadcaster_id: String =
-                    redemption.event.broadcaster_user_id.clone().into_string();
-                let reward_id: String = redemption.event.reward.id.clone().into_string();
-                let redemption_id: String = redemption.event.id.clone().into_string();
+                let broadcaster_id: String = notification.broadcaster_user_id.clone().into_string();
+                let reward_id: String = notification.reward.id.clone().into_string();
+                let redemption_id: String = notification.id.clone().into_string();
 
-                let executing_user_login: String = redemption.event.user_name.clone().into_string();
-                let broadcaster_login: String = redemption
-                    .event
-                    .broadcaster_user_login
-                    .clone()
-                    .into_string();
-                let reward_name: String = redemption.event.reward.title.clone();
+                let executing_user_login: String = notification.user_name.clone().into_string();
+                let broadcaster_login: String =
+                    notification.broadcaster_user_login.clone().into_string();
+                let reward_name: String = notification.reward.title.clone();
                 let reward_type = reward.data.0.to_string();
-                let user_input = redemption.event.user_input.clone();
+                let user_input = notification.user_input.clone();
 
                 let status = match executor
                     .send(ExecuteRewardMessage {
-                        redemption,
+                        redemption: notification,
+                        subscription,
                         broadcaster: user.clone(),
                         reward,
                     })
@@ -154,14 +162,19 @@ async fn reward_redemption(
 
             Ok(HttpResponse::Ok().finish())
         }
-        Payload::UserAuthorizationRevokeV1(re) => {
+        Event::UserAuthorizationRevokeV1(re) => {
             log::warn!("auth revoke: {:?}", re);
             log_discord!(
                 "Auth",
                 "Unhandled revocation",
-                "User Login/Id" = match re.event.user_login {
-                    Some(login) => login.into_string(),
-                    None => re.event.user_id.into_string(),
+                "User Login/Id" = match re.message {
+                    Message::Notification(UserAuthorizationRevokeV1Payload {
+                        user_name: Some(login),
+                        ..
+                    }) => login.into_string(),
+                    Message::Notification(UserAuthorizationRevokeV1Payload { user_id, .. }) =>
+                        user_id.into_string(),
+                    _ => "no login or id".to_string(),
                 }
             );
             // TODO

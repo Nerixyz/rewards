@@ -2,23 +2,23 @@ use std::fmt::Display;
 
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
-use twitch_api2::eventsub::{
-    channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload,
-};
 
 use crate::{
     actors::discord::DiscordActor,
     embed_builder,
     models::reward::{SlotRewardData, SwapRewardData},
     send_discord,
-    services::emotes::{slots, swap, Emote, EmoteRW},
+    services::{
+        emotes::{slots, swap, Emote, EmoteRW},
+        rewards::Redemption,
+    },
 };
 use actix::Addr;
 use std::str::FromStr;
 
 pub async fn execute_swap<RW, F, I, E, EI>(
     extractor: F,
-    redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
+    redemption: Redemption,
     reward_data: SwapRewardData,
     pool: &PgPool,
     discord: Addr<DiscordActor>,
@@ -30,20 +30,20 @@ where
     EI: Display + Clone + FromStr + Default,
     E: Emote<EI>,
 {
-    let platform_id = extractor(&redemption.event.user_input)?;
+    let platform_id = extractor(&redemption.user_input)?;
 
     log::info!(
         "Adding {:?} emote {} in {}",
         RW::platform(),
         platform_id,
-        redemption.event.broadcaster_user_login
+        redemption.broadcaster_user_login
     );
 
-    let user: String = redemption.event.user_login.into_string();
+    let user: String = redemption.user_login.into_string();
 
     Ok(
         match swap::swap_or_add_emote::<RW, I, E, EI>(
-            redemption.event.broadcaster_user_id.as_ref(),
+            redemption.broadcaster_user_id.as_ref(),
             platform_id,
             reward_data,
             &user,
@@ -55,7 +55,7 @@ where
                 let msg = format!("☑ Added {} - 🗑 Removed {}", added, removed);
                 send_discord!(
                     discord,
-                    redemption.event.user_id.into_string(),
+                    redemption.user_id.into_string(),
                     embed_builder!(
                         "Emotes",
                         "Added an emote",
@@ -73,7 +73,7 @@ where
                 let msg = format!("☑ Added {}", added);
                 send_discord!(
                     discord,
-                    redemption.event.broadcaster_user_id.into_string(),
+                    redemption.broadcaster_user_id.into_string(),
                     embed_builder!(
                         "Emotes",
                         "Added an emote",
@@ -92,7 +92,7 @@ where
 
 pub async fn execute_slot<RW, F, I, E, EI>(
     extractor: F,
-    redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
+    redemption: Redemption,
     slot_data: SlotRewardData,
     pool: &PgPool,
     discord: Addr<DiscordActor>,
@@ -103,10 +103,10 @@ where
     E: Emote<EI>,
     EI: Display,
 {
-    let platform_id = extractor(&redemption.event.user_input)?;
+    let platform_id = extractor(&redemption.user_input)?;
 
-    let broadcaster: String = redemption.event.broadcaster_user_login.into_string();
-    let user: String = redemption.event.user_login.into_string();
+    let broadcaster: String = redemption.broadcaster_user_login.into_string();
+    let user: String = redemption.user_login.into_string();
 
     log::info!(
         "Adding {:?} emote {} in {}",
@@ -116,8 +116,8 @@ where
     );
 
     let res = slots::add_slot_emote::<RW, I, E, EI>(
-        redemption.event.broadcaster_user_id.as_ref(),
-        redemption.event.reward.id.as_ref(),
+        redemption.broadcaster_user_id.as_ref(),
+        redemption.reward.id.as_ref(),
         slot_data,
         platform_id,
         &user,
@@ -137,7 +137,7 @@ where
 
     send_discord!(
         discord,
-        redemption.event.broadcaster_user_id.into_string(),
+        redemption.broadcaster_user_id.into_string(),
         embed_builder!(
             "Emotes",
             "Added an emote",

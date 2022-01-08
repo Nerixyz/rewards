@@ -64,7 +64,6 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                 HelixRequestGetError::InvalidResponse { status, reason, .. } => {
                     Self::Response(status, reason.to_string())
                 }
-                HelixRequestGetError::InvalidUri(_) => Self::InvalidUri,
             },
             ClientRequestError::HelixRequestPutError(e) => match e {
                 HelixRequestPutError::Error {

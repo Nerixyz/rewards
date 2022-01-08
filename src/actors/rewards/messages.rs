@@ -1,12 +1,16 @@
 use crate::models::{reward::Reward, user::User};
 use actix::Message;
 use twitch_api2::eventsub::{
-    channel::ChannelPointsCustomRewardRedemptionAddV1, NotificationPayload,
+    channel::{
+        ChannelPointsCustomRewardRedemptionAddV1, ChannelPointsCustomRewardRedemptionAddV1Payload,
+    },
+    EventSubscriptionInformation,
 };
 
 pub struct ExecuteRewardMessage {
     pub reward: Reward,
-    pub redemption: NotificationPayload<ChannelPointsCustomRewardRedemptionAddV1>,
+    pub redemption: ChannelPointsCustomRewardRedemptionAddV1Payload,
+    pub subscription: EventSubscriptionInformation<ChannelPointsCustomRewardRedemptionAddV1>,
     pub broadcaster: User,
 }
 

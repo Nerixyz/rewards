@@ -1,13 +1,13 @@
 use crate::{
     log_err,
     models::{spotify::SpotifyData, user::User},
-    services::spotify::requests::refresh_token,
+    services::{spotify::requests::refresh_token, twitch},
 };
 use actix::{Actor, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
 use sqlx::PgPool;
 use std::time::Duration;
-use twitch_api2::twitch_oauth2::{client::reqwest_http_client, TwitchToken, UserToken};
+use twitch_api2::twitch_oauth2::{TwitchToken, UserToken};
 
 pub struct TokenRefresher {
     pool: PgPool,
@@ -47,15 +47,16 @@ async fn refresh_twitch_users(pool: &PgPool) -> AnyResult<()> {
     let users = User::get_all(pool).await.unwrap_or_default();
     for user in users {
         let mut token: UserToken = user.into();
-        if token.refresh_token(reqwest_http_client).await.is_ok() {
+        if token.refresh_token(&*twitch::CLIENT).await.is_ok() {
             log_err!(
                 User::update_refresh(
                     &token.user_id,
                     token.access_token.secret(),
-                    &token
+                    token
                         .refresh_token
-                        .map(|t| t.secret().clone())
-                        .unwrap_or_default(),
+                        .as_ref()
+                        .map(|t| t.as_str())
+                        .unwrap_or(""),
                     pool,
                 )
                 .await,

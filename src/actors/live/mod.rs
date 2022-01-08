@@ -56,16 +56,12 @@ impl LiveActor {
         let live = stream::iter(live.into_iter());
         let pending: Vec<(chrono::Duration, String)> = live
             .filter_map(|reward| async {
-                if let Some(duration) = reward
-                    .live_delay
-                    .map(|delay| {
-                        humantime::parse_duration(&delay)
-                            .map(|d| chrono::Duration::from_std(d).ok())
-                            .ok()
-                            .flatten()
-                    })
-                    .flatten()
-                {
+                if let Some(duration) = reward.live_delay.and_then(|delay| {
+                    humantime::parse_duration(&delay)
+                        .map(|d| chrono::Duration::from_std(d).ok())
+                        .ok()
+                        .flatten()
+                }) {
                     match get_reward_for_broadcaster_by_id(user_id, reward.id, &user_token).await {
                         Ok(reward) => {
                             if !reward.is_paused {

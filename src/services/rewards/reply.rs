@@ -28,12 +28,8 @@ pub fn format_spotify_result(res: AnyResult<String>, action: SpotifyAction) -> A
 
 pub fn get_reply_data(redemption: &Redemption) -> (String, String) {
     (
-        redemption
-            .event
-            .broadcaster_user_login
-            .clone()
-            .into_string(),
-        redemption.event.user_login.clone().into_string(),
+        redemption.broadcaster_user_login.clone().into_string(),
+        redemption.user_login.clone().into_string(),
     )
 }
 

@@ -10,13 +10,12 @@ pub fn username(str: &str) -> AnyResult<String> {
     let str = str.trim();
 
     if !str.contains(' ') {
-        return Ok(str.replace("@", ""));
+        return Ok(str.replace('@', ""));
     }
 
     USERNAME_REGEX
         .captures(str)
-        .map(|m| m.get(0))
-        .flatten()
+        .and_then(|m| m.get(0))
         .map(|m| m.as_str().to_string())
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
@@ -30,8 +29,7 @@ pub fn bttv_id(str: &str) -> AnyResult<&str> {
     }
     BTTV_REGEX
         .captures(str)
-        .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
-        .flatten()
+        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
@@ -44,8 +42,7 @@ pub fn ffz_id(str: &str) -> AnyResult<&str> {
     }
     FFZ_REGEX
         .captures(str)
-        .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
-        .flatten()
+        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
         .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
