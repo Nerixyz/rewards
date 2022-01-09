@@ -15,7 +15,7 @@ pub fn username(str: &str) -> AnyResult<String> {
 
     USERNAME_REGEX
         .captures(str)
-        .and_then(|m| m.get(0))
+        .and_then(|m| m.get(1))
         .map(|m| m.as_str().to_string())
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
@@ -54,8 +54,7 @@ pub fn seventv_id(str: &str) -> AnyResult<&str> {
     }
     BTTV_REGEX
         .captures(str)
-        .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
-        .flatten()
+        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
