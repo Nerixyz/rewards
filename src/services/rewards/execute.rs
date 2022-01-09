@@ -45,14 +45,14 @@ pub async fn timeout(
     ),
 ) -> AnyResult<()> {
     // check timeout
-    let username = extract::username(&redemption.event.user_input)?.to_lowercase();
+    let username = extract::username(&redemption.user_input)?.to_lowercase();
     let user = get_user_by_login(username.clone(), &*app_token.read().await)
         .await
         .map_err(|_| AnyError::msg("Could not get user"))?;
 
     let ok_timeout = timeout_handler
         .send(CheckValidTimeoutMessage {
-            channel_id: redemption.event.broadcaster_user_id.clone().into_string(),
+            channel_id: redemption.broadcaster_user_id.clone().into_string(),
             user_id: user.id.clone().into_string(),
         })
         .await
@@ -64,11 +64,11 @@ pub async fn timeout(
     }
 
     irc.send(TimeoutMessage {
-        user: extract::username(&redemption.event.user_input)?,
+        user: extract::username(&redemption.user_input)?,
         user_id: user.id.into_string(),
         duration: extract::duration(&timeout)?,
         broadcaster: broadcaster.name,
-        broadcaster_id: redemption.event.broadcaster_user_id.into_string(),
+        broadcaster_id: redemption.broadcaster_user_id.into_string(),
     })
     .await??;
     Ok(())
@@ -130,7 +130,7 @@ pub async fn spotify_skip(
     (db, irc): (PgPool, Addr<IrcActor>),
 ) -> AnyResult<()> {
     let (broadcaster, user) = get_reply_data(&redemption);
-    let res = spotify::skip_track(redemption.event.broadcaster_user_id.as_ref(), &db).await;
+    let res = spotify::skip_track(redemption.broadcaster_user_id.as_ref(), &db).await;
     reply_to_redemption(
         format_spotify_result(res, SpotifyAction::Skip),
         &irc,
@@ -147,13 +147,13 @@ pub async fn spotify_play(
 ) -> AnyResult<()> {
     let (broadcaster, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
-        &redemption.event.user_input,
-        redemption.event.broadcaster_user_id.as_ref(),
+        &redemption.user_input,
+        redemption.broadcaster_user_id.as_ref(),
         &opts,
         &db,
     )
     .and_then(|track| async {
-        spotify::play_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
+        spotify::play_track(redemption.broadcaster_user_id.as_ref(), track, &db).await
     })
     .await;
     reply_to_redemption(
@@ -172,13 +172,13 @@ pub async fn spotify_queue(
 ) -> AnyResult<()> {
     let (broadcaster, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
-        &redemption.event.user_input,
-        redemption.event.broadcaster_user_id.as_ref(),
+        &redemption.user_input,
+        redemption.broadcaster_user_id.as_ref(),
         &opts,
         &db,
     )
     .and_then(|track| async {
-        spotify::queue_track(redemption.event.broadcaster_user_id.as_ref(), track, &db).await
+        spotify::queue_track(redemption.broadcaster_user_id.as_ref(), track, &db).await
     })
     .await;
     reply_to_redemption(

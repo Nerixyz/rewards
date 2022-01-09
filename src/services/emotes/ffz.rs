@@ -73,8 +73,7 @@ impl EmoteRW for FfzEmotes {
         let room_emotes: Vec<ffz::FfzEmote> = ffz_room
             .sets
             .into_iter()
-            .map(|s| s.1.emoticons)
-            .flatten()
+            .flat_map(|s| s.1.emoticons)
             .collect();
 
         if room_emotes
@@ -113,8 +112,7 @@ impl EmoteRW for FfzEmotes {
         let room_emotes = ffz_room
             .sets
             .into_iter()
-            .map(|s| s.1.emoticons)
-            .flatten()
+            .flat_map(|s| s.1.emoticons)
             .count();
 
         Ok(EmoteEnvData {

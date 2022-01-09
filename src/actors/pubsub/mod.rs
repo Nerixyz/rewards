@@ -193,8 +193,7 @@ impl Handler<SubAllMessage> for PubSubActor {
         let topics = msg
             .0
             .iter()
-            .map(|user| Self::make_topics(user.parse::<u32>().unwrap_or(0), my_id))
-            .flatten()
+            .flat_map(|user| Self::make_topics(user.parse::<u32>().unwrap_or(0), my_id))
             .collect();
 
         let client = self.client.clone();

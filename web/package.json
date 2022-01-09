@@ -10,24 +10,25 @@
     "lint": "eslint --fix src/**/*.{vue,ts,tsx,js,html}"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.4.0",
-    "@vuelidate/core": "^2.0.0-alpha.24",
-    "@vuelidate/validators": "^2.0.0-alpha.21",
-    "vue": "^3.2.3",
-    "vue-router": "^4.0.11"
+    "@headlessui/vue": "^1.4.2",
+    "@vuelidate/core": "^2.0.0-alpha.33",
+    "@vuelidate/validators": "^2.0.0-alpha.26",
+    "vue": "^3.2.26",
+    "vue-router": "^4.0.12"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^1.4.0",
-    "@vue/compiler-sfc": "^3.2.1",
-    "@vue/eslint-config-prettier": "^6.0.0",
-    "@vue/eslint-config-typescript": "^7.0.0",
-    "autoprefixer": "^10.3.1",
-    "eslint": "^7.32.0",
-    "postcss": "^8.3.6",
-    "prettier": "^2.3.2",
-    "tailwindcss": "^2.2.7",
-    "typescript": "^4.3.5",
-    "vite": "^2.4.4",
-    "vue-tsc": "^0.2.2"
+    "@vitejs/plugin-vue": "^2.0.1",
+    "@vue/compiler-sfc": "^3.2.26",
+    "@vue/eslint-config-typescript": "^10.0.0",
+    "autoprefixer": "^10.4.2",
+    "eslint": "^8.6.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "postcss": "^8.4.5",
+    "prettier": "^2.5.1",
+    "tailwindcss": "^3.0.12",
+    "typescript": "^4.5.4",
+    "vite": "^2.7.10",
+    "vue-tsc": "^0.30.2"
   }
 }

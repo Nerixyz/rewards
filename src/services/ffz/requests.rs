@@ -117,8 +117,7 @@ pub async fn get_channels() -> AnyResult<Vec<String>> {
     let text = ffz_get_text("https://www.frankerfacez.com/").await?;
     Ok(CHANNEL_REGEX
         .captures_iter(&text)
-        .map(|c: Captures| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
-        .flatten()
+        .filter_map(|c: Captures| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
         .collect())
 }
 
@@ -166,8 +165,7 @@ fn check_for_success(text: &str, success: &Regex, reason: &Regex) -> AnyResult<(
     } else {
         let reason = reason
             .captures(text)
-            .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
-            .flatten()
+            .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
             .unwrap_or_else(|| "No reason found".to_string());
 
         Err(AnyError::msg(reason))

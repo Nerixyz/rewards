@@ -14,7 +14,7 @@ use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use tokio::sync::RwLock;
 use twitch_api2::{
     helix::Scope,
-    twitch_oauth2::{client::reqwest_http_client, AppAccessToken, ClientId, ClientSecret},
+    twitch_oauth2::{AppAccessToken, ClientId, ClientSecret},
 };
 
 use actors::{irc::JoinAllMessage, pubsub::SubAllMessage};
@@ -49,7 +49,7 @@ use crate::{
 use std::convert::TryInto;
 
 pub type RedisPool = deadpool_redis::Pool;
-pub type RedisConn = deadpool_redis::ConnectionWrapper;
+pub type RedisConn = deadpool_redis::Connection;
 
 mod actors;
 mod chat;
@@ -90,7 +90,7 @@ async fn main() -> std::io::Result<()> {
         connection: None,
         ..Default::default()
     }
-    .create_pool()
+    .create_pool(Some(deadpool_redis::Runtime::Tokio1))
     .expect("Could not create redis pool");
 
     // make sure the connection is working and there's at least one connected client
@@ -191,8 +191,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(prom_handle.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
-            .wrap(create_cors())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
+            .wrap(create_cors())
             .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")
@@ -209,7 +209,7 @@ async fn main() -> std::io::Result<()> {
 
 async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
     Ok(AppAccessToken::get_app_access_token(
-        reqwest_http_client,
+        &reqwest::Client::new(),
         ClientId::new(CONFIG.twitch.client_id.to_string()),
         ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
         vec![
@@ -221,7 +221,7 @@ async fn get_app_access_token() -> Result<AppAccessToken, AnyError> {
 }
 
 fn get_default_headers() -> DefaultHeaders {
-    DefaultHeaders::new().header("X-Rewards-Version", env!("CARGO_PKG_VERSION"))
+    DefaultHeaders::new().add(("X-Rewards-Version", env!("CARGO_PKG_VERSION")))
 }
 
 fn create_cors() -> Cors {

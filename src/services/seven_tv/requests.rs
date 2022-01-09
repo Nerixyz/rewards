@@ -2,7 +2,7 @@ use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use reqwest::IntoUrl;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{array::IntoIter, collections::HashMap};
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 struct GqlRequest<'a> {
@@ -70,7 +70,7 @@ pub struct SevenUser {
 pub async fn get_user(user_id_or_login: &str) -> AnyResult<SevenUser> {
     let user = seven_tv_post::<GqlResponse<SevenUserResponse>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "query getUser($id: String!) { user(id: $id) { id, login, emotes { id, name }, twitch_id, emote_slots } }",
-        variables: IntoIter::new([("id", user_id_or_login)]).collect::<HashMap<_, _>>()
+        variables: [("id", user_id_or_login)].into_iter().collect::<HashMap<_, _>>()
     }).await?;
 
     Ok(user.data.user)
@@ -81,7 +81,9 @@ pub async fn get_user_editors(user_id_or_login: &str) -> AnyResult<Vec<OnlyName>
         "https://api.7tv.app/v2/gql",
         &GqlRequest {
             query: "query getUser($id: String!) { user(id: $id) { editors { login } } }",
-            variables: IntoIter::new([("id", user_id_or_login)]).collect::<HashMap<_, _>>(),
+            variables: [("id", user_id_or_login)]
+                .into_iter()
+                .collect::<HashMap<_, _>>(),
         },
     )
     .await?;
@@ -94,7 +96,7 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
         "https://api.7tv.app/v2/gql",
         &GqlRequest {
             query: "query emoteQuery($id: String!){emote(id: $id){id,name, tags}}",
-            variables: IntoIter::new([("id", emote_id)]).collect::<HashMap<_, _>>(),
+            variables: [("id", emote_id)].into_iter().collect::<HashMap<_, _>>(),
         },
     )
     .await?;
@@ -105,7 +107,7 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
 pub async fn add_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
     seven_tv_post::<GqlResponse<serde_json::Value>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "mutation AddChannelEmote($ch: String!, $em: String!, $re: String!) {addChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
-        variables: IntoIter::new([("ch", channel_id), ("em", emote_id), ("re", "")]).collect::<HashMap<_,_>>()
+        variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
     }).await?;
 
     Ok(())
@@ -114,7 +116,7 @@ pub async fn add_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
 pub async fn remove_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
     seven_tv_post::<GqlResponse<serde_json::Value>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "mutation RemoveChannelEmote($ch: String!, $em: String!, $re: String!) {removeChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
-        variables: IntoIter::new([("ch", channel_id), ("em", emote_id), ("re", "")]).collect::<HashMap<_,_>>()
+        variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
     }).await?;
 
     Ok(())

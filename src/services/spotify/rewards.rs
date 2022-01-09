@@ -86,13 +86,12 @@ pub async fn get_track_uri_from_input(
         let tracks = requests::search_track(input, &token).await?;
         tracks
             .tracks
-            .map(|tracks| {
+            .and_then(|tracks| {
                 tracks
                     .items
                     .into_iter()
                     .find(|track| options.allow_explicit || !track.explicit)
             })
-            .flatten()
             .ok_or_else(|| AnyError::msg("No track found"))
     }
 }
@@ -103,8 +102,7 @@ fn extract_spotify_id(str: &str) -> Option<&str> {
     }
     SPOTIFY_REGEX
         .captures(str)
-        .map(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
-        .flatten()
+        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
 }
 
 async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {

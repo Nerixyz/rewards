@@ -1,8 +1,8 @@
 const colors = require('tailwindcss/colors');
 
 module.exports = {
-  purge: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
-  darkMode: false, // or 'media' or 'class'
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  media: false, // or 'media' or 'class'
   theme: {
     colors: {
       transparent: 'transparent',
@@ -76,16 +76,6 @@ module.exports = {
     },
     animation: {
       bing: 'bing 1s ease-out infinite',
-    },
-  },
-  variants: {
-    extend: {
-      borderWidth: ['hover'],
-      backgroundColor: ['disabled'],
-      cursor: ['disabled'],
-      borderColor: ['disabled'],
-      textColor: ['disabled'],
-      ringColor: ['disabled'],
     },
   },
   plugins: [],

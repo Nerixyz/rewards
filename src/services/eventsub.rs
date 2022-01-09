@@ -80,8 +80,11 @@ pub async fn register_eventsub_for_all_unregistered(
     let non_subs = User::get_all_non_subscribers(pool).await?;
 
     for user_id in non_subs {
-        log_err!(register_eventsub_for_id(&user_id, token, pool)
-            .await, "Could not register eventsub for id {} - {}", user_id);
+        log_err!(
+            register_eventsub_for_id(&user_id, token, pool).await,
+            "Could not register eventsub for id {} - {}",
+            user_id
+        );
     }
 
     Ok(())
@@ -111,7 +114,7 @@ pub async fn clear_invalid_rewards(
             }
             if !is_enabled
                 || (!is_this_server
-                    && Regex::new("https?://[\\w_]+.ngrok.io")
+                    && Regex::new("https?://[\\w_]+(:?\\.\\w+)?.ngrok.io")
                         .unwrap()
                         .is_match(&sub.transport.callback))
             {
