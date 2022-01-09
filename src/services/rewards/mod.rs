@@ -2,6 +2,7 @@ use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payl
 
 pub mod execute;
 pub mod extract;
+pub mod redemption;
 pub mod reply;
 pub mod save;
 pub mod verify;
