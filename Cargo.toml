@@ -23,7 +23,6 @@ actix-metrics = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "acti
 twitch-irc = { version = "3.0.1", features = ["refreshing-token", "transport-tcp-native-tls", "metrics-collection"] }
 twitch_api2 = { git = "https://github.com/emilgardis/twitch_api2", rev = "7194ec0", features = ["eventsub", "helix", "twitch_oauth2", "reqwest_client", "client", "unsupported"], default-features = false }
 twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "754297b", features = ["native-tls", "unsupported"], default-features = false }
-eventsub = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "eventsub-v0.2.1" }
 
 tokio = { version = "1", features = ["rt", "time", "sync"] }
 tokio-stream = "0.1"
@@ -77,9 +76,8 @@ async-stream = "0.3"
 env_logger = "0.9.0"
 log = "0.4"
 
-# todo: remove with nerix-utils
-#sha2 = "0.9.5"
-#hmac = "0.11.0"
+sha2 = "0.10"
+hmac = "0.12"
 
 # see https://github.com/tkaitchuck/aHash/issues/95#issuecomment-874150078
 #indexmap = "=1.6.2"

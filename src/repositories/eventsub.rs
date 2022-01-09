@@ -8,7 +8,6 @@ use actix_web::{
 };
 use sqlx::PgPool;
 use twitch_api2::{
-    eventsub,
     eventsub::{user::UserAuthorizationRevokeV1Payload, Event, Message, Payload},
     helix::points::CustomRewardRedemptionStatus,
 };
@@ -18,6 +17,7 @@ use crate::{
         irc::{IrcActor, WhisperMessage},
         rewards::{ExecuteRewardMessage, RewardsActor},
     },
+    extractors::eventsub::EventsubPayload,
     log_discord,
     models::{reward::Reward, user::User},
     services::twitch::eventsub::update_reward_redemption,
@@ -27,10 +27,10 @@ use crate::{
 async fn reward_redemption(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-    payload: web::Json<eventsub::Event>,
+    payload: EventsubPayload,
     executor: web::Data<Addr<RewardsActor>>,
 ) -> Result<HttpResponse> {
-    match payload.into_inner() {
+    match payload.0 {
         Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
             message: Message::VerificationRequest(req),
             subscription,
@@ -139,7 +139,11 @@ async fn reward_redemption(
                     "Status" = format!("{:?}", status),
                     "Execution Time" = execution.as_secs_f64().to_string(),
                     "User" = executing_user_login,
-                    "Input" = user_input
+                    "Input" = if user_input.is_empty() {
+                        "<no input>".to_string()
+                    } else {
+                        user_input
+                    }
                 );
 
                 match update_reward_redemption(

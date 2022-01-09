@@ -114,7 +114,7 @@ pub async fn clear_invalid_rewards(
             }
             if !is_enabled
                 || (!is_this_server
-                    && Regex::new("https?://[\\w_]+.ngrok.io")
+                    && Regex::new("https?://[\\w_]+(:?\\.\\w+)?.ngrok.io")
                         .unwrap()
                         .is_match(&sub.transport.callback))
             {
