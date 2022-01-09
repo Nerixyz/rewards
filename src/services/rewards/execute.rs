@@ -48,7 +48,7 @@ pub async fn timeout(
     let username = extract::username(&redemption.user_input)?.to_lowercase();
     let user = get_user_by_login(username.clone(), &*app_token.read().await)
         .await
-        .map_err(|_| AnyError::msg("Could not get user"))?;
+        .map_err(|e| AnyError::msg(format!("Could not get user: {}", e)))?;
 
     let ok_timeout = timeout_handler
         .send(CheckValidTimeoutMessage {
