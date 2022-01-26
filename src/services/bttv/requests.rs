@@ -7,6 +7,7 @@ use reqwest::{
     Client, IntoUrl, Response,
 };
 use serde::{de::DeserializeOwned, Deserialize};
+use std::time::Duration;
 
 lazy_static! {
     static ref BTTV_CLIENT: Client = Client::builder()
@@ -24,6 +25,7 @@ lazy_static! {
             );
             map
         })
+        .timeout(Duration::from_secs(15))
         .build()
         .unwrap();
 }
