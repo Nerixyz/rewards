@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use reqwest::{cookie::Jar, Client, IntoUrl, Response, Url};
 use serde::{de::DeserializeOwned, Deserialize};
-use std::{collections::HashMap, fmt::Display, sync::Arc};
+use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
 
 lazy_static! {
     static ref FFZ_CLIENT: Client = Client::builder()
@@ -35,6 +35,7 @@ lazy_static! {
 
             jar
         }))
+        .timeout(Duration::from_secs(15))
         .build()
         .unwrap();
 }

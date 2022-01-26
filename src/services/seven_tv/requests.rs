@@ -1,8 +1,33 @@
 use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
-use reqwest::IntoUrl;
+use lazy_static::lazy_static;
+use reqwest::{
+    header::{self, HeaderMap},
+    Client, IntoUrl,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
+
+lazy_static! {
+    static ref SEVENTV_CLIENT: Client = Client::builder()
+        .user_agent(format!(
+            "RewardMore/{} github.com/Nerixyz/rewards",
+            env!("CARGO_PKG_VERSION")
+        ))
+        .default_headers({
+            let mut map = HeaderMap::with_capacity(1);
+            map.insert(
+                header::AUTHORIZATION,
+                format!("Bearer {}", CONFIG.emotes.seven_tv.jwt)
+                    .parse()
+                    .unwrap(),
+            );
+            map
+        })
+        .timeout(Duration::from_secs(15))
+        .build()
+        .unwrap();
+}
 
 #[derive(Serialize)]
 struct GqlRequest<'a> {
@@ -127,15 +152,7 @@ where
     J: DeserializeOwned,
     U: IntoUrl,
 {
-    let response = reqwest::Client::default()
-        .post(url)
-        .header(
-            "Authorization",
-            format!("Bearer {}", CONFIG.emotes.seven_tv.jwt),
-        )
-        .json(request)
-        .send()
-        .await?;
+    let response = SEVENTV_CLIENT.post(url).json(request).send().await?;
     if !response.status().is_success() {
         return Err(AnyError::msg(format!(
             "Non OK status: {} - Error: {}",
