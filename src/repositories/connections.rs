@@ -61,10 +61,11 @@ async fn spotify_callback(
         .await
         .map_err(|_| RedirectError::new("/failed-auth", Some("DB-Error")))?;
 
-    Ok(HttpResponse::Found()
+    let mut res = HttpResponse::Found()
         .insert_header(("location", "/connections"))
-        .del_cookie(&cookie)
-        .finish())
+        .finish();
+    res.add_removal_cookie(&cookie)?;
+    Ok(res)
 }
 
 #[get("/spotify-auth-url")]

@@ -4,6 +4,7 @@ use errors::redirect_error::RedirectError;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::future;
 use time::{Duration, OffsetDateTime};
 use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::{
@@ -134,7 +135,7 @@ struct TwitchAuthUrlResponse {
 }
 
 #[get("/twitch-auth")]
-fn redirect_to_twitch_auth() -> HttpResponse {
+fn redirect_to_twitch_auth() -> future::Ready<HttpResponse> {
     let params = TwitchOAuthParams {
         client_id: CONFIG.twitch.client_id.to_string(),
         redirect_uri: format!("{}/api/v1/auth/twitch-callback", CONFIG.server.url),
@@ -152,9 +153,11 @@ fn redirect_to_twitch_auth() -> HttpResponse {
         serde_qs::to_string(&params).expect("Failed to serialize")
     );
 
-    HttpResponse::Found()
-        .append_header(("location", url))
-        .finish()
+    future::ready(
+        HttpResponse::Found()
+            .append_header(("location", url))
+            .finish(),
+    )
 }
 
 #[delete("")]
