@@ -100,6 +100,15 @@ impl EmoteRW for SevenTvEmotes {
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
     ) -> AnyResult<()> {
+        // seventv doesn't error if the emote isn't added,
+        // so we have to check if the emote is added in the first place.
+        // There's no request to check if the emote is added for the user, so we have to either
+        // check the channels the emote is added to or check the users emotes.
+        let user = seven_tv::get_user(platform_id).await?;
+        if !user.emotes.iter().any(|emote| emote.id == *emote_id) {
+            return Err(AnyError::msg("Emote not added"));
+        }
+
         seven_tv::remove_emote(platform_id, emote_id).await
     }
 
