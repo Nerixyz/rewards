@@ -1,6 +1,6 @@
-use crate::models::timed_mode::Mode;
 use actix::Message;
 use anyhow::Error as AnyError;
+use models::timed_mode::Mode;
 use twitch_irc::message::PrivmsgMessage;
 
 #[derive(Message)]

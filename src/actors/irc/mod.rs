@@ -27,10 +27,11 @@ use token_storage::PgTokenStorage;
 use crate::{
     actors::{db::DbActor, timeout::TimeoutActor},
     chat::{parse::opt_next_space, try_parse_command},
-    config::CONFIG,
     log_err,
-    models::timed_mode::TimedMode,
 };
+use config::CONFIG;
+use models::timed_mode::TimedMode;
+
 mod messages;
 mod token_storage;
 use crate::actors::{

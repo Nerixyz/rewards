@@ -1,13 +1,11 @@
-use crate::{
-    models::{emote::SlotPlatform, swap_emote::SwapEmote},
-    services::{
-        bttv::{get_or_fetch_id, requests as bttv},
-        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
-    },
+use crate::services::{
+    bttv::{get_or_fetch_id, requests as bttv},
+    emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;
+use models::{emote::SlotPlatform, swap_emote::SwapEmote};
 use sqlx::PgPool;
 
 pub struct BttvEmotes {

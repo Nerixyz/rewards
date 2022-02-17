@@ -2,13 +2,11 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
 use twitch_api2::twitch_oauth2::UserToken;
 
-use crate::{
-    models::reward::RewardData,
-    services::{
-        bttv, ffz::is_editor_in, rewards::extract, seven_tv, spotify::rewards as spotify,
-        twitch::requests::get_user,
-    },
+use crate::services::{
+    bttv, ffz::is_editor_in, rewards::extract, seven_tv, spotify::rewards as spotify,
+    twitch::requests::get_user,
 };
+use models::reward::RewardData;
 
 pub async fn verify_reward(
     reward: &RewardData,

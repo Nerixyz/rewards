@@ -1,6 +1,5 @@
 use crate::{
     log_discord,
-    models::reward::{Reward, RewardData},
     services::{
         jwt::JwtClaims,
         rewards::{
@@ -15,6 +14,7 @@ use crate::{
     },
 };
 use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
+use models::reward::{Reward, RewardData};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};

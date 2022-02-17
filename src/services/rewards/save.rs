@@ -1,12 +1,10 @@
-use crate::{
-    models::reward::RewardData,
-    services::{
-        bttv,
-        emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap},
-        ffz, seven_tv,
-    },
+use crate::services::{
+    bttv,
+    emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap},
+    ffz, seven_tv,
 };
 use anyhow::Result as AnyResult;
+use models::reward::RewardData;
 use sqlx::PgPool;
 
 pub async fn save_reward(

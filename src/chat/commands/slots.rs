@@ -1,6 +1,7 @@
-use crate::{chat::command::ChatCommand, models::slot::Slot, RedisConn};
+use crate::{chat::command::ChatCommand, RedisConn};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
+use models::slot::Slot;
 use sqlx::PgPool;
 use twitch_irc::message::PrivmsgMessage;
 

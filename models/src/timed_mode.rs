@@ -1,9 +1,9 @@
-use actix_web::http::StatusCode;
 use chrono::{DateTime, Utc};
 use errors::{
     json_error::JsonError,
     sql::{SqlReason, SqlResult},
 };
+use http::StatusCode;
 use sqlx::PgPool;
 
 #[derive(Debug, sqlx::FromRow)]

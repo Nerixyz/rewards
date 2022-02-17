@@ -1,6 +1,5 @@
 use crate::{
     log_err,
-    models::{log_entry::LogEntry, reward::SlotRewardData, slot::Slot, user::User},
     services::{
         emotes::{Emote, EmoteId, EmoteRW},
         text::trim_to,
@@ -10,6 +9,7 @@ use crate::{
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::{Duration, Utc};
 use futures::TryFutureExt;
+use models::{log_entry::LogEntry, reward::SlotRewardData, slot::Slot, user::User};
 use sqlx::PgPool;
 use std::{cmp::Ordering, fmt::Display};
 use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};

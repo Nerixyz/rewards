@@ -1,7 +1,5 @@
 use crate::{
-    config::CONFIG,
     log_err,
-    models::{reward::RewardToUpdate, user::User},
     services::twitch::{
         eventsub::{delete_subscription, subscribe_to_rewards},
         RHelixClient,
@@ -9,7 +7,9 @@ use crate::{
 };
 use actix_web::Result as ActixResult;
 use anyhow::Result as AnyhowResult;
+use config::CONFIG;
 use futures::TryStreamExt;
+use models::{reward::RewardToUpdate, user::User};
 use regex::Regex;
 use sqlx::PgPool;
 use std::{convert::TryInto, sync::Arc};

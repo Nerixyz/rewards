@@ -1,7 +1,5 @@
-use crate::{
-    models::{editor::Editor, user::User},
-    services::jwt::JwtClaims,
-};
+use crate::services::jwt::JwtClaims;
+use models::{editor::Editor, user::User};
 use sqlx::PgPool;
 
 pub async fn get_user_or_editor(

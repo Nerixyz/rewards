@@ -1,8 +1,6 @@
 use crate::{
     actors::discord::DiscordActor,
-    embed_builder, log_discord, log_err,
-    models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User},
-    send_discord,
+    embed_builder, log_discord, log_err, send_discord,
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
         twitch::requests::update_reward,
@@ -12,6 +10,7 @@ use crate::{
 use actix::{Actor, Addr, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
 use deadpool_redis::redis::AsyncCommands;
+use models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User};
 use sqlx::PgPool;
 use std::time::Duration;
 use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};

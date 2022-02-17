@@ -1,7 +1,7 @@
 pub mod macros;
 
-use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
+use config::CONFIG;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use serde::Serialize;

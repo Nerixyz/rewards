@@ -1,4 +1,4 @@
-use crate::models::emote::SlotPlatform;
+use crate::emote::SlotPlatform;
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
 use serde::{Deserialize, Serialize};

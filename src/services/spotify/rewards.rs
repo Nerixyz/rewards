@@ -1,15 +1,13 @@
-use crate::{
-    models::{reward::SpotifyPlayOptions, spotify::SpotifyData, user::User},
-    services::{
-        spotify::{
-            requests,
-            responses::{PlayerResponse, TrackObject},
-        },
-        twitch::requests::is_user_live,
+use crate::services::{
+    spotify::{
+        requests,
+        responses::{PlayerResponse, TrackObject},
     },
+    twitch::requests::is_user_live,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
+use models::{reward::SpotifyPlayOptions, spotify::SpotifyData, user::User};
 use regex::Regex;
 use sqlx::PgPool;
 use twitch_api2::twitch_oauth2::UserToken;

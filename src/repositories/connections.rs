@@ -1,11 +1,8 @@
-use crate::{
-    models::spotify::{SpotifyData, SpotifySettings},
-    services::{
-        jwt::{decode_jwt, JwtClaims},
-        spotify::{
-            auth::{get_auth_url, SpotifyAuthResponse},
-            requests::get_token,
-        },
+use crate::services::{
+    jwt::{decode_jwt, JwtClaims},
+    spotify::{
+        auth::{get_auth_url, SpotifyAuthResponse},
+        requests::get_token,
     },
 };
 use actix_web::{
@@ -15,6 +12,7 @@ use actix_web::{
     HttpRequest, HttpResponse, Result,
 };
 use errors::redirect_error::RedirectError;
+use models::spotify::{SpotifyData, SpotifySettings};
 use serde::Serialize;
 use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};
@@ -57,9 +55,14 @@ async fn spotify_callback(
     let auth_data = get_token(&code)
         .await
         .map_err(|_| RedirectError::new("/failed-auth", Some("Invalid code")))?;
-    SpotifyData::add(claims.user_id(), &auth_data, &pool)
-        .await
-        .map_err(|_| RedirectError::new("/failed-auth", Some("DB-Error")))?;
+    SpotifyData::add(
+        claims.user_id(),
+        &auth_data.access_token,
+        &auth_data.refresh_token,
+        &pool,
+    )
+    .await
+    .map_err(|_| RedirectError::new("/failed-auth", Some("DB-Error")))?;
 
     let mut res = HttpResponse::Found()
         .insert_header(("location", "/connections"))

@@ -1,8 +1,6 @@
-use crate::{
-    config::CONFIG,
-    services::jwt::{encode_jwt, JwtClaims},
-};
+use crate::services::jwt::{encode_jwt, JwtClaims};
 use anyhow::Result as AnyResult;
+use config::CONFIG;
 use serde::{Deserialize, Serialize};
 
 pub const SPOTIFY_SCOPES: &str = "user-modify-playback-state user-read-currently-playing";

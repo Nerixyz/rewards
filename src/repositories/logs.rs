@@ -1,12 +1,10 @@
-use crate::{
-    models::{discord, log_entry::LogEntry},
-    services::{jwt::JwtClaims, sql::get_user_or_editor},
-};
+use crate::services::{jwt::JwtClaims, sql::get_user_or_editor};
 use actix_web::{
     delete, get, patch,
     web::{self, ServiceConfig},
     HttpResponse, Result,
 };
+use models::{discord, log_entry::LogEntry};
 use regex::Regex;
 use serde::Deserialize;
 use sqlx::PgPool;

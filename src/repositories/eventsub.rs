@@ -11,12 +11,12 @@ use crate::{
     actors::{irc::IrcActor, rewards::RewardsActor},
     extractors::eventsub::EventsubPayload,
     log_discord,
-    models::user::User,
     services::rewards::{
         redemption,
         redemption::{ReceiveRedemptionCtx, ReceiveRedemptionError},
     },
 };
+use models::user::User;
 
 #[post("/reward")]
 async fn reward_redemption(

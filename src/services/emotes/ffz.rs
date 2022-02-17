@@ -1,13 +1,11 @@
-use crate::{
-    models::{emote::SlotPlatform, swap_emote::SwapEmote},
-    services::{
-        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
-        ffz::requests as ffz,
-    },
+use crate::services::{
+    emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+    ffz::requests as ffz,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;
+use models::{emote::SlotPlatform, swap_emote::SwapEmote};
 use sqlx::PgPool;
 
 pub struct FfzEmotes {
