@@ -12,7 +12,16 @@ pub trait ChatCommand: Send {
         pool: &PgPool,
         redis: &mut RedisConn,
     ) -> AnyResult<String>;
-    fn parse(args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send;
+
+    async fn check_permission(
+        &mut self,
+        _msg: &PrivmsgMessage,
+        _pool: &PgPool,
+        _redis: &mut RedisConn,
+    ) -> bool {
+        true
+    }
 }

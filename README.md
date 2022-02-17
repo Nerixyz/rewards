@@ -42,6 +42,15 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * Play a Spotify track
 * Queue a Spotify track
 
+### Commands
+
+* `::ei <emote>`, `::emoteinfo <emote>`, `::emote info <emote>` 
+ Displays information about an emote. Only works for emotes managed by the bot.
+* `::emote ban/unban <url/emote>` Ban/unban emotes from being added. Requires editor rights.
+* `::slots`, `::emoteslots` Display the current slots.
+* `::emotes`, `::ce`, `::currentemotes` Display the current emotes.
+* `::ping`, `::bing` Ping the bot.
+* `::about`, `::rewardmore`, `::who`, `::bot` Display details about the bot.
 
 # Development
 

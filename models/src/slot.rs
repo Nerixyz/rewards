@@ -126,6 +126,21 @@ impl Slot {
         Ok(slot)
     }
 
+    pub async fn get_slot_by_emote_id(
+        user_id: &str,
+        emote_id: &str,
+        platform: SlotPlatform,
+        pool: &PgPool,
+    ) -> SqlResult<Option<Self>> {
+        // language=PostgreSQL
+        let slot = sqlx::query_as!(Self, r#"
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
+            WHERE user_id = $1 AND emote_id = $2 and platform = $3
+        "#, user_id, emote_id, platform as _).fetch_optional(pool).await?;
+
+        Ok(slot)
+    }
+
     pub async fn get_occupation(user_id: &str, pool: &PgPool) -> SqlResult<SlotOccupation> {
         // language=PostgreSQL
         let occupation = sqlx::query_as!(SlotOccupation,

@@ -6,7 +6,7 @@ use crate::{
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
-use models::{reward::SwapRewardData, swap_emote::SwapEmote};
+use models::{banned_emote, reward::SwapRewardData, swap_emote::SwapEmote};
 use sqlx::PgPool;
 use std::{fmt::Display, str::FromStr};
 
@@ -23,6 +23,9 @@ where
     EI: Display + ToOwned<Owned = EI> + FromStr + Default,
     E: Emote<EI>,
 {
+    if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool).await? {
+        return Err(AnyError::msg("This emote is banned"));
+    }
     let data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
     let removed_emote = if data.current_emotes >= data.max_emotes
         || reward_data

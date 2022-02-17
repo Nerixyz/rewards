@@ -1,3 +1,4 @@
+use crate::services::text::first_capture;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -27,9 +28,7 @@ pub fn bttv_id(str: &str) -> AnyResult<&str> {
         )
         .expect("must compile");
     }
-    BTTV_REGEX
-        .captures(str)
-        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
+    first_capture(str, &BTTV_REGEX)
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
@@ -40,21 +39,16 @@ pub fn ffz_id(str: &str) -> AnyResult<&str> {
         )
         .expect("must compile");
     }
-    FFZ_REGEX
-        .captures(str)
-        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
-        .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
+    first_capture(str, &FFZ_REGEX).ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
 pub fn seventv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
-        static ref BTTV_REGEX: Regex =
+        static ref SEVENTV_REGEX: Regex =
             Regex::new("(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )")
                 .expect("must compile");
     }
-    BTTV_REGEX
-        .captures(str)
-        .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
+    first_capture(str, &SEVENTV_REGEX)
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 

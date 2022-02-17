@@ -74,6 +74,22 @@ async fn try_handle_command(
         // nothing went wrong we're just on cooldown
         return Ok(());
     }
+    if !msg
+        .executor
+        .check_permission(&msg.raw, &db, &mut conn)
+        .await
+    {
+        msg.addr
+            .send(SayMessage(
+                msg.raw.channel_login,
+                format!(
+                    "@{}, ⛔ You don't have permission to run this command!",
+                    msg.raw.sender.login
+                ),
+            ))
+            .await??;
+        return Ok(());
+    }
 
     let broadcaster = msg.raw.channel_login.clone();
     let sender = msg.raw.sender.login.clone();

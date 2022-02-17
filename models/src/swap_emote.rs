@@ -93,6 +93,28 @@ impl SwapEmote {
         Ok(emote)
     }
 
+    pub async fn by_id(
+        user_id: &str,
+        emote_id: &str,
+        platform: SlotPlatform,
+        pool: &PgPool,
+    ) -> SqlResult<Option<Self>> {
+        // language=PostgreSQL
+        let emote = sqlx::query_as!(
+            Self,
+            r#"
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
+            FROM swap_emotes
+            WHERE user_id = $1 AND emote_id = $2 AND platform = $3"#,
+            user_id,
+            emote_id,
+            platform as _
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(emote)
+    }
+
     pub async fn all_emote_names(user_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
         let emotes =

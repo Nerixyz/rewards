@@ -1,3 +1,4 @@
+pub mod banned_emote;
 pub mod config;
 pub mod discord;
 pub mod editor;
