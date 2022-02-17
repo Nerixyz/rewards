@@ -1,3 +1,5 @@
+mod messages;
+
 use crate::{
     actors::discord::DiscordActor,
     embed_builder, log_discord, log_err, send_discord,
@@ -7,9 +9,10 @@ use crate::{
     },
     RedisPool,
 };
-use actix::{Actor, Addr, AsyncContext, Context, WrapFuture};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, Supervised, SystemService, WrapFuture};
 use anyhow::Result as AnyResult;
 use deadpool_redis::redis::AsyncCommands;
+pub use messages::*;
 use models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User};
 use sqlx::PgPool;
 use std::time::Duration;
@@ -189,5 +192,25 @@ impl Actor for SlotActor {
                     .into_actor(this),
             );
         });
+    }
+}
+
+impl Handler<Recheck> for SlotActor {
+    type Result = ();
+
+    fn handle(&mut self, _: Recheck, ctx: &mut Self::Context) -> Self::Result {
+        ctx.spawn(
+            Self::queue_rewards(self.pool.clone(), self.redis.clone(), self.discord.clone())
+                .into_actor(self),
+        );
+    }
+}
+
+impl SystemService for SlotActor {}
+impl Supervised for SlotActor {}
+
+impl Default for SlotActor {
+    fn default() -> Self {
+        unreachable!();
     }
 }

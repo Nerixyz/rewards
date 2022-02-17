@@ -26,7 +26,7 @@ impl ChatCommand for SlotsCommand {
         ))
     }
 
-    fn parse(_args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(_cmd: &str, _args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {

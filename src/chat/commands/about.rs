@@ -21,7 +21,7 @@ impl ChatCommand for About {
         ))
     }
 
-    fn parse(_msg: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>> {
+    fn parse(_cmd: &str, _msg: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>> {
         Ok(Box::new(Self))
     }
 }

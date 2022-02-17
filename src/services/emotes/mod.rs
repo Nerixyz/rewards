@@ -1,6 +1,9 @@
 pub mod bttv;
 pub mod execute;
 pub mod ffz;
+pub mod format;
+pub mod remove;
+pub mod search;
 pub mod seven_tv;
 pub mod slots;
 pub mod swap;

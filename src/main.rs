@@ -1,4 +1,4 @@
-use actix::{Actor, Addr};
+use actix::{Actor, Addr, SystemRegistry};
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_metrics::Metrics;
@@ -110,12 +110,14 @@ async fn main() -> std::io::Result<()> {
     .start();
     let discord_user_actor = DiscordActor::new(pg_pool.clone()).start();
 
-    SlotActor::new(
-        pg_pool.clone(),
-        redis_pool.clone(),
-        discord_user_actor.clone(),
-    )
-    .start();
+    SystemRegistry::set(
+        SlotActor::new(
+            pg_pool.clone(),
+            redis_pool.clone(),
+            discord_user_actor.clone(),
+        )
+        .start(),
+    );
 
     log::info!("Announcing on twitch and discord");
 

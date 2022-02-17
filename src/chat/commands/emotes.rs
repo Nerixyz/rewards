@@ -60,7 +60,7 @@ impl ChatCommand for Emotes {
         })
     }
 
-    fn parse(args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(_cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {
