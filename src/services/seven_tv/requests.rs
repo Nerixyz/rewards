@@ -47,8 +47,14 @@ where
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
+struct GqlErrors {
+    errors: Vec<GqlError>,
+}
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
 struct GqlError {
-    errors: Vec<String>,
+    message: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -164,12 +170,13 @@ where
             "Non OK status: {} - Error: {}",
             response.status(),
             response
-                .json::<GqlError>()
+                .json::<GqlErrors>()
                 .await
                 .map(|e| e
                     .errors
                     .into_iter()
                     .next()
+                    .map(|e| e.message)
                     .unwrap_or_else(|| "<no error>?".to_string()))
                 .unwrap_or_else(|e| e.to_string())
         )));
