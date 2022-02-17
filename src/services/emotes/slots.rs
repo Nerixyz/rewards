@@ -3,6 +3,7 @@ use crate::{
     models::{log_entry::LogEntry, reward::SlotRewardData, slot::Slot, user::User},
     services::{
         emotes::{Emote, EmoteId, EmoteRW},
+        text::trim_to,
         twitch::requests::update_reward,
     },
 };
@@ -150,7 +151,7 @@ where
         .await
         .map_err(|e| {
             log::warn!("Could not add: {}", e);
-            AnyError::msg("Couldn't add emote")
+            AnyError::msg(trim_to(format!("Couldn't add emote: {}", e), 200))
         })?;
 
     let expiration = humantime::parse_duration(&slot_data.expiration)

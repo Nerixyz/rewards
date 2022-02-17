@@ -1,7 +1,10 @@
 use crate::{
     log_err,
     models::{reward::SwapRewardData, swap_emote::SwapEmote},
-    services::emotes::{Emote, EmoteRW},
+    services::{
+        emotes::{Emote, EmoteRW},
+        text::trim_to,
+    },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
@@ -43,7 +46,10 @@ where
     );
     if let Err(e) = RW::add_emote(&data.platform_id, data.emote.id()).await {
         log::warn!("Could not add emote: {}", e);
-        return Err(AnyError::msg("Couldn't add emote."));
+        return Err(AnyError::msg(trim_to(
+            format!("Couldn't add emote: {}", e),
+            200,
+        )));
     }
     SwapEmote::add(
         broadcaster_id,

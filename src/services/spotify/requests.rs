@@ -209,13 +209,13 @@ where
     U: IntoUrl,
     T: DeserializeOwned,
 {
-    Ok(SPOTIFY_CLIENT
+    SPOTIFY_CLIENT
         .get(url)
         .header("Authorization", format!("Bearer {}", auth_token))
         .send()
         .map_err(AnyError::from)
         .and_then(maybe_json)
-        .await?)
+        .await
 }
 
 async fn maybe_json<T>(res: Response) -> AnyResult<Option<T>>
