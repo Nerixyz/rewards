@@ -112,13 +112,19 @@ pub async fn get_user(id: &str) -> AnyResult<FfzUser> {
 pub async fn get_channels() -> AnyResult<Vec<String>> {
     lazy_static! {
         static ref CHANNEL_REGEX: Regex =
-            Regex::new("<li><a href=\"/channel/([\\w_]+)\">[^My ]{3}").expect("must compile");
+            Regex::new("<li><a href=\"/channel/([\\w_]+)").expect("must compile");
     }
 
     let text = ffz_get_text("https://www.frankerfacez.com/").await?;
     Ok(CHANNEL_REGEX
         .captures_iter(&text)
-        .filter_map(|c: Captures| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
+        .filter_map(|c: Captures| {
+            c.iter()
+                .nth(1)
+                .flatten()
+                .filter(|m| m.as_str() != "mine")
+                .map(|m| m.as_str().to_string())
+        })
         .collect())
 }
 
