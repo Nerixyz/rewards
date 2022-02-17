@@ -21,9 +21,9 @@ use crate::{
         live::{LiveActor, LiveMessage, OfflineMessage},
         timeout::{RemoveTimeoutMessage, TimeoutActor},
     },
-    config::CONFIG,
     log_discord, log_err,
 };
+use config::CONFIG;
 
 mod messages;
 mod token_provider;

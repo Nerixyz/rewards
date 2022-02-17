@@ -1,7 +1,5 @@
-use crate::{
-    config::CONFIG,
-    services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient},
-};
+use crate::services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient};
+use config::CONFIG;
 use twitch_api2::{
     eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport, TransportMethod},
     helix::{

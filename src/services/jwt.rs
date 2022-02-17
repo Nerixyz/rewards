@@ -1,8 +1,9 @@
-use crate::{config::CONFIG, models::user::User};
 use actix_web::Result;
+use config::CONFIG;
 use jsonwebtoken::{
     decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
 };
+use models::user::User;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use time::{Duration, OffsetDateTime};

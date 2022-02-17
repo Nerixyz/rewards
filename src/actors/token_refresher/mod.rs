@@ -1,10 +1,10 @@
 use crate::{
     log_err,
-    models::{spotify::SpotifyData, user::User},
     services::{spotify::requests::refresh_token, twitch},
 };
 use actix::{Actor, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
+use models::{spotify::SpotifyData, user::User};
 use sqlx::PgPool;
 use std::time::Duration;
 use twitch_api2::twitch_oauth2::{TwitchToken, UserToken};
@@ -76,7 +76,7 @@ async fn refresh_spotify_tokens(pool: &PgPool) -> AnyResult<()> {
         match refresh_token(&user.refresh_token).await {
             Ok(res) => {
                 log_err!(
-                    SpotifyData::update_token(&user.user_id, &res, pool).await,
+                    SpotifyData::update_token(&user.user_id, &res.access_token, pool).await,
                     "Failed to insert"
                 );
             }

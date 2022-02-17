@@ -1,12 +1,12 @@
 use crate::{
     log_err,
-    models::{reward::SwapRewardData, swap_emote::SwapEmote},
     services::{
         emotes::{Emote, EmoteRW},
         text::trim_to,
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
+use models::{reward::SwapRewardData, swap_emote::SwapEmote};
 use sqlx::PgPool;
 use std::{fmt::Display, str::FromStr};
 

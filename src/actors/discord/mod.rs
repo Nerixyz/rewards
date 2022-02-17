@@ -2,10 +2,10 @@ mod messages;
 
 use crate::{
     log_err,
-    models::discord,
     services::discord::{send_user_webhook_message, WebhookReq},
 };
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
+use models::discord;
 use sqlx::PgPool;
 
 pub use messages::*;

@@ -1,6 +1,5 @@
-use crate::config::CONFIG;
-use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
+use config::CONFIG;
 use errors::sql::SqlResult;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
@@ -77,14 +76,6 @@ pub struct SwapRewardData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SpotifyPlayOptions {
     pub allow_explicit: bool,
-}
-
-impl Responder for Reward {
-    type Body = BoxBody;
-
-    fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
-        HttpResponse::Ok().json(&self)
-    }
 }
 
 impl Reward {

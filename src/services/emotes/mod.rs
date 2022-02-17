@@ -5,9 +5,9 @@ pub mod seven_tv;
 pub mod slots;
 pub mod swap;
 
-use crate::models::emote::SlotPlatform;
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
+use models::emote::SlotPlatform;
 use sqlx::PgPool;
 
 pub struct EmoteInitialData<I, E> {

@@ -35,7 +35,7 @@ macro_rules! embed_builder {
 #[macro_export]
 macro_rules! log_discord {
     ($message:expr) => {
-        {if crate::config::CONFIG.log.webhook_url.is_some() {
+        {if config::CONFIG.log.webhook_url.is_some() {
             let msg = crate::services::discord::WebhookReq::Content($message.into());
             tokio::spawn(async move {
                 crate::log_err!(crate::services::discord::send_webhook_message(&msg).await, "Could not send webhook message");
@@ -46,7 +46,7 @@ macro_rules! log_discord {
         crate::log_discord!($title, $description, 0xe91916, $($name = $value),*)
     };
     ($title:literal, $description:expr, $color:expr, $($name:literal = $value:expr),*) => {
-        {if crate::config::CONFIG.log.webhook_url.is_some() {
+        {if config::CONFIG.log.webhook_url.is_some() {
             let msg = crate::services::discord::WebhookReq::Embeds(vec![crate::embed_builder!($title, $description, $color, $($name = $value),*)]);
             tokio::spawn(async move {
                 crate::log_err!(crate::services::discord::send_webhook_message(&msg).await, "Could not send webhook message");

@@ -1,4 +1,3 @@
-use crate::services::spotify::responses::{AccessTokenResponse, RefreshTokenResponse};
 use errors::sql::SqlResult;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
@@ -35,7 +34,12 @@ impl SpotifyData {
         Ok(data)
     }
 
-    pub async fn add(id: &str, token: &AccessTokenResponse, pool: &PgPool) -> SqlResult<()> {
+    pub async fn add(
+        id: &str,
+        access_token: &str,
+        refresh_token: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             "
@@ -43,24 +47,20 @@ impl SpotifyData {
             VALUES ($1, $2, $3)
             ",
             id,
-            token.access_token,
-            token.refresh_token
+            access_token,
+            refresh_token
         )
         .execute(pool)
         .await?;
         Ok(())
     }
 
-    pub async fn update_token(
-        id: &str,
-        token: &RefreshTokenResponse,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
+    pub async fn update_token(id: &str, access_token: &str, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             "UPDATE spotify SET access_token=$2 WHERE user_id=$1",
             id,
-            token.access_token
+            access_token
         )
         .execute(pool)
         .await?;

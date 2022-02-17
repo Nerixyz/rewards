@@ -1,4 +1,4 @@
-use crate::models::user::User;
+use crate::user::User;
 use errors::sql::SqlResult;
 use sqlx::PgPool;
 

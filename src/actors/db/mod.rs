@@ -3,7 +3,7 @@ use errors::sql::SqlResult;
 use sqlx::PgPool;
 use twitch_irc::login::UserAccessToken;
 
-use crate::models::config::ConfigEntry;
+use models::config::ConfigEntry;
 
 mod messages;
 pub use messages::*;

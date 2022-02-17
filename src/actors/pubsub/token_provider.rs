@@ -3,7 +3,7 @@ use errors::{json_error::JsonError, sql::SqlReason};
 use sqlx::PgPool;
 use twitch_pubsub::{TokenProvider, Topic};
 
-use crate::models::config::ConfigEntry;
+use models::config::ConfigEntry;
 
 #[derive(Debug)]
 pub struct PubsubTokenProvider(pub PgPool);

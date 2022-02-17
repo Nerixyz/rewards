@@ -13,9 +13,9 @@ use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToke
 use crate::{
     actors::irc::{IrcActor, SayMessage},
     log_discord, log_err,
-    models::{reward::Reward, user::User},
     services::twitch::requests::{get_reward_for_broadcaster_by_id, update_reward},
 };
+use models::{reward::Reward, user::User};
 
 mod messages;
 pub use messages::*;

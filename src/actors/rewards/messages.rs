@@ -1,5 +1,5 @@
-use crate::models::{reward::Reward, user::User};
 use actix::Message;
+use models::{reward::Reward, user::User};
 use twitch_api2::eventsub::{
     channel::{
         ChannelPointsCustomRewardRedemptionAddV1, ChannelPointsCustomRewardRedemptionAddV1Payload,

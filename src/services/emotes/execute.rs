@@ -5,15 +5,14 @@ use sqlx::PgPool;
 
 use crate::{
     actors::discord::DiscordActor,
-    embed_builder,
-    models::reward::{SlotRewardData, SwapRewardData},
-    send_discord,
+    embed_builder, send_discord,
     services::{
         emotes::{slots, swap, Emote, EmoteRW},
         rewards::Redemption,
     },
 };
 use actix::Addr;
+use models::reward::{SlotRewardData, SwapRewardData};
 use std::str::FromStr;
 
 pub async fn execute_swap<RW, F, I, E, EI>(

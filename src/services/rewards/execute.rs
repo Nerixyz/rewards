@@ -13,11 +13,6 @@ use crate::{
         irc::{IrcActor, TimedModeMessage, TimeoutMessage},
         timeout::{CheckValidTimeoutMessage, TimeoutActor},
     },
-    models::{
-        reward::{SlotRewardData, SpotifyPlayOptions, SwapRewardData},
-        timed_mode,
-        user::User,
-    },
     services::{
         emotes::{
             execute::{execute_slot, execute_swap},
@@ -31,6 +26,11 @@ use crate::{
         spotify::rewards as spotify,
         twitch::requests::get_user_by_login,
     },
+};
+use models::{
+    reward::{SlotRewardData, SpotifyPlayOptions, SwapRewardData},
+    timed_mode,
+    user::User,
 };
 use std::{fmt::Display, str::FromStr};
 

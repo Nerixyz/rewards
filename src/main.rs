@@ -33,9 +33,7 @@ use crate::{
         timeout::TimeoutActor,
         token_refresher::TokenRefresher,
     },
-    config::CONFIG,
     middleware::useragent::UserAgentGuard,
-    models::user::User,
     repositories::init_repositories,
     services::{
         eventsub::{
@@ -46,6 +44,8 @@ use crate::{
         timed_mode::resolve_timed_modes,
     },
 };
+use config::CONFIG;
+use models::user::User;
 use std::convert::TryInto;
 
 pub type RedisPool = deadpool_redis::Pool;
@@ -53,10 +53,8 @@ pub type RedisConn = deadpool_redis::Connection;
 
 mod actors;
 mod chat;
-mod config;
 mod extractors;
 mod middleware;
-mod models;
 mod repositories;
 mod services;
 

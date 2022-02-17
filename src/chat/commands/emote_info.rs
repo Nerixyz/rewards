@@ -1,6 +1,5 @@
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    models::{slot::Slot, swap_emote::SwapEmote},
     services::formatting::human_format_duration,
     RedisConn,
 };
@@ -10,6 +9,7 @@ use chrono::Utc;
 use deadpool_redis::redis::AsyncCommands;
 use either::Either;
 use futures::TryFutureExt;
+use models::{slot::Slot, swap_emote::SwapEmote};
 use sqlx::PgPool;
 use twitch_irc::message::PrivmsgMessage;
 

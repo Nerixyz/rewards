@@ -1,5 +1,5 @@
-use crate::config::CONFIG;
 use anyhow::{Error as AnyError, Result as AnyResult};
+use config::CONFIG;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};

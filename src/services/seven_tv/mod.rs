@@ -1,6 +1,8 @@
 use anyhow::{Error as AnyError, Result as AnyResult};
 
-use crate::{config::CONFIG, models::user::User, services::seven_tv::requests::get_user_editors};
+use crate::services::seven_tv::requests::get_user_editors;
+use config::CONFIG;
+use models::user::User;
 use sqlx::PgPool;
 
 pub mod requests;

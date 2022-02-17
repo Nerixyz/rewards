@@ -1,12 +1,12 @@
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote},
     RedisConn,
 };
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use futures::future;
 use itertools::Itertools;
+use models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote};
 use sqlx::PgPool;
 use twitch_irc::message::PrivmsgMessage;
 

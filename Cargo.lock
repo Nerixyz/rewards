@@ -570,6 +570,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "config"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "serde",
+ "sqlx",
+ "toml",
+]
+
+[[package]]
 name = "console"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1686,6 +1697,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "models"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "config",
+ "derive_more",
+ "errors",
+ "futures",
+ "http",
+ "serde",
+ "sqlx",
+ "twitch-irc",
+ "twitch_api2",
+]
+
+[[package]]
 name = "native-tls"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2231,6 +2258,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "chrono",
+ "config",
  "cookie 0.16.0",
  "deadpool-postgres",
  "deadpool-redis",
@@ -2252,6 +2280,7 @@ dependencies = [
  "log",
  "metrics 0.17.1",
  "metrics-exporter-prometheus",
+ "models",
  "paste",
  "percent-encoding",
  "pin-project",
@@ -2268,7 +2297,6 @@ dependencies = [
  "time 0.3.7",
  "tokio",
  "tokio-stream",
- "toml",
  "twitch-irc",
  "twitch-pubsub",
  "twitch_api2",

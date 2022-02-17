@@ -18,9 +18,7 @@ use crate::{
         irc::{IrcActor, JoinMessage, PartMessage},
         pubsub::{PubSubActor, SubMessage},
     },
-    config::CONFIG,
     log_discord,
-    models::{reward::Reward, user::User},
     services::{
         eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
         jwt::{encode_jwt, JwtClaims},
@@ -28,6 +26,8 @@ use crate::{
         twitch::requests::delete_reward,
     },
 };
+use config::CONFIG;
+use models::{reward::Reward, user::User};
 
 #[derive(Deserialize)]
 #[non_exhaustive]

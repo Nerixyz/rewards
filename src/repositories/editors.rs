@@ -1,10 +1,10 @@
 use crate::{
     log_discord,
-    models::editor::Editor,
     services::{jwt::JwtClaims, twitch::get_many_users},
     RedisPool,
 };
 use actix_web::{delete, get, put, web, HttpResponse, Result};
+use models::editor::Editor;
 use sqlx::PgPool;
 
 #[get("")]

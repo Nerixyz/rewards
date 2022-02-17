@@ -1,4 +1,4 @@
-use crate::config::CONFIG;
+use config::CONFIG;
 use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 use std::time::Duration;

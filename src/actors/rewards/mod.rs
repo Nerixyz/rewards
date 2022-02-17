@@ -1,7 +1,6 @@
 mod messages;
 use crate::{
     actors::{discord::DiscordActor, irc::IrcActor, timeout::TimeoutActor},
-    models::{reward::RewardData, timed_mode},
     services::{
         emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes},
         rewards::{execute, extract},
@@ -12,6 +11,7 @@ use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use anyhow::Result as AnyResult;
 use futures::FutureExt;
 pub use messages::*;
+use models::{reward::RewardData, timed_mode};
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::RwLock;

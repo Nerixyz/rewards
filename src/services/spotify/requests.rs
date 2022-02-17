@@ -1,13 +1,11 @@
-use crate::{
-    config::CONFIG,
-    services::spotify::{
-        auth::get_redirect_url,
-        responses::{
-            AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
-        },
+use crate::services::spotify::{
+    auth::get_redirect_url,
+    responses::{
+        AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
+use config::CONFIG;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use percent_encoding::{AsciiSet, CONTROLS};

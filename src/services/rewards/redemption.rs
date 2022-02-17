@@ -2,11 +2,11 @@ use super::Redemption;
 use crate::{
     actors::{irc::WhisperMessage, rewards::ExecuteRewardMessage},
     log_discord,
-    models::reward::Reward,
     services::twitch::eventsub::update_reward_redemption,
     IrcActor, PgPool, RewardsActor, User,
 };
 use actix::{Addr, MailboxError};
+use models::reward::Reward;
 use std::{
     sync::Arc,
     time::{Duration, Instant},

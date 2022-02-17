@@ -1,13 +1,11 @@
-use crate::{
-    models::{emote::SlotPlatform, swap_emote::SwapEmote},
-    services::{
-        emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW},
-        seven_tv::{get_or_fetch_id, requests as seven_tv},
-    },
+use crate::services::{
+    emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW},
+    seven_tv::{get_or_fetch_id, requests as seven_tv},
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;
+use models::{emote::SlotPlatform, swap_emote::SwapEmote};
 use sqlx::PgPool;
 
 pub struct SevenTvEmotes {
