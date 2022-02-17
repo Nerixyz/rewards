@@ -64,7 +64,7 @@ pub async fn timeout(
 
         if !ok_timeout {
             return Err(AnyError::msg(
-                "Refusing to change timeout: This user was timed out my another moderator.",
+                "Refusing to change timeout: This user was timed out by another moderator.",
             ));
         }
 
