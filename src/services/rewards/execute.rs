@@ -44,33 +44,50 @@ pub async fn timeout(
         Addr<TimeoutActor>,
     ),
 ) -> AnyResult<()> {
-    // check timeout
-    let username = extract::username(&redemption.user_input)?.to_lowercase();
-    let user = get_user_by_login(username.clone(), &*app_token.read().await)
-        .await
-        .map_err(|e| AnyError::msg(format!("Could not get user: {}", e)))?;
+    let reply_data = get_reply_data(&redemption);
+    let reply_irc_addr = irc.clone();
+    let result = async move {
+        // check timeout
+        let username = extract::username(&redemption.user_input)?.to_lowercase();
+        let user = get_user_by_login(username.clone(), &*app_token.read().await)
+            .await
+            .map_err(|e| AnyError::msg(format!("This user doesn't seem to exist: {}", e)))?;
 
-    let ok_timeout = timeout_handler
-        .send(CheckValidTimeoutMessage {
-            channel_id: redemption.broadcaster_user_id.clone().into_string(),
-            user_id: user.id.clone().into_string(),
+        let ok_timeout = timeout_handler
+            .send(CheckValidTimeoutMessage {
+                channel_id: redemption.broadcaster_user_id.clone().into_string(),
+                user_id: user.id.clone().into_string(),
+            })
+            .await
+            .map_err(|_| AnyError::msg("Too much traffic"))?
+            .map_err(|_| AnyError::msg("Internal error"))?;
+
+        if !ok_timeout {
+            return Err(AnyError::msg(
+                "Refusing to change timeout: This user was timed out my another moderator.",
+            ));
+        }
+
+        irc.send(TimeoutMessage {
+            user: extract::username(&redemption.user_input)?,
+            user_id: user.id.into_string(),
+            duration: extract::duration(&timeout)?,
+            broadcaster: broadcaster.name,
+            broadcaster_id: redemption.broadcaster_user_id.into_string(),
         })
-        .await
-        .map_err(|_| AnyError::msg("Too much traffic"))?
-        .map_err(|_| AnyError::msg("Internal error"))?;
-
-    if !ok_timeout {
-        return Err(AnyError::msg("Can't timeout this user"));
+        .await??;
+        Ok(())
     }
-
-    irc.send(TimeoutMessage {
-        user: extract::username(&redemption.user_input)?,
-        user_id: user.id.into_string(),
-        duration: extract::duration(&timeout)?,
-        broadcaster: broadcaster.name,
-        broadcaster_id: redemption.broadcaster_user_id.into_string(),
-    })
-    .await??;
+    .await;
+    if matches!(result, Err(_)) {
+        reply_to_redemption(
+            result.map(|_| unreachable!("only errors are printed")),
+            &reply_irc_addr,
+            reply_data.0,
+            reply_data.1,
+        )
+        .await?;
+    }
     Ok(())
 }
 

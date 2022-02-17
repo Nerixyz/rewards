@@ -260,7 +260,8 @@ impl Handler<TimeoutMessage> for IrcActor {
                         "usage_timeout"
                         | "timeout_no_timeout"
                         | "invalid_user"
-                        | "bad_timeout_duration" => return Err(AnyError::msg(id.clone())),
+                        | "bad_timeout_duration"
+                        | "already_banned" => return Err(AnyError::msg(id.clone())),
                         _ => {
                             if id.starts_with("bad_timeout") {
                                 return Err(AnyError::msg(id.clone()));
