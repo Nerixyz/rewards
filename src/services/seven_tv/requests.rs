@@ -47,6 +47,12 @@ where
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
+struct GqlError {
+    errors: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
 struct SevenEmoteResponse {
     emote: SevenEmote,
 }
@@ -158,9 +164,14 @@ where
             "Non OK status: {} - Error: {}",
             response.status(),
             response
-                .text()
+                .json::<GqlError>()
                 .await
-                .unwrap_or_else(|_| "<no error?>".to_string())
+                .map(|e| e
+                    .errors
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(|| "<no error>?".to_string()))
+                .unwrap_or_else(|e| e.to_string())
         )));
     }
 
