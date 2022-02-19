@@ -82,22 +82,26 @@ where
     let mut emote = None;
     let mut removed_from_db = 0;
     while let Ok(Some(db_emote)) = SwapEmote::oldest(user_id, RW::platform(), pool).await {
-        if let Err(e) = RW::remove_emote(
+        let actually_removed = if let Err(e) = RW::remove_emote(
             platform_id,
-            &EI::from_str(&db_emote.emote_id).unwrap_or_default(),
+            &EI::from_str(&db_emote.emote_id).unwrap_or_default()
         )
         .await
         {
             log::info!("Skipping emote: {:?}; error={}", db_emote, e);
-            continue;
-        }
+            false
+        } else {
+            true
+        };
         log_err!(
             SwapEmote::remove(db_emote.id, pool).await,
             "Failed to remove a swap emote even though we just got the id"
         );
-        emote = Some(db_emote);
-        removed_from_db += 1;
-        break;
+        if actually_removed {
+            emote = Some(db_emote);
+            removed_from_db += 1;
+            break;
+        }
     }
 
     (
