@@ -84,7 +84,7 @@ where
     while let Ok(Some(db_emote)) = SwapEmote::oldest(user_id, RW::platform(), pool).await {
         let actually_removed = if let Err(e) = RW::remove_emote(
             platform_id,
-            &EI::from_str(&db_emote.emote_id).unwrap_or_default()
+            &EI::from_str(&db_emote.emote_id).unwrap_or_default(),
         )
         .await
         {

@@ -1,18 +1,25 @@
 use crate::{
     actors::slot::Recheck,
-    services::emotes::{
-        bttv::BttvEmotes, ffz::FfzEmotes, search::search_by_id, seven_tv::SevenTvEmotes, EmoteRW,
+    services::{
+        emotes::{
+            bttv::BttvEmotes, ffz::FfzEmotes, search::search_by_id, seven_tv::SevenTvEmotes,
+            EmoteRW,
+        },
+        twitch::requests::update_reward,
     },
-    SlotActor,
+    AnyError, SlotActor,
 };
 use actix::SystemService;
 use anyhow::{anyhow, Result as AnyResult};
 use chrono::{TimeZone, Utc};
 use either::Either;
-use models::{emote::SlotPlatform, swap_emote::SwapEmote};
+use futures_util::{future, TryFutureExt};
+use models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote, user::User};
 use sqlx::PgPool;
 use std::str::FromStr;
+use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
 
+/// Untracks and removes the emote both from the db and the platform.
 pub async fn remove_emote(
     channel_id: &str,
     emote_id: &str,
@@ -41,6 +48,48 @@ pub async fn remove_emote(
             }
         },
     }
+    Ok(())
+}
+
+/// Only untracks the emote in the database. Doesn't remove the emote from the platform.
+pub async fn untrack_emote(
+    channel_id: &str,
+    emote_id: &str,
+    slot_platform: SlotPlatform,
+    pool: &PgPool,
+) -> AnyResult<String> {
+    let name = match search_by_id(channel_id, emote_id, slot_platform, pool)
+        .await?
+        .ok_or_else(|| anyhow!("Couldn't find emote"))?
+    {
+        Either::Left(slot) => {
+            future::try_join(
+                Slot::clear(slot.id, pool).map_err(AnyError::from),
+                enable_reward(&slot, pool),
+            )
+            .await?;
+            slot.name.unwrap_or_else(|| "<empty slot>".to_string())
+        }
+        Either::Right(swap) => {
+            SwapEmote::remove(swap.id, pool).await?;
+            swap.name
+        }
+    };
+    Ok(name)
+}
+
+async fn enable_reward(slot: &Slot, pool: &PgPool) -> AnyResult<()> {
+    let user = User::get_by_id(&slot.user_id, &pool).await?;
+    let token: UserToken = user.into();
+    update_reward(
+        &token.user_id,
+        slot.reward_id.clone(),
+        UpdateCustomRewardBody::builder()
+            .is_paused(Some(false))
+            .build(),
+        &token,
+    )
+    .await?;
     Ok(())
 }
 

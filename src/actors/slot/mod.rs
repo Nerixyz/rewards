@@ -149,6 +149,7 @@ impl SlotActor {
                 }
             };
 
+            // also called when untracking emotes
             match update_reward(
                 &token.user_id,
                 p.reward_id.clone(),
