@@ -7,6 +7,14 @@
       Make sure to mod <b class="border-red border-b">RewardMore</b> in chat to be able to use rewards that require
       mod-access!
     </div>
+    <a
+      href="https://github.com/Nerixyz/rewards"
+      target="_blank"
+      title="GitHub Project"
+      class="mt-8 transition-transform ease-cubic-out hover:scale-150"
+    >
+      <GithubIcon />
+    </a>
   </div>
 </template>
 
@@ -17,10 +25,11 @@ import Heading from '../components/core/Heading.vue';
 import SubHeading from '../components/core/SubHeading.vue';
 import CButton from '../components/core/CButton.vue';
 import { useApi } from '../api/plugin';
+import GithubIcon from '../components/icons/GithubIcon.vue';
 
 export default defineComponent({
   name: 'Home',
-  components: { SubHeading, Heading, TwitchIcon, CButton },
+  components: { GithubIcon, SubHeading, Heading, TwitchIcon, CButton },
   setup() {
     const api = useApi();
     return {
