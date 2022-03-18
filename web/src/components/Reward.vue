@@ -1,18 +1,7 @@
 <template>
   <router-link :to="`/rewards/${reward.twitch.broadcaster_id}/${reward.twitch.id}`">
     <div
-      class="
-        flex flex-col
-        gap-2
-        transition transition-transform transition-opacity
-        transform
-        bg-gray-300
-        rounded-xl
-        overflow-hidden
-        cursor-pointer
-        border border-transparent border-opacity-5 border-white
-        hover:scale-105 hover:border-opacity-20
-      "
+      class="flex flex-col gap-2 transition transition transform bg-gray-300 rounded-xl overflow-hidden cursor-pointer border border-opacity-5 border-white hover:scale-105 hover:border-opacity-20 focus:scale-105 focus:border-opacity-20"
     >
       <div class="flex flex-col p-4 w-60">
         <div v-if="imageUrl" class="flex items-center justify-center">
@@ -34,19 +23,7 @@
       </div>
       <div class="">
         <button
-          class="
-            py-2
-            px-3
-            uppercase
-            font-bold
-            flex
-            items-center
-            w-full
-            justify-center
-            transition transition-colors
-            border-t border-red
-            hover:bg-red-dark hover:text-black hover:border-transparent
-          "
+          class="py-2 px-3 uppercase font-bold flex items-center w-full justify-center transition transition-colors border-t border-red hover:bg-red-dark hover:text-black hover:border-transparent"
           @click.prevent="$emit('deleteReward', reward)"
         >
           <TrashIcon /> Delete
