@@ -70,8 +70,8 @@ module.exports = {
     },
     keyframes: {
       bing: {
-        '0%, 100%': { transform: 'scale(100%) rotate(0)' },
-        '50%': { transform: 'scale(105%) rotate(20deg)' },
+        '0%, 100%': { transform: 'scale(100%) rotate(0)', filter: 'brightness(1)' },
+        '50%': { transform: 'scale(105%) rotate(20deg)', filter: 'brightness(2)' },
       },
     },
     animation: {
