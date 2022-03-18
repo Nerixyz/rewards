@@ -1,6 +1,6 @@
 <template>
   <CDialog :open="dialogOpen" title="Choose an Action">
-    <ul class="overflow-y-auto max-w-5xl max-h-75vh flex flex-col gap-3 p-2">
+    <ul class="overflow-y-auto max-w-3xl max-h-75vh flex flex-col gap-3 p-2">
       <ActionType v-model="rewardAction" action="Timeout" description="Timeout someone" />
       <ActionCategory name="Timed Modes">
         <ActionType v-model="rewardAction" action="EmoteOnly" description="Turn on emote-only mode for some time" />
@@ -8,29 +8,42 @@
       </ActionCategory>
       <ActionCategory
         name="Emote Swaps"
-        description="Swap emotes on some platform. This will add emotes until the limit
-      is reached and then remove the last added emotes."
+        description="Adds emotes until a specified limit is reached. Then removes the oldest emotes in order. In contrast to Slots, this reward is more dynamic."
       >
-        <ActionType v-model="rewardAction" action="BttvSwap" description="Swap emotes on BTTV" />
-        <ActionType v-model="rewardAction" action="FfzSwap" description="Swap emotes on FFZ" />
-        <ActionType v-model="rewardAction" action="SevenTvSwap" description="Swap emotes on 7TV" />
+        <ActionType v-model="rewardAction" action="BttvSwap" action-name="BTTV" description="Swap emotes on BTTV" />
+        <ActionType v-model="rewardAction" action="FfzSwap" action-name="FFZ" description="Swap emotes on FFZ" />
+        <ActionType v-model="rewardAction" action="SevenTvSwap" action-name="7TV" description="Swap emotes on 7TV" />
       </ActionCategory>
       <ActionCategory
         name="Emote Slots"
-        description="Create slots for emotes to be added to. A slot has an expiration time for how long an emote will be in it."
+        description="Add emotes into slots. A slot has an expiration time for how long an emote will be in it. In contrast to Swaps, here the reward will be locked until an emote expires, so emotes have a fixed duration for how long they will be added."
       >
-        <ActionType v-model="rewardAction" action="BttvSlot" description="Emote slots on BTTV" />
-        <ActionType v-model="rewardAction" action="FfzSlot" description="Emote slots on FFZ" />
-        <ActionType v-model="rewardAction" action="SevenTvSlot" description="Emote slots on 7TV" />
+        <ActionType v-model="rewardAction" action="BttvSlot" action-name="BTTV" description="Emote slots on BTTV" />
+        <ActionType v-model="rewardAction" action="FfzSlot" action-name="FFZ" description="Emote slots on FFZ" />
+        <ActionType v-model="rewardAction" action="SevenTvSlot" action-name="7TV" description="Emote slots on 7TV" />
       </ActionCategory>
-      <ActionCategory name="Spotify">
+      <ActionCategory
+        name="Spotify"
+        description="These rewards require Spotify Premium since they control the Spotify player."
+      >
         <ActionType
           v-model="rewardAction"
           action="SpotifySkip"
+          action-name="Skip"
           description="Skip the currently playing track on Spotify"
         />
-        <ActionType v-model="rewardAction" action="SpotifyPlay" description="Play a track on Spotify" />
-        <ActionType v-model="rewardAction" action="SpotifyQueue" description="Queue a track on Spotify" />
+        <ActionType
+          v-model="rewardAction"
+          action="SpotifyPlay"
+          action-name="Play"
+          description="Play a track on Spotify"
+        />
+        <ActionType
+          v-model="rewardAction"
+          action="SpotifyQueue"
+          action-name="Queue"
+          description="Queue a track on Spotify"
+        />
       </ActionCategory>
     </ul>
     <div class="flex justify-end mt-3">

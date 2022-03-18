@@ -11,59 +11,53 @@
           </router-link>
         </div>
       </div>
-      <div
-        v-if="!userLoading"
-        class="
-          flex
-          gap-2
-          h-5/6
-          px-2
-          rounded-lg
-          justify-center
-          items-center
-          select-none
-          cursor-pointer
-          hover:bg-gray-350
-        "
-        @click="toggleMenu"
-      >
-        <span>{{ userName }}</span>
-        <img :src="userImage" alt="Profile Image" class="h-8 w-8 rounded-full" />
-        <ChevronDown :class="[state.menuOpen ? 'rotate-180' : '', 'transform transition transition-transform']" />
-        <div v-if="state.menuOpen" class="absolute block top-16 bg-gray-350 rounded-lg flex flex-col">
-          <button
-            class="uppercase bg-red m-2 rounded-md py-1 px-3 text-black font-bold hover:bg-red-dark"
-            @click.stop="openLogout"
-          >
-            Logout
-          </button>
-          <button
-            class="uppercase m-2 rounded-md py-1 px-3 text-sm text-red font-bold hover:bg-gray-400"
-            @click.stop="openDelete"
-          >
-            Delete Account
-          </button>
-        </div>
-
-        <!-- Logout Dialog -->
-        <CDialog title="Are you sure?" :open="state.logoutDialogOpen">
-          <DialogButtons>
-            <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
-            <CButton @click="logout">Logout</CButton>
-          </DialogButtons>
-        </CDialog>
-
-        <!-- Delete Account Dialog -->
-        <CDialog
-          title="Are you sure?"
-          subtitle="All rewards and connections will be deleted!"
-          :open="state.deleteDialogOpen"
+      <div class="flex items-center gap-4 h-5/6">
+        <a href="https://github.com/Nerixyz/rewards" target="_blank" title="GitHub Project">
+          <GithubIcon />
+        </a>
+        <div
+          v-if="!userLoading"
+          class="flex gap-2 h-5/6 px-2 rounded-lg justify-center items-center select-none cursor-pointer hover:bg-gray-350"
+          @click="toggleMenu"
         >
-          <DialogButtons>
-            <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
-            <CButton @click="deleteAccount">Delete Account</CButton>
-          </DialogButtons>
-        </CDialog>
+          <span>{{ userName }}</span>
+          <img :src="userImage" alt="Profile Image" class="h-8 w-8 rounded-full" />
+          <ChevronDown :class="[state.menuOpen ? 'rotate-180' : '', 'transform transition transition-transform']" />
+          <div v-if="state.menuOpen" class="absolute block top-16 bg-gray-350 rounded-lg flex flex-col">
+            <button
+              class="uppercase bg-red m-2 rounded-md py-1 px-3 text-black font-bold hover:bg-red-dark"
+              @click.stop="openLogout"
+            >
+              Logout
+            </button>
+            <button
+              class="uppercase m-2 rounded-md py-1 px-3 text-sm text-red font-bold hover:bg-gray-400"
+              @click.stop="openDelete"
+            >
+              Delete Account
+            </button>
+          </div>
+
+          <!-- Logout Dialog -->
+          <CDialog title="Are you sure?" :open="state.logoutDialogOpen">
+            <DialogButtons>
+              <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
+              <CButton @click="logout">Logout</CButton>
+            </DialogButtons>
+          </CDialog>
+
+          <!-- Delete Account Dialog -->
+          <CDialog
+            title="Are you sure?"
+            subtitle="All rewards and connections will be deleted!"
+            :open="state.deleteDialogOpen"
+          >
+            <DialogButtons>
+              <OutlinedButton @click="closeAll">Cancel</OutlinedButton>
+              <CButton @click="deleteAccount">Delete Account</CButton>
+            </DialogButtons>
+          </CDialog>
+        </div>
       </div>
     </div>
   </nav>
@@ -79,10 +73,11 @@ import CDialog from './core/CDialog.vue';
 import DialogButtons from './DialogButtons.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
+import GithubIcon from './icons/GithubIcon.vue';
 
 export default defineComponent({
   name: 'NavBar',
-  components: { CButton, OutlinedButton, DialogButtons, CDialog, ChevronDown },
+  components: { GithubIcon, CButton, OutlinedButton, DialogButtons, CDialog, ChevronDown },
   setup() {
     const router = useRouter();
     const route = useRoute();

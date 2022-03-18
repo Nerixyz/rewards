@@ -7,7 +7,8 @@
   ],
   "overrides": [{
     "rules": {
-      "vue/no-dupe-keys": "off"
+      "vue/no-dupe-keys": "off",
+      "@typescript-eslint/ban-ts-comment": "off"
     },
     "files": ["*.ts", "*.tsx", "*.vue", "*.js"]
   }]

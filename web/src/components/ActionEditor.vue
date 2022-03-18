@@ -76,6 +76,7 @@ export default defineComponent({
       get: () => props.action,
       set: (act: keyof RewardDataMap) => {
         if (!StaticRewardData[act].validOptions(actionData.value)) {
+          // @ts-ignore -- we know the options are compatible
           actionData.value = simpleClone(StaticRewardData[act].defaultOptions);
         }
 

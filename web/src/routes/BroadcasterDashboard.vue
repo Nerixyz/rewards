@@ -11,23 +11,7 @@
       <div v-if="state.value.length" class="flex flex-wrap gap-5">
         <RouterLink v-for="broadcaster of state.value" :key="broadcaster.id" :to="makeBroadcasterLink(broadcaster.id)">
           <div
-            class="
-              flex
-              items-center
-              flex-col
-              gap-4
-              bg-gray-300
-              rounded-lg
-              overflow-hidden
-              border border-gray-900 border-opacity-30
-              pt-4
-              select-none
-              cursor-pointer
-              transform
-              transition-transform transition-shadow
-              drop-shadow-none
-              hover:scale-105 hover:shadow-light
-            "
+            class="flex items-center flex-col gap-4 bg-gray-300 rounded-lg overflow-hidden border border-gray-900 border-opacity-30 pt-4 select-none cursor-pointer transition drop-shadow-none hover:scale-105 hover:shadow-light"
           >
             <img
               :src="broadcaster.profile_image_url"
