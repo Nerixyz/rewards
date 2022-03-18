@@ -20,7 +20,7 @@
     @click="setCurrent"
     @keydown.enter="setCurrent"
   >
-    <h3 class="font-bold font-mono text-xd">{{ action }}</h3>
+    <h3 class="font-bold font-mono text-xd">{{ actionName ?? action }}</h3>
     <span class="ml-3">{{ description }}</span>
   </li>
 </template>
@@ -35,6 +35,10 @@ export default defineComponent({
     action: {
       type: String as PropType<keyof RewardDataMap>,
       required: true,
+    },
+    actionName: {
+      type: String,
+      required: false,
     },
     modelValue: {
       type: String as PropType<keyof RewardDataMap>,

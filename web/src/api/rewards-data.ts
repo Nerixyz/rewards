@@ -121,7 +121,7 @@ export function defaultNewReward(): VRewardModel {
     cost: '',
     usesPerStream: '',
     usesPerUser: '',
-    cooldown: '0',
+    cooldown: '0m',
     color: '',
     prompt: '',
     action: {
