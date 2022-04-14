@@ -1,7 +1,9 @@
-use crate::{chat::command::ChatCommand, RedisConn};
+use crate::{chat::command::ChatCommand, AppAccessToken, RedisConn};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
 
 pub struct About;
@@ -13,6 +15,7 @@ impl ChatCommand for About {
         msg: PrivmsgMessage,
         _pool: &PgPool,
         _: &mut RedisConn,
+        _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         Ok(format!("@{}, I'm a bot made for rewards.nerixyz.de by @nerixyz in Rust {rustc_info} ({build_profile}) 📝 github.com/Nerixyz/rewards",
                    msg.sender.login,

@@ -1,8 +1,10 @@
-use crate::{chat::command::ChatCommand, RedisConn};
+use crate::{chat::command::ChatCommand, AppAccessToken, RedisConn};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use models::slot::Slot;
 use sqlx::PgPool;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
 
 pub struct SlotsCommand;
@@ -14,6 +16,7 @@ impl ChatCommand for SlotsCommand {
         msg: PrivmsgMessage,
         pool: &PgPool,
         _: &mut RedisConn,
+        _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         let occupation = Slot::get_occupation(&msg.channel_id, pool)
             .await

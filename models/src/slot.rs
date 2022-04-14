@@ -82,6 +82,25 @@ impl Slot {
         Ok(n_available.unwrap_or(0))
     }
 
+    pub async fn get_n_available_slots_for_platform(
+        user_id: &str,
+        platform: SlotPlatform,
+        pool: &PgPool,
+    ) -> SqlResult<i64> {
+        // language=PostgreSQL
+        let n_available = sqlx::query_scalar!(
+            "
+            SELECT count(*) FROM slots
+            WHERE platform = $1 and user_id = $2 and emote_id is null and expires is null
+        ",
+            platform as _,
+            user_id
+        )
+        .fetch_one(pool)
+        .await?;
+        Ok(n_available.unwrap_or(0))
+    }
+
     pub async fn get_all_slots(
         user_id: &str,
         reward_id: &str,

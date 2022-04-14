@@ -1,6 +1,6 @@
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    RedisConn,
+    AppAccessToken, RedisConn,
 };
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
@@ -8,6 +8,8 @@ use futures::future;
 use itertools::Itertools;
 use models::{emote::SlotPlatform, slot::Slot, swap_emote::SwapEmote};
 use sqlx::PgPool;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
 
 enum Requested {
@@ -28,6 +30,7 @@ impl ChatCommand for Emotes {
         msg: PrivmsgMessage,
         pool: &PgPool,
         _: &mut RedisConn,
+        _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         let resp = match self.requested {
             None => future::try_join(

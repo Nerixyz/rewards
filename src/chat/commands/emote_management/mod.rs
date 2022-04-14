@@ -5,7 +5,7 @@ mod info;
 
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    PgPool, RedisConn,
+    AppAccessToken, PgPool, RedisConn,
 };
 use anyhow::{anyhow, Result as AnyResult};
 use async_trait::async_trait;
@@ -13,6 +13,8 @@ use banning::{execute_ban, execute_unban};
 use eject::execute_eject;
 use info::execute_info;
 use models::editor::Editor;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
 
 pub enum EmoteManagement {
@@ -29,6 +31,7 @@ impl ChatCommand for EmoteManagement {
         msg: PrivmsgMessage,
         pool: &PgPool,
         redis: &mut RedisConn,
+        _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         match &self {
             Self::Info(emote) => execute_info(&msg, emote, pool, redis).await,

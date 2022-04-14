@@ -38,6 +38,8 @@ lazy_static! {
         .timeout(Duration::from_secs(15))
         .build()
         .unwrap();
+    static ref CHANNEL_REGEX: Regex =
+        Regex::new("<li><a href=\"/channel/([\\w_]+)").expect("must compile");
 }
 
 #[derive(Deserialize, Debug)]
@@ -110,11 +112,6 @@ pub async fn get_user(id: &str) -> AnyResult<FfzUser> {
 }
 
 pub async fn get_channels() -> AnyResult<Vec<String>> {
-    lazy_static! {
-        static ref CHANNEL_REGEX: Regex =
-            Regex::new("<li><a href=\"/channel/([\\w_]+)").expect("must compile");
-    }
-
     let text = ffz_get_text("https://www.frankerfacez.com/").await?;
     Ok(CHANNEL_REGEX
         .captures_iter(&text)
@@ -126,6 +123,11 @@ pub async fn get_channels() -> AnyResult<Vec<String>> {
                 .map(|m| m.as_str().to_string())
         })
         .collect())
+}
+
+pub async fn logged_in() -> AnyResult<bool> {
+    let text = ffz_get_text("https://www.frankerfacez.com/").await?;
+    Ok(CHANNEL_REGEX.is_match(&text))
 }
 
 pub async fn add_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {

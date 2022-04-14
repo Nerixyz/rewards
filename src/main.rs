@@ -96,7 +96,19 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Starting Db, Irc and Slot-Actor");
 
-    let chat_actor = ChatActor::new(pg_pool.clone(), redis_pool.clone()).start();
+    log::info!("Getting access-token");
+
+    let app_access_token = get_app_access_token()
+        .await
+        .expect("Could not get app access token");
+    let app_access_token = web::Data::new(RwLock::new(app_access_token));
+
+    let chat_actor = ChatActor::new(
+        pg_pool.clone(),
+        redis_pool.clone(),
+        app_access_token.clone().into_inner(),
+    )
+    .start();
 
     let timeout_actor = TimeoutActor::new(redis_pool.clone()).start();
 
@@ -130,12 +142,6 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not get users");
     irc_actor.do_send(JoinAllMessage(names));
 
-    log::info!("Getting access-token");
-
-    let app_access_token = get_app_access_token()
-        .await
-        .expect("Could not get app access token");
-    let app_access_token = web::Data::new(RwLock::new(app_access_token));
     TokenRefresher::new(pg_pool.clone()).start();
     let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
     let pubsub = PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
