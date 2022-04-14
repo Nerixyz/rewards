@@ -81,6 +81,27 @@ impl Editor {
         Ok(())
     }
 
+    pub async fn add_editor_for_name(
+        broadcaster_name: &str,
+        editor_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        let _ = sqlx::query!(
+            // language=PostgreSQL
+            "
+            INSERT INTO editors
+                (editor_id, broadcaster_id)
+             VALUES
+                    ($1, (SELECT id from users WHERE name = $2))
+            ",
+            editor_id,
+            broadcaster_name
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn delete_editor(
         broadcaster_id: &str,
         editor_name: &str,
@@ -95,6 +116,28 @@ impl Editor {
             ",
             broadcaster_id,
             editor_name
+        )
+        .execute(&mut tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn delete_editor_for_name(
+        broadcaster_name: &str,
+        editor_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        let mut tx = pool.begin().await?;
+        let _ = sqlx::query!(
+            // language=PostgreSQL
+            "
+            DELETE FROM editors
+                   WHERE editor_id = $2 AND broadcaster_id = (SELECT id from users WHERE name = $1)
+            ",
+            broadcaster_name,
+            editor_id
         )
         .execute(&mut tx)
         .await?;

@@ -1707,6 +1707,7 @@ dependencies = [
  "futures",
  "http",
  "serde",
+ "serde_json",
  "sqlx",
  "twitch-irc",
  "twitch_api2",

@@ -11,7 +11,7 @@ use twitch_api2::{
         users::{GetUsersRequest, User},
         Response,
     },
-    twitch_oauth2::{TwitchToken, UserToken},
+    twitch_oauth2::{tokens::errors::ValidationError, TwitchToken, UserToken},
     types::{Nickname, RewardId, UserId},
 };
 
@@ -171,4 +171,12 @@ pub async fn is_user_live<T: TwitchToken>(id: String, token: &T) -> HelixResult<
         .await?;
 
     Ok(response.data.into_iter().next().is_some())
+}
+
+pub async fn validate_token(token: &UserToken) -> anyhow::Result<bool> {
+    match token.validate_token(&RHelixClient::default()).await {
+        Ok(_) => Ok(true),
+        Err(ValidationError::NotAuthorized) => Ok(false),
+        Err(e) => Err(e.into()),
+    }
 }

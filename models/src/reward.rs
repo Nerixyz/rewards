@@ -34,6 +34,7 @@ pub struct LiveRewardAT {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, derive_more::Display)]
+// the tags are used in the debug command.
 #[serde(tag = "type", content = "data")]
 pub enum RewardData {
     #[display(fmt = "timeout")]
@@ -76,6 +77,11 @@ pub struct SwapRewardData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SpotifyPlayOptions {
     pub allow_explicit: bool,
+}
+
+#[derive(FromRow, Serialize, Deserialize)]
+pub struct RewardDataOnly {
+    pub data: Json<RewardData>,
 }
 
 impl Reward {
@@ -124,6 +130,37 @@ impl Reward {
         .await?;
 
         Ok(rewards)
+    }
+
+    pub async fn get_swaps_for_user(
+        user_id: &str,
+        reward_type: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<SwapRewardData>> {
+        // language=PostgreSQL
+        let data: Vec<RewardDataOnly> = sqlx::query_as!(
+            RewardDataOnly,
+            r#"
+            SELECT data as "data: Json<RewardData>"
+            FROM rewards
+            WHERE user_id = $1 AND data ->> 'type' = $2
+            "#,
+            user_id,
+            reward_type
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let data = data
+            .into_iter()
+            .filter_map(|r| match r.data.0 {
+                RewardData::FfzSwap(d) => Some(d),
+                RewardData::BttvSwap(d) => Some(d),
+                RewardData::SevenTvSwap(d) => Some(d),
+                _ => None,
+            })
+            .collect();
+        Ok(data)
     }
 
     pub async fn get_all_live_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<LiveReward>> {

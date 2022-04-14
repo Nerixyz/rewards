@@ -159,6 +159,18 @@ pub async fn remove_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
     Ok(())
 }
 
+pub async fn logged_in() -> bool {
+    seven_tv_post::<GqlResponse<serde_json::Value>, _>(
+        "https://api.7tv.app/v2/gql",
+        &GqlRequest {
+            query: "query GetUser($id: String!) {user(id: $id) {id}}",
+            variables: [("id", "@me")].into_iter().collect::<HashMap<_, _>>(),
+        },
+    )
+    .await
+    .is_ok()
+}
+
 async fn seven_tv_post<J, U>(url: U, request: &GqlRequest<'_>) -> AnyResult<J>
 where
     J: DeserializeOwned,

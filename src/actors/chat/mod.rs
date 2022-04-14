@@ -1,7 +1,9 @@
-use crate::{actors::irc::SayMessage, log_err, RedisConn, RedisPool};
+use crate::{actors::irc::SayMessage, log_err, AppAccessToken, RedisConn, RedisPool};
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
 use deadpool_redis::{redis, redis::AsyncCommands};
 use sqlx::PgPool;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 mod messages;
 pub use messages::*;
@@ -9,11 +11,20 @@ pub use messages::*;
 pub struct ChatActor {
     pool: PgPool,
     redis: RedisPool,
+    app_access_token: Arc<RwLock<AppAccessToken>>,
 }
 
 impl ChatActor {
-    pub fn new(pool: PgPool, redis: RedisPool) -> Self {
-        Self { pool, redis }
+    pub fn new(
+        pool: PgPool,
+        redis: RedisPool,
+        app_access_token: Arc<RwLock<AppAccessToken>>,
+    ) -> Self {
+        Self {
+            pool,
+            redis,
+            app_access_token,
+        }
     }
 }
 
@@ -27,9 +38,10 @@ impl Handler<ExecuteCommandMessage> for ChatActor {
     fn handle(&mut self, msg: ExecuteCommandMessage, ctx: &mut Self::Context) -> Self::Result {
         let pool = self.pool.clone();
         let redis = self.redis.clone();
+        let app_access_token = self.app_access_token.clone();
         async move {
             log_err!(
-                try_handle_command(msg, pool, redis).await,
+                try_handle_command(msg, pool, redis, app_access_token).await,
                 "Could not handle command"
             );
         }
@@ -68,6 +80,7 @@ async fn try_handle_command(
     mut msg: ExecuteCommandMessage,
     db: PgPool,
     redis: RedisPool,
+    app_access_token: Arc<RwLock<AppAccessToken>>,
 ) -> anyhow::Result<()> {
     let mut conn = redis.get().await?;
     if !check_update_cooldown(&mut conn, &msg.raw.channel_id, &msg.raw.sender.id).await? {
@@ -93,7 +106,11 @@ async fn try_handle_command(
 
     let broadcaster = msg.raw.channel_login.clone();
     let sender = msg.raw.sender.login.clone();
-    let message = match msg.executor.execute(msg.raw, &db, &mut conn).await {
+    let message = match msg
+        .executor
+        .execute(msg.raw, &db, &mut conn, app_access_token)
+        .await
+    {
         Ok(res) => SayMessage(broadcaster, res),
         Err(e) => SayMessage(broadcaster, format!("@{}, ⚠ {}", sender, e)),
     };
