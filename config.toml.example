@@ -60,6 +60,10 @@ webhook-url = ""
 discord = true
 twitch = { channel = "nerixyz", prefix = "Running."}
 
+[owner]
+id = "129546453"
+username = "nerixyz"
+
 # optional
 [supinic]
 # the supibot user-ID of the chat user
