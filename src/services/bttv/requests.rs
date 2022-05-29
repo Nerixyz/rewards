@@ -6,7 +6,7 @@ use reqwest::{
     header::{HeaderMap, AUTHORIZATION},
     Client, IntoUrl, Response,
 };
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::time::Duration;
 
 lazy_static! {
@@ -47,7 +47,7 @@ pub struct BttvLimits {
     pub shared_emotes: usize,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct BttvEmote {

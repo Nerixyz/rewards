@@ -1,3 +1,4 @@
+use crate::emote::SlotPlatform;
 use chrono::{DateTime, Utc};
 use config::CONFIG;
 use errors::sql::SqlResult;
@@ -132,11 +133,12 @@ impl Reward {
         Ok(rewards)
     }
 
-    pub async fn get_swaps_for_user(
+    pub async fn get_swap_limit_for_user(
         user_id: &str,
-        reward_type: &str,
+        platform: SlotPlatform,
         pool: &PgPool,
-    ) -> SqlResult<Vec<SwapRewardData>> {
+    ) -> SqlResult<Option<usize>> {
+        let reward_type = platform.swap_reward_name();
         // language=PostgreSQL
         let data: Vec<RewardDataOnly> = sqlx::query_as!(
             RewardDataOnly,
@@ -159,7 +161,10 @@ impl Reward {
                 RewardData::SevenTvSwap(d) => Some(d),
                 _ => None,
             })
-            .collect();
+            .fold(Some(0), |acc, swap| match (acc, &swap.limit) {
+                (Some(acc), Some(lim)) => Some(acc + *lim as usize),
+                _ => None,
+            });
         Ok(data)
     }
 
