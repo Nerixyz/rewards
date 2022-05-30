@@ -188,6 +188,21 @@ impl Slot {
         Ok(emotes.into_iter().flatten().collect())
     }
 
+    pub async fn get_occupied(user_id: &str, pool: &PgPool) -> SqlResult<Vec<Self>> {
+        // language=PostgreSQL
+        let emotes = sqlx::query_as!(
+            Self,
+            r#"
+            SELECT id, user_id, emote_id, expires, reward_id, platform as "platform: _", name, added_at, added_by FROM slots
+            WHERE user_id = $1 and emote_id is not null and name is not null
+        "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
+        Ok(emotes)
+    }
+
     pub async fn update(&self, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(

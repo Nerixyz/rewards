@@ -6,10 +6,7 @@ mod inject;
 mod reload;
 
 use crate::{
-    chat::{
-        command::ChatCommand, commands::emote_management::inject::execute_inject,
-        parse::opt_next_space,
-    },
+    chat::{command::ChatCommand, parse::opt_next_space},
     AppAccessToken, PgPool, RedisConn,
 };
 use anyhow::{anyhow, Result as AnyResult};
@@ -17,7 +14,9 @@ use async_trait::async_trait;
 use banning::{execute_ban, execute_unban};
 use eject::execute_eject;
 use info::execute_info;
+use inject::execute_inject;
 use models::editor::Editor;
+use reload::execute_reload;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
@@ -28,6 +27,7 @@ pub enum EmoteManagement {
     Unban(String),
     Eject(String),
     Inject(String),
+    Reload,
 }
 
 #[async_trait]
@@ -45,6 +45,7 @@ impl ChatCommand for EmoteManagement {
             Self::Unban(emote) => execute_unban(&msg, emote, pool).await,
             Self::Eject(emote) => execute_eject(&msg, emote, pool).await,
             Self::Inject(emote) => execute_inject(&msg, emote, redis, pool).await,
+            Self::Reload => execute_reload(&msg, redis, pool).await,
         }
     }
 
@@ -63,7 +64,7 @@ impl ChatCommand for EmoteManagement {
                 let (target, args) = args
                     .ok_or_else(|| {
                         anyhow!(
-                            "No option specified (emote <ban/unban/info/eject/inject/{{emote}}>"
+                            "No option specified (emote <ban/unban/info/eject/inject/reload/{{emote}}>"
                         )
                     })
                     .map(opt_next_space)?;
@@ -88,6 +89,7 @@ impl ChatCommand for EmoteManagement {
                             .0
                             .to_string(),
                     ),
+                    "reload" => Self::Reload,
                     _ => Self::Info(target),
                 }
             }

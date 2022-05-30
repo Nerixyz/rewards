@@ -97,6 +97,25 @@ impl EmoteCache {
                 .map(|e| e.name.as_str()),
         }
     }
+
+    pub fn non_empty_platform(&self, platform: SlotPlatform) -> bool {
+        match platform {
+            SlotPlatform::Bttv => !self.bttv.is_empty(),
+            SlotPlatform::Ffz => !self.ffz.is_empty(),
+            SlotPlatform::SevenTv => !self.seventv.is_empty(),
+        }
+    }
+
+    pub fn contains(&self, emote_id: &str, platform: SlotPlatform) -> bool {
+        match platform {
+            SlotPlatform::Bttv => self.bttv.iter().any(|emote| emote.id == emote_id),
+            SlotPlatform::Ffz => {
+                let id = emote_id.parse::<usize>().ok().unwrap_or(usize::MAX);
+                self.ffz.iter().any(|emote| emote.id == id)
+            }
+            SlotPlatform::SevenTv => self.seventv.iter().any(|emote| emote.id == emote_id),
+        }
+    }
 }
 
 pub async fn search_emote_by_name(
