@@ -3,6 +3,7 @@ mod eject;
 mod extract;
 mod info;
 mod inject;
+mod reload;
 
 use crate::{
     chat::{
@@ -60,7 +61,11 @@ impl ChatCommand for EmoteManagement {
             ),
             _ => {
                 let (target, args) = args
-                    .ok_or_else(|| anyhow!("No option specified (emote <ban/unban/info/eject/inject/{{emote}}>"))
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "No option specified (emote <ban/unban/info/eject/inject/{{emote}}>"
+                        )
+                    })
                     .map(opt_next_space)?;
                 let target = target.to_lowercase();
                 match target.as_str() {
