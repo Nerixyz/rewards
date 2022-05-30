@@ -63,7 +63,7 @@ struct SevenEmoteResponse {
     emote: SevenEmote,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenEmote {
     pub name: String,

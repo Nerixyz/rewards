@@ -2,6 +2,8 @@ mod banning;
 mod eject;
 mod extract;
 mod info;
+mod inject;
+mod reload;
 
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
@@ -12,7 +14,9 @@ use async_trait::async_trait;
 use banning::{execute_ban, execute_unban};
 use eject::execute_eject;
 use info::execute_info;
+use inject::execute_inject;
 use models::editor::Editor;
+use reload::execute_reload;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use twitch_irc::message::PrivmsgMessage;
@@ -22,6 +26,8 @@ pub enum EmoteManagement {
     Ban(String),
     Unban(String),
     Eject(String),
+    Inject(String),
+    Reload,
 }
 
 #[async_trait]
@@ -38,6 +44,8 @@ impl ChatCommand for EmoteManagement {
             Self::Ban(emote) => execute_ban(&msg, emote, pool).await,
             Self::Unban(emote) => execute_unban(&msg, emote, pool).await,
             Self::Eject(emote) => execute_eject(&msg, emote, pool).await,
+            Self::Inject(emote) => execute_inject(&msg, emote, redis, pool).await,
+            Self::Reload => execute_reload(&msg, redis, pool).await,
         }
     }
 
@@ -54,11 +62,15 @@ impl ChatCommand for EmoteManagement {
             ),
             _ => {
                 let (target, args) = args
-                    .ok_or_else(|| anyhow!("No option specified (emote <ban/unban/info/{{emote}}>"))
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "No option specified (emote <ban/unban/info/eject/inject/reload/{{emote}}>"
+                        )
+                    })
                     .map(opt_next_space)?;
                 let target = target.to_lowercase();
                 match target.as_str() {
-                    "ban" | "unban" | "eject" => {
+                    "ban" | "unban" | "eject" | "inject" => {
                         let emote = args
                             .ok_or_else(|| anyhow!("No emote url specified"))
                             .map(opt_next_space)?
@@ -67,7 +79,8 @@ impl ChatCommand for EmoteManagement {
                         match target.as_str() {
                             "ban" => Self::Ban(emote),
                             "unban" => Self::Unban(emote),
-                            _ => Self::Eject(emote),
+                            "eject" => Self::Eject(emote),
+                            _ => Self::Inject(emote),
                         }
                     }
                     "info" => Self::Info(
@@ -76,6 +89,7 @@ impl ChatCommand for EmoteManagement {
                             .0
                             .to_string(),
                     ),
+                    "reload" => Self::Reload,
                     _ => Self::Info(target),
                 }
             }

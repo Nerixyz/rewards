@@ -4,7 +4,7 @@ use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use reqwest::{cookie::Jar, Client, IntoUrl, Response, Url};
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
 
 lazy_static! {
@@ -42,7 +42,7 @@ lazy_static! {
         Regex::new("<li><a href=\"/channel/([\\w_]+)").expect("must compile");
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[non_exhaustive]
 pub struct FfzEmote {
     pub id: usize,

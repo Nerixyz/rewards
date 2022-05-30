@@ -2,6 +2,9 @@
 
 This is an application that manages custom Twitch rewards. The current instance is hosted at [rewards.nerixyz.de](https://rewards.nerixyz.de/).
 
+![New Reward Interface](https://i.imgur.com/xicQtn0.png)
+![Rewards Dashboard](https://i.imgur.com/CytMFkM.png)
+
 # Web Interface
 
 ## Editors and Broadcasters
@@ -17,12 +20,11 @@ The editors can access the rewards through the `Broadcasters` tab.
 
 You can edit the rewards in the `Rewards` tab.
 
-In the dialog there are two sides.
+When adding or editing a reward, you can change the action at the bottom. 
+Click on the pen (✏) icon to select the reward.
 
-On the left side you can edit Twitch specific parameters like the reward title or the cooldown.
+First, you can edit Twitch specific parameters like the reward title or the cooldown.
 The cooldown can be specified like this: `1h`, `3.5d`, `3m` or `123` (seconds).
-
-On the right side you can edit the specific action done when this reward is redeemed.
 
 Some rewards expose a `Duration` configuration.
 Here, you can specify the duration like this: `1hour 3min 4ms`. 
@@ -47,10 +49,18 @@ This would timeout the user for a random duration between `10m` and `1h`.
 * `::ei <emote>`, `::emoteinfo <emote>`, `::emote info <emote>` 
  Displays information about an emote. Only works for emotes managed by the bot.
 * `::emote ban/unban <url/emote>` Ban/unban emotes from being added. Requires editor rights.
+* `::emote eject <name or url>` Untracks the emote from the bot's database; doesn't remove the emote from the platform.
+* `::emote inject <name or url>` Adds an emote to the bot's database (only works with swap rewards currently).
 * `::slots`, `::emoteslots` Display the current slots.
 * `::emotes`, `::ce`, `::currentemotes` Display the current emotes.
 * `::ping`, `::bing` Ping the bot.
 * `::about`, `::rewardmore`, `::who`, `::bot` Display details about the bot.
+
+**Admin only**
+* `::debug channel ?name` Print debug infos about a channel.
+* `::debug platoforms` Check if the auth-tokens for the platforms are still valid.
+* `::debug edit <name>` Add the admin as editor.
+* `::debug rmedit <name>` Remove the admin as editor.
 
 # Development
 

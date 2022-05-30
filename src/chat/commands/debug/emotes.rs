@@ -163,29 +163,13 @@ async fn get_swap_data(
     platform: SlotPlatform,
     pool: &PgPool,
 ) -> AnyResult<(usize, Option<usize>)> {
-    let (active, all_swaps) = future::try_join(
+    let (active, limit) = future::try_join(
         swap_emote::SwapEmote::emote_count(channel_id, platform, pool),
-        reward::Reward::get_swaps_for_user(
-            channel_id,
-            match platform {
-                SlotPlatform::Bttv => "BttvSwap",
-                SlotPlatform::Ffz => "FfzSwap",
-                SlotPlatform::SevenTv => "SevenTvSwap",
-            },
-            pool,
-        ),
+        reward::Reward::get_swap_limit_for_user(channel_id, platform, pool),
     )
     .await?;
 
-    Ok((
-        active as usize,
-        all_swaps
-            .iter()
-            .fold(Some(0), |acc, swap| match (acc, &swap.limit) {
-                (Some(acc), Some(lim)) => Some(acc + *lim as usize),
-                _ => None,
-            }),
-    ))
+    Ok((active as usize, limit))
 }
 
 impl From<Option<EmotePlatformData>> for EpDataOpt {

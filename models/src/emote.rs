@@ -11,3 +11,13 @@ pub enum SlotPlatform {
     #[display(fmt = "7TV")]
     SevenTv,
 }
+
+impl SlotPlatform {
+    pub fn swap_reward_name(&self) -> &'static str {
+        match self {
+            SlotPlatform::Bttv => "BttvSwap",
+            SlotPlatform::Ffz => "FfzSwap",
+            SlotPlatform::SevenTv => "SevenTvSwap",
+        }
+    }
+}

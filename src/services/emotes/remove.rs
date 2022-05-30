@@ -78,7 +78,7 @@ pub async fn untrack_emote(
     Ok(name)
 }
 
-async fn enable_reward(slot: &Slot, pool: &PgPool) -> AnyResult<()> {
+pub async fn enable_reward(slot: &Slot, pool: &PgPool) -> AnyResult<()> {
     let user = User::get_by_id(&slot.user_id, &pool).await?;
     let token: UserToken = user.into();
     update_reward(

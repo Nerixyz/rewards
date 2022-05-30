@@ -1,3 +1,4 @@
+pub mod add;
 pub mod bttv;
 pub mod execute;
 pub mod ffz;
