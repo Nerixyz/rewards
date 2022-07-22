@@ -1,4 +1,4 @@
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, Result as AnyResult};
 use config::CONFIG;
 use lazy_static::lazy_static;
 use reqwest::{
@@ -43,12 +43,7 @@ where
     T: DeserializeOwned,
 {
     data: T,
-}
-
-#[derive(Deserialize, Debug)]
-#[non_exhaustive]
-struct GqlErrors {
-    errors: Vec<GqlError>,
+    errors: Option<Vec<GqlError>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -105,7 +100,7 @@ pub struct SevenUser {
 }
 
 pub async fn get_user(user_id_or_login: &str) -> AnyResult<SevenUser> {
-    let user = seven_tv_post::<GqlResponse<SevenUserResponse>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
+    let user = seven_tv_post::<SevenUserResponse, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "query getUser($id: String!) { user(id: $id) { id, login, emotes { id, name }, twitch_id, emote_slots } }",
         variables: [("id", user_id_or_login)].into_iter().collect::<HashMap<_, _>>()
     }).await?;
@@ -114,7 +109,7 @@ pub async fn get_user(user_id_or_login: &str) -> AnyResult<SevenUser> {
 }
 
 pub async fn get_user_editors(user_id_or_login: &str) -> AnyResult<Vec<OnlyName>> {
-    let user = seven_tv_post::<GqlResponse<SevenUserEditorsResponse>, _>(
+    let user = seven_tv_post::<SevenUserEditorsResponse, _>(
         "https://api.7tv.app/v2/gql",
         &GqlRequest {
             query: "query getUser($id: String!) { user(id: $id) { editors { login } } }",
@@ -129,7 +124,7 @@ pub async fn get_user_editors(user_id_or_login: &str) -> AnyResult<Vec<OnlyName>
 }
 
 pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
-    let emote = seven_tv_post::<GqlResponse<SevenEmoteResponse>, _>(
+    let emote = seven_tv_post::<SevenEmoteResponse, _>(
         "https://api.7tv.app/v2/gql",
         &GqlRequest {
             query: "query emoteQuery($id: String!){emote(id: $id){id,name, tags}}",
@@ -142,7 +137,7 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
 }
 
 pub async fn add_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
-    seven_tv_post::<GqlResponse<serde_json::Value>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
+    seven_tv_post::<serde_json::Value, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "mutation AddChannelEmote($ch: String!, $em: String!, $re: String!) {addChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
         variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
     }).await?;
@@ -151,7 +146,7 @@ pub async fn add_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
 }
 
 pub async fn remove_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
-    seven_tv_post::<GqlResponse<serde_json::Value>, _>("https://api.7tv.app/v2/gql", &GqlRequest {
+    seven_tv_post::<serde_json::Value, _>("https://api.7tv.app/v2/gql", &GqlRequest {
         query: "mutation RemoveChannelEmote($ch: String!, $em: String!, $re: String!) {removeChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
         variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
     }).await?;
@@ -160,7 +155,7 @@ pub async fn remove_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
 }
 
 pub async fn logged_in() -> bool {
-    seven_tv_post::<GqlResponse<serde_json::Value>, _>(
+    seven_tv_post::<serde_json::Value, _>(
         "https://api.7tv.app/v2/gql",
         &GqlRequest {
             query: "query GetUser($id: String!) {user(id: $id) {id}}",
@@ -171,28 +166,23 @@ pub async fn logged_in() -> bool {
     .is_ok()
 }
 
-async fn seven_tv_post<J, U>(url: U, request: &GqlRequest<'_>) -> AnyResult<J>
+async fn seven_tv_post<J, U>(url: U, request: &GqlRequest<'_>) -> AnyResult<GqlResponse<J>>
 where
     J: DeserializeOwned,
     U: IntoUrl,
 {
     let response = SEVENTV_CLIENT.post(url).json(request).send().await?;
-    if !response.status().is_success() {
-        return Err(AnyError::msg(format!(
-            "Non OK status: {} - Error: {}",
-            response.status(),
-            response
-                .json::<GqlErrors>()
-                .await
-                .map(|e| e
-                    .errors
-                    .into_iter()
-                    .next()
-                    .map(|e| e.message)
-                    .unwrap_or_else(|| "<no error>?".to_string()))
-                .unwrap_or_else(|e| e.to_string())
-        )));
+    let status = response.status();
+    let response = response.json().await?;
+    match response {
+        GqlResponse {
+            errors: Some(errors),
+            ..
+        } if !errors.is_empty() => Err(anyhow!(
+            "7TV Error: {} (http-status={})",
+            errors[0].message,
+            status.as_str()
+        )),
+        res => Ok(res),
     }
-
-    Ok(response.json().await?)
 }
