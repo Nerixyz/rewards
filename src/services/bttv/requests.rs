@@ -44,7 +44,7 @@ pub struct BttvEditor {
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct BttvLimits {
-    pub shared_emotes: usize,
+    pub channel_emotes: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
