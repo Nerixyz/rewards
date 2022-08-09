@@ -79,7 +79,7 @@ impl EmoteRW for BttvEmotes {
             return Err(AnyError::msg("The emote already exists as a channel emote"));
         }
         Ok(EmoteInitialData {
-            max_emotes: user_limits.shared_emotes,
+            max_emotes: user_limits.channel_emotes,
             current_emotes: bttv_user.shared_emotes.len(),
             history_len: history_len as usize,
             platform_id: bttv_id,
@@ -97,7 +97,7 @@ impl EmoteRW for BttvEmotes {
                 .await?;
 
         Ok(EmoteEnvData {
-            max_emotes: bttv_limits.shared_emotes,
+            max_emotes: bttv_limits.channel_emotes,
             current_emotes: shared_emotes.shared_emotes.len(),
         })
     }
