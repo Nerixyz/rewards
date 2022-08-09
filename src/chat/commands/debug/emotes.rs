@@ -136,13 +136,13 @@ async fn extract_bttv(channel_id: &str, pool: &PgPool) -> AnyResult<Option<Emote
 
     Ok(Some(EmotePlatformData {
         remaining_emotes: limits
-            .shared_emotes
+            .channel_emotes
             .checked_sub(user.shared_emotes.len())
             .unwrap_or(0),
         open_slots: slots,
         swap_capacity: swaps
             .1
-            .unwrap_or(limits.shared_emotes)
+            .unwrap_or(limits.channel_emotes)
             .checked_sub(swaps.0)
             .unwrap_or(0),
     }))
