@@ -82,11 +82,11 @@ async fn twitch_callback(
         .into_string();
 
     let user = User {
-        id: user_token.user_id.clone(),
+        id: user_token.user_id.clone().into_string(),
         refresh_token,
         access_token: user_token.access_token.into_string(),
         scopes: scope,
-        name: user_token.login,
+        name: user_token.login.into_string(),
         eventsub_id: None,
     };
 
@@ -108,7 +108,7 @@ async fn twitch_callback(
     irc.do_send(JoinMessage(user.name));
     pubsub.do_send(SubMessage(user.id));
 
-    let token = encode_jwt(&JwtClaims::new(user_token.user_id.clone()))
+    let token = encode_jwt(&JwtClaims::new(user_token.user_id.into_string()))
         .map_err(|_| RedirectError::new("/failed-auth", Some("Could not encode")))?;
     Ok(HttpResponse::Found()
         .append_header(("location", "/"))

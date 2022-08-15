@@ -1,3 +1,5 @@
+extern crate twitch_api as twitch_api2;
+
 pub mod banned_emote;
 pub mod config;
 pub mod discord;

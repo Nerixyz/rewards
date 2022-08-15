@@ -79,10 +79,10 @@ pub async fn untrack_emote(
 }
 
 pub async fn enable_reward(slot: &Slot, pool: &PgPool) -> AnyResult<()> {
-    let user = User::get_by_id(&slot.user_id, &pool).await?;
+    let user = User::get_by_id(&slot.user_id, pool).await?;
     let token: UserToken = user.into();
     update_reward(
-        &token.user_id,
+        token.user_id.clone(),
         slot.reward_id.clone(),
         UpdateCustomRewardBody::builder()
             .is_paused(Some(false))

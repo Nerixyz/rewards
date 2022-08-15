@@ -38,9 +38,7 @@ pub fn extract_emote_by_url(emote: &str) -> Option<(Cow<str>, SlotPlatform)> {
         Some((id.into(), SlotPlatform::Bttv))
     } else if let Some(id) = first_capture(emote, &FFZ_REGEX) {
         Some((id.into(), SlotPlatform::Ffz))
-    } else if let Some(id) = first_capture(emote, &SEVENTV_REGEX) {
-        Some((id.into(), SlotPlatform::SevenTv))
     } else {
-        None
+        first_capture(emote, &SEVENTV_REGEX).map(|id| (id.into(), SlotPlatform::SevenTv))
     }
 }

@@ -68,8 +68,7 @@ impl EmoteCache {
                 .map(|s| {
                     s.sets
                         .into_iter()
-                        .map(|(_, set)| set.emoticons)
-                        .flatten()
+                        .flat_map(|(_, set)| set.emoticons)
                         .collect()
                 })
                 .unwrap_or_else(|_| Vec::with_capacity(0)),

@@ -9,6 +9,7 @@ use std::{convert::TryFrom, pin::Pin, time::Duration};
 use twitch_api2::{
     helix::points::CreateCustomRewardResponse,
     twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken},
+    types::{Nickname, UserId},
 };
 
 #[derive(Serialize, Deserialize, FromRow)]
@@ -116,7 +117,10 @@ impl Reward {
         Ok(reward)
     }
 
-    pub async fn get_all_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<Reward>> {
+    pub async fn get_all_for_user(
+        user_id: impl AsRef<str>,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<Reward>> {
         // language=PostgreSQL
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
@@ -125,7 +129,7 @@ impl Reward {
             FROM rewards
             WHERE user_id = $1
             "#,
-            user_id
+            user_id.as_ref()
         )
         .fetch_all(pool)
         .await?;
@@ -324,8 +328,8 @@ impl TryFrom<RewardToUpdate> for (String, UserToken) {
                     RefreshToken::new(refresh_token),
                     ClientId::new(CONFIG.twitch.client_id.to_string()),
                     ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
-                    String::new(),
-                    broadcaster_id,
+                    Nickname::from(""),
+                    UserId::from(broadcaster_id),
                     None,
                     Some(Duration::from_secs(1000)),
                 ),
@@ -349,8 +353,8 @@ impl From<LiveRewardAT> for (LiveReward, UserToken) {
                 None,
                 ClientId::new(CONFIG.twitch.client_id.to_string()),
                 None,
-                String::new(),
-                reward.user_id,
+                Nickname::from(""),
+                UserId::from(reward.user_id),
                 None,
                 None,
             ),

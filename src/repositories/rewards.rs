@@ -145,7 +145,7 @@ async fn update(
         )));
     }
 
-    let reward = update_reward(&broadcaster_id, reward_id, body.twitch, &token).await?;
+    let reward = update_reward(broadcaster_id, reward_id, body.twitch, &token).await?;
     let data_type = body.data.to_string();
     let db_reward = Reward::from_response(&reward, body.data, body.live_delay);
     db_reward.update(&pool).await?;
@@ -186,7 +186,7 @@ async fn delete(
         "Rewards",
         "🗑 Deleted reward",
         0xff0a12,
-        "User" = token.login,
+        "User" = token.login.into_string(),
         "Id" = reward_id
     );
 
@@ -211,7 +211,7 @@ async fn list_for_user(
 
     let (rewards, saved_rewards) = futures::future::join(
         get_rewards_for_id(&broadcaster_id, &token),
-        Reward::get_all_for_user(&broadcaster_id, &pool),
+        Reward::get_all_for_user(broadcaster_id.as_str(), &pool),
     )
     .await;
 
