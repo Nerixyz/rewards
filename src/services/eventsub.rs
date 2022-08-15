@@ -28,16 +28,17 @@ use twitch_api2::{
 };
 
 pub async fn register_eventsub_for_id(
-    id: &str,
+    id: impl AsRef<str>,
     token: &Arc<RwLock<AppAccessToken>>,
     pool: &PgPool,
 ) -> ActixResult<()> {
+    let id = id.as_ref();
     let token = token.read().await;
 
     // this clears every subscription so we make sure, there's a new fresh one
-    unregister_eventsub_for_user(id, &*token, pool).await.ok();
+    unregister_eventsub_for_user(id, &token, pool).await.ok();
 
-    let reward = subscribe_to_rewards(&*token, id).await?;
+    let reward = subscribe_to_rewards(&token, id).await?;
 
     User::set_eventsub_id(id, &reward.id.into_string(), pool).await?;
 
@@ -45,14 +46,18 @@ pub async fn register_eventsub_for_id(
 }
 
 pub async fn unregister_eventsub_for_user(
-    id: &str,
+    id: impl AsRef<str>,
     token: &AppAccessToken,
     pool: &PgPool,
 ) -> ActixResult<()> {
-    let old_id = User::clear_eventsub_for_user(id, pool).await?;
+    let old_id = User::clear_eventsub_for_user(id.as_ref(), pool).await?;
 
     if let Some(old_id) = old_id {
-        log::info!("Clearing old subscription id={} user={}", old_id, id);
+        log::info!(
+            "Clearing old subscription id={} user={}",
+            old_id,
+            id.as_ref()
+        );
         delete_subscription(token, old_id).await?;
     }
 
@@ -68,7 +73,7 @@ pub async fn unregister_eventsub_for_id(
 
     User::clear_eventsub_id(&id, pool).await?;
 
-    delete_subscription(&*token, id).await?;
+    delete_subscription(&token, id).await?;
 
     Ok(())
 }
@@ -118,7 +123,7 @@ pub async fn clear_invalid_rewards(
                         .unwrap()
                         .is_match(&sub.transport.callback))
             {
-                if let Err(e) = delete_subscription(&*token, sub.id.clone()).await {
+                if let Err(e) = delete_subscription(&token, sub.id.clone()).await {
                     log::warn!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
                 }
             }

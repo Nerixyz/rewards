@@ -190,7 +190,7 @@ where
 
         log_err!(
             update_reward(
-                &token.user_id,
+                token.user_id.clone(),
                 reward_id.to_string(),
                 UpdateCustomRewardBody::builder()
                     .is_paused(Some(true))

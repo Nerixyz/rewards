@@ -78,13 +78,9 @@ async fn extract_seventv(channel_id: &str, pool: &PgPool) -> AnyResult<Option<Em
     .await?;
 
     Ok(Some(EmotePlatformData {
-        remaining_emotes: user.emote_slots.checked_sub(user.emotes.len()).unwrap_or(0),
+        remaining_emotes: user.emote_slots.saturating_sub(user.emotes.len()),
         open_slots: slots,
-        swap_capacity: swaps
-            .1
-            .unwrap_or(user.emote_slots)
-            .checked_sub(swaps.0)
-            .unwrap_or(0),
+        swap_capacity: swaps.1.unwrap_or(user.emote_slots).saturating_sub(swaps.0),
     }))
 }
 
@@ -106,13 +102,12 @@ async fn extract_ffz(
     .await?;
     let added_emotes: usize = room.sets.values().map(|s| s.emoticons.len()).sum();
     Ok(Some(EmotePlatformData {
-        remaining_emotes: user.max_emoticons.checked_sub(added_emotes).unwrap_or(0),
+        remaining_emotes: user.max_emoticons.saturating_sub(added_emotes),
         open_slots: slots,
         swap_capacity: swaps
             .1
             .unwrap_or(user.max_emoticons)
-            .checked_sub(swaps.0)
-            .unwrap_or(0),
+            .saturating_sub(swaps.0),
     }))
 }
 
@@ -137,14 +132,12 @@ async fn extract_bttv(channel_id: &str, pool: &PgPool) -> AnyResult<Option<Emote
     Ok(Some(EmotePlatformData {
         remaining_emotes: limits
             .channel_emotes
-            .checked_sub(user.shared_emotes.len())
-            .unwrap_or(0),
+            .saturating_sub(user.shared_emotes.len()),
         open_slots: slots,
         swap_capacity: swaps
             .1
             .unwrap_or(limits.channel_emotes)
-            .checked_sub(swaps.0)
-            .unwrap_or(0),
+            .saturating_sub(swaps.0),
     }))
 }
 

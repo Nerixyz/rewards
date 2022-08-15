@@ -73,8 +73,8 @@ impl IrcActor {
             new_connection_every: Duration::from_secs(12),
             max_channels_per_connection: 20,
 
-            ..ClientConfig::new_simple(IrcCredentials::new(
-                CONFIG.twitch.login.to_string(),
+            ..ClientConfig::new_simple(IrcCredentials::init_with_username(
+                Some(CONFIG.twitch.login.to_string()),
                 CONFIG.twitch.client_id.to_string(),
                 CONFIG.twitch.client_secret.to_string(),
                 PgTokenStorage(db),
@@ -148,7 +148,7 @@ impl Handler<JoinMessage> for IrcActor {
     type Result = ();
 
     fn handle(&mut self, msg: JoinMessage, _ctx: &mut Self::Context) -> Self::Result {
-        self.client.join(msg.0)
+        log_err!(self.client.join(msg.0), "Cannot join");
     }
 }
 
@@ -166,7 +166,7 @@ impl Handler<JoinAllMessage> for IrcActor {
 
     fn handle(&mut self, msg: JoinAllMessage, _ctx: &mut Self::Context) -> Self::Result {
         for channel in msg.0 {
-            self.client.join(channel)
+            log_err!(self.client.join(channel), "Cannot join");
         }
     }
 }

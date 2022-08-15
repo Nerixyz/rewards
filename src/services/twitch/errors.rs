@@ -105,6 +105,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                 }
             },
             ClientRequestError::Custom(_) => Self::Custom,
+            ClientRequestError::HyperError(_) => Self::ReqwestError,
         }
     }
 }

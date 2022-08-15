@@ -1,3 +1,5 @@
+extern crate twitch_api as twitch_api2;
+
 use actix::{Actor, Addr, SystemRegistry};
 use actix_cors::Cors;
 use actix_files::NamedFile;
@@ -67,7 +69,7 @@ async fn main() -> std::io::Result<()> {
 
     lazy_static::initialize(&CONFIG);
 
-    let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build()));
+    let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build().unwrap().0));
     let prom_handle = prom_recorder.handle();
     metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
     Metrics::register_metrics();

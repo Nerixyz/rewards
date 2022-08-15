@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Add};
 use tokio_postgres::{types::Json, NoTls};
 use twitch_oauth2::{
-    client::reqwest_http_client, oauth2::url::Url, tokens::UserTokenBuilder, ClientId,
-    ClientSecret, RedirectUrl, Scope, TwitchToken,
+    tokens::UserTokenBuilder, url::Url, ClientId, ClientSecret, Scope, TwitchToken,
 };
 
 #[derive(Serialize, Debug)]
@@ -102,8 +101,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut builder = UserTokenBuilder::new(
         tw_client_id,
         tw_client_secret,
-        RedirectUrl::new("http://localhost".to_string())?,
-    )?
+        Url::parse("http://localhost")?,
+    )
     .set_scopes(vec![
         Scope::ChatEdit,
         Scope::ChatRead,
@@ -137,7 +136,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let token = builder
-        .get_user_token(reqwest_http_client, csrf.secret(), &code)
+        .get_user_token(&reqwest::Client::new(), csrf.secret(), &code)
         .await?;
 
     let token_duration = Duration::from_std(token.expires_in()).expect("Should be in range");

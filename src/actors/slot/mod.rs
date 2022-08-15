@@ -151,7 +151,7 @@ impl SlotActor {
 
             // also called when untracking emotes
             match update_reward(
-                &token.user_id,
+                token.user_id.clone(),
                 p.reward_id.clone(),
                 UpdateCustomRewardBody::builder()
                     .is_paused(Some(false))

@@ -35,7 +35,7 @@ pub async fn create_reward(
 }
 
 pub async fn update_reward(
-    user_id: &str,
+    user_id: impl Into<UserId>,
     id: String,
     req: UpdateCustomRewardBody,
     token: &UserToken,

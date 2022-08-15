@@ -82,7 +82,7 @@ impl LiveActor {
         log::info!("Pausing {} rewards", pending.len());
         log_err!(
             irc.send(SayMessage(
-                user_token.login.clone(),
+                user_token.login.clone().into_string(),
                 format!("🔴 Live, pausing {} reward(s) at the start.", pending.len())
             ))
             .await,
@@ -155,7 +155,7 @@ impl LiveActor {
                 futures::future::try_join(
                     Reward::set_unpause_at(&reward.id, None, pool).map_err(AnyError::from),
                     update_reward(
-                        &reward.user_id,
+                        reward.user_id.clone(),
                         reward.id.clone(),
                         UpdateCustomRewardBody::builder().is_paused(false).build(),
                         &user_token
@@ -207,7 +207,7 @@ impl Handler<LiveMessage> for LiveActor {
                                     );
                                     log_err!(
                                         update_reward(
-                                            &info.user_token.user_id,
+                                            info.user_token.user_id.as_str(),
                                             info.reward_id,
                                             UpdateCustomRewardBody::builder()
                                                 .is_paused(false)

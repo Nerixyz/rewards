@@ -2,7 +2,10 @@ use config::CONFIG;
 use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 use std::time::Duration;
-use twitch_api2::twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken};
+use twitch_api2::{
+    twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken},
+    types::{Nickname, UserId},
+};
 
 #[derive(FromRow, Clone)]
 pub struct User {
@@ -120,7 +123,7 @@ impl User {
     }
 
     pub async fn update_refresh(
-        id: &str,
+        id: impl AsRef<str>,
         access_token: &str,
         refresh_token: &str,
         pool: &PgPool,
@@ -129,7 +132,7 @@ impl User {
         // language=PostgreSQL
         let _ = sqlx::query!(
             "UPDATE users SET access_token = $2, refresh_token = $3 WHERE id = $1",
-            id,
+            id.as_ref(),
             access_token,
             refresh_token
         )
@@ -226,8 +229,8 @@ impl From<User> for UserToken {
             RefreshToken::new(u.refresh_token),
             ClientId::new(CONFIG.twitch.client_id.to_string()),
             ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
-            u.name,
-            u.id,
+            Nickname::from(u.name),
+            UserId::from(u.id),
             None,
             // this isn't used anywhere
             Some(Duration::from_secs(1000)),
