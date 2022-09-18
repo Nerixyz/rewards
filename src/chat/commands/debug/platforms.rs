@@ -1,4 +1,7 @@
-use crate::services::{bttv, ffz, seven_tv};
+use crate::{
+    log_discord,
+    services::{bttv, ffz, seven_tv},
+};
 use anyhow::Result as AnyResult;
 use futures_util::future;
 use std::fmt::{Display, Formatter};
@@ -32,7 +35,13 @@ impl Display for Platforms {
 }
 
 async fn get_bttv() -> bool {
-    bttv::requests::get_dashboards().await.is_ok()
+    match bttv::requests::get_dashboards().await {
+        Ok(_) => true,
+        Err(e) => {
+            log_discord!("Bttv error", e.to_string(),);
+            false
+        }
+    }
 }
 
 async fn get_ffz() -> AnyResult<bool> {
