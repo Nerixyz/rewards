@@ -5,7 +5,10 @@ use sqlx::PgPool;
 pub struct Editor;
 
 impl Editor {
-    pub async fn get_editors(broadcaster_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
+    pub async fn get_editors(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
         let editors = sqlx::query_scalar!(
             // language=PostgreSQL
             "
@@ -21,7 +24,10 @@ impl Editor {
         Ok(editors)
     }
 
-    pub async fn get_broadcasters(editor_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
+    pub async fn get_broadcasters(
+        editor_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
         let broadcasters = sqlx::query_scalar!(
             // language=PostgreSQL
             "

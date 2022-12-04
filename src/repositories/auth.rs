@@ -1,5 +1,7 @@
 use actix::Addr;
-use actix_web::{cookie::CookieBuilder, delete, get, web, HttpResponse, Result};
+use actix_web::{
+    cookie::CookieBuilder, delete, get, web, HttpResponse, Result,
+};
 use errors::redirect_error::RedirectError;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -8,8 +10,8 @@ use std::future;
 use time::{Duration, OffsetDateTime};
 use tokio::sync::RwLock;
 use twitch_api2::twitch_oauth2::{
-    tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret, CsrfToken, Scope,
-    TwitchToken, UserToken,
+    tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret,
+    CsrfToken, Scope, TwitchToken, UserToken,
 };
 use url::Url;
 
@@ -74,28 +76,31 @@ async fn twitch_callback(
     let user_token = builder
         .get_user_token(&*twitch::CLIENT, "", &code)
         .await
-        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not get token")))?;
+        .map_err(|_| {
+            RedirectError::new("/failed-auth", Some("Could not get token"))
+        })?;
 
     let refresh_token = user_token
         .refresh_token
         .ok_or_else(|| RedirectError::<&str, &str>::simple("/failed-auth"))?
-        .into_string();
+        .take();
 
     let user = User {
-        id: user_token.user_id.clone().into_string(),
+        id: user_token.user_id.clone().take(),
         refresh_token,
-        access_token: user_token.access_token.into_string(),
+        access_token: user_token.access_token.take(),
         scopes: scope,
-        name: user_token.login.into_string(),
+        name: user_token.login.take(),
         eventsub_id: None,
     };
 
-    user.create(&pool)
-        .await
-        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not create user")))?;
+    user.create(&pool).await.map_err(|_| {
+        RedirectError::new("/failed-auth", Some("Could not create user"))
+    })?;
 
     // register and save the id into the database
-    register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool).await?;
+    register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool)
+        .await?;
 
     log::info!("AUTH: Registered {}", user.name);
     log_discord!(
@@ -108,8 +113,10 @@ async fn twitch_callback(
     irc.do_send(JoinMessage(user.name));
     pubsub.do_send(SubMessage(user.id));
 
-    let token = encode_jwt(&JwtClaims::new(user_token.user_id.into_string()))
-        .map_err(|_| RedirectError::new("/failed-auth", Some("Could not encode")))?;
+    let token = encode_jwt(&JwtClaims::new(user_token.user_id.take()))
+        .map_err(|_| {
+        RedirectError::new("/failed-auth", Some("Could not encode"))
+    })?;
     Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(
@@ -138,7 +145,10 @@ struct TwitchAuthUrlResponse {
 fn redirect_to_twitch_auth() -> future::Ready<HttpResponse> {
     let params = TwitchOAuthParams {
         client_id: CONFIG.twitch.client_id.to_string(),
-        redirect_uri: format!("{}/api/v1/auth/twitch-callback", CONFIG.server.url),
+        redirect_uri: format!(
+            "{}/api/v1/auth/twitch-callback",
+            CONFIG.server.url
+        ),
         response_type: "code".to_string(),
         scope: vec![
             Scope::ChannelManageRedemptions,
@@ -173,7 +183,9 @@ async fn revoke(
     let token: UserToken = user.into();
 
     if let Some(id) = eventsub_id {
-        if let Err(e) = unregister_eventsub_for_id(id, &app_access_token, &pool).await {
+        if let Err(e) =
+            unregister_eventsub_for_id(id, &app_access_token, &pool).await
+        {
             // we don't return the error, so me make sure everything is cleaned up
             log::warn!("Eventsub unregister error: {}", e);
         }

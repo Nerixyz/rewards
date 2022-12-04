@@ -57,14 +57,22 @@ pub trait EmoteRW {
         broadcaster_id: &str,
         platform_id: &Self::PlatformId,
     ) -> AnyResult<EmoteEnvData>;
-    async fn get_platform_id(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Self::PlatformId>;
+    async fn get_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Self::PlatformId>;
 
-    async fn get_emote_by_id(emote_id: &Self::EmoteId) -> AnyResult<Self::Emote>;
+    async fn get_emote_by_id(
+        emote_id: &Self::EmoteId,
+    ) -> AnyResult<Self::Emote>;
     async fn remove_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
     ) -> AnyResult<()>;
-    async fn add_emote(platform_id: &Self::PlatformId, emote_id: &Self::EmoteId) -> AnyResult<()>;
+    async fn add_emote(
+        platform_id: &Self::PlatformId,
+        emote_id: &Self::EmoteId,
+    ) -> AnyResult<()>;
 
     async fn remove_emote_from_broadcaster(
         broadcaster_id: &str,

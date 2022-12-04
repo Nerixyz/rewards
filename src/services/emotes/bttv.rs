@@ -56,9 +56,12 @@ impl EmoteRW for BttvEmotes {
 
         // get the data in parallel
         let (bttv_user, user_limits, emote_data) = futures::future::try_join3(
-            bttv::get_user(&bttv_id).map_err(|_| AnyError::msg("No such user.")),
-            get_user_limits(&bttv_id).map_err(|_| AnyError::msg("I'm not added as an editor.")),
-            bttv::get_emote(emote_id).map_err(|_| AnyError::msg("This emote doesn't exist.")),
+            bttv::get_user(&bttv_id)
+                .map_err(|_| AnyError::msg("No such user.")),
+            get_user_limits(&bttv_id)
+                .map_err(|_| AnyError::msg("I'm not added as an editor.")),
+            bttv::get_emote(emote_id)
+                .map_err(|_| AnyError::msg("This emote doesn't exist.")),
         )
         .await?;
 
@@ -69,14 +72,18 @@ impl EmoteRW for BttvEmotes {
             .iter()
             .any(|e| e.id == emote_id || e.code == emote_data.code)
         {
-            return Err(AnyError::msg("The emote already exists as a shared emote"));
+            return Err(AnyError::msg(
+                "The emote already exists as a shared emote",
+            ));
         }
         if bttv_user
             .channel_emotes
             .iter()
             .any(|e| e.id == emote_id || e.code == emote_data.code)
         {
-            return Err(AnyError::msg("The emote already exists as a channel emote"));
+            return Err(AnyError::msg(
+                "The emote already exists as a channel emote",
+            ));
         }
         Ok(EmoteInitialData {
             max_emotes: user_limits.channel_emotes,
@@ -92,9 +99,11 @@ impl EmoteRW for BttvEmotes {
         _broadcaster_id: &str,
         platform_id: &String,
     ) -> AnyResult<EmoteEnvData> {
-        let (bttv_limits, shared_emotes) =
-            futures::future::try_join(get_user_limits(platform_id), bttv::get_user(platform_id))
-                .await?;
+        let (bttv_limits, shared_emotes) = futures::future::try_join(
+            get_user_limits(platform_id),
+            bttv::get_user(platform_id),
+        )
+        .await?;
 
         Ok(EmoteEnvData {
             max_emotes: bttv_limits.channel_emotes,
@@ -106,12 +115,18 @@ impl EmoteRW for BttvEmotes {
         bttv::get_emote(emote_id).await
     }
 
-    async fn remove_emote(platform_id: &String, emote_id: &String) -> AnyResult<()> {
+    async fn remove_emote(
+        platform_id: &String,
+        emote_id: &String,
+    ) -> AnyResult<()> {
         bttv::delete_shared_emote(emote_id, platform_id).await?;
         Ok(())
     }
 
-    async fn add_emote(platform_id: &String, emote_id: &String) -> AnyResult<()> {
+    async fn add_emote(
+        platform_id: &String,
+        emote_id: &String,
+    ) -> AnyResult<()> {
         bttv::add_shared_emote(emote_id, platform_id).await?;
         Ok(())
     }
@@ -124,7 +139,11 @@ impl EmoteRW for BttvEmotes {
         let bttv_id = match get_or_fetch_id(broadcaster_id, pool).await {
             Ok(id) => id,
             Err(e) => {
-                log::warn!("No user-id? broadcaster={} error={}", broadcaster_id, e);
+                log::warn!(
+                    "No user-id? broadcaster={} error={}",
+                    broadcaster_id,
+                    e
+                );
                 return Err(e);
             }
         };
@@ -138,7 +157,10 @@ impl EmoteRW for BttvEmotes {
         Ok(emote.code)
     }
 
-    async fn get_platform_id(broadcaster_id: &str, pool: &PgPool) -> AnyResult<Self::PlatformId> {
+    async fn get_platform_id(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Self::PlatformId> {
         get_or_fetch_id(broadcaster_id, pool).await
     }
 

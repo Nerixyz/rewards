@@ -5,11 +5,16 @@ use crate::{
 };
 use deadpool_redis::redis;
 use itertools::{Either, Itertools};
-use twitch_api2::{helix::users::User as HelixUser, twitch_oauth2::UserToken, HelixClient};
+use twitch_api2::{
+    helix::users::User as HelixUser, twitch_oauth2::UserToken, HelixClient,
+};
+use twitch_api2::types::UserIdRef;
 
 pub mod errors;
 pub mod eventsub;
 pub mod requests;
+mod token;
+pub use token::*;
 
 pub type RHelixClient<'a> = HelixClient<'a, reqwest::Client>;
 pub type HelixResult<T> = Result<T, TwitchApiError>;
@@ -34,7 +39,11 @@ pub async fn get_many_users(
         .ok()
         .map(|res| {
             res.into_iter()
-                .map(|user| user.and_then(|user| serde_json::from_str::<HelixUser>(&user).ok()))
+                .map(|user| {
+                    user.and_then(|user| {
+                        serde_json::from_str::<HelixUser>(&user).ok()
+                    })
+                })
                 .collect::<Vec<Option<HelixUser>>>()
         }) {
         Some(mut cached) if cached.len() == ids.len() => {
@@ -49,16 +58,17 @@ pub async fn get_many_users(
                 return Ok(done);
             }
 
-            let mut users = get_users(pending, token).await?;
+            let to_get: Vec<&UserIdRef> = pending.iter().map(|i| i.as_str().into()).collect();
+            let mut users = get_users(&to_get, token).await?;
             save_users_to_redis(&users, redis).await?;
 
             done.append(&mut users);
 
             Ok(done)
         }
-        x => {
-            println!("{:?}", x);
-            let users = get_users(ids, token).await?;
+        _ => {
+            let to_get: Vec<&UserIdRef> = ids.iter().map(|i| i.as_str().into()).collect();
+            let users = get_users(&to_get, token).await?;
             save_users_to_redis(&users, redis).await?;
 
             Ok(users)
@@ -66,13 +76,19 @@ pub async fn get_many_users(
     }
 }
 
-async fn save_users_to_redis(users: &[HelixUser], redis: &mut RedisConn) -> HelixResult<()> {
+async fn save_users_to_redis(
+    users: &[HelixUser],
+    redis: &mut RedisConn,
+) -> HelixResult<()> {
     let mut pipe = redis::pipe();
     for user in users.iter() {
         pipe.cmd("SETEX")
             .arg(format!("rewards:user:{}", user.id))
             .arg(60 * 60)
-            .arg(serde_json::to_string(user).map_err(|_| TwitchApiError::Serde)?);
+            .arg(
+                serde_json::to_string(user)
+                    .map_err(|_| TwitchApiError::Serde)?,
+            );
     }
     log_err!(
         pipe.query_async::<_, ()>(redis).await,

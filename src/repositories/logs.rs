@@ -37,7 +37,8 @@ async fn set_discord_url(
         static ref DISCORD_URL_REGEX: Regex = Regex::new("(^|\\.)discord\\.com$").unwrap();
     }
 
-    let url = Url::parse(&body.url).map_err(|_| errors::ErrorBadRequest("Invalid url provided"))?;
+    let url = Url::parse(&body.url)
+        .map_err(|_| errors::ErrorBadRequest("Invalid url provided"))?;
     let domain = url
         .domain()
         .ok_or_else(|| errors::ErrorBadRequest("Invalid url provided"))?;

@@ -7,13 +7,21 @@ use anyhow::{anyhow, Result as AnyResult};
 use models::banned_emote;
 use twitch_irc::message::PrivmsgMessage;
 
-pub async fn execute_ban(msg: &PrivmsgMessage, emote: &str, pool: &PgPool) -> AnyResult<String> {
+pub async fn execute_ban(
+    msg: &PrivmsgMessage,
+    emote: &str,
+    pool: &PgPool,
+) -> AnyResult<String> {
     let (emote_id, platform) = extract_emote_data(emote, &msg.channel_id, pool)
         .await
-        .ok_or_else(|| anyhow!("Could not find emote. Try to specify the emote url!"))?;
+        .ok_or_else(|| {
+            anyhow!("Could not find emote. Try to specify the emote url!")
+        })?;
     banned_emote::add(&msg.channel_id, &emote_id, platform, pool)
         .await
-        .map_err(|_| anyhow!("Couldn't add ban, the emote might be banned already"))?;
+        .map_err(|_| {
+            anyhow!("Couldn't add ban, the emote might be banned already")
+        })?;
     // .ok because it may not be added
     remove_emote(&msg.channel_id, &emote_id, platform, pool)
         .await
@@ -25,10 +33,16 @@ pub async fn execute_ban(msg: &PrivmsgMessage, emote: &str, pool: &PgPool) -> An
     ))
 }
 
-pub async fn execute_unban(msg: &PrivmsgMessage, emote: &str, pool: &PgPool) -> AnyResult<String> {
+pub async fn execute_unban(
+    msg: &PrivmsgMessage,
+    emote: &str,
+    pool: &PgPool,
+) -> AnyResult<String> {
     let (emote_id, platform) = extract_emote_data(emote, &msg.channel_id, pool)
         .await
-        .ok_or_else(|| anyhow!("Could not find emote. Try to specify the emote url!"))?;
+        .ok_or_else(|| {
+            anyhow!("Could not find emote. Try to specify the emote url!")
+        })?;
     banned_emote::remove(&msg.channel_id, &emote_id, platform, pool).await?;
     Ok(format!(
         "@{}, ✅ Unbanned {}",

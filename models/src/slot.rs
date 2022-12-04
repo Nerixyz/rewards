@@ -160,7 +160,10 @@ impl Slot {
         Ok(slot)
     }
 
-    pub async fn get_occupation(user_id: &str, pool: &PgPool) -> SqlResult<SlotOccupation> {
+    pub async fn get_occupation(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<SlotOccupation> {
         // language=PostgreSQL
         let occupation = sqlx::query_as!(SlotOccupation,
             "
@@ -174,7 +177,10 @@ impl Slot {
         Ok(occupation)
     }
 
-    pub async fn get_occupied_emotes(user_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
+    pub async fn get_occupied_emotes(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
         let emotes = sqlx::query_scalar!(
             "
@@ -188,7 +194,10 @@ impl Slot {
         Ok(emotes.into_iter().flatten().collect())
     }
 
-    pub async fn get_occupied(user_id: &str, pool: &PgPool) -> SqlResult<Vec<Self>> {
+    pub async fn get_occupied(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let emotes = sqlx::query_as!(
             Self,

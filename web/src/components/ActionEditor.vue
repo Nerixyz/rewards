@@ -22,11 +22,8 @@
         <EditIcon />
       </button>
     </div>
-    <TSESettings
-      v-if="['Timeout', 'SubOnly', 'EmoteOnly'].includes(actionType)"
-      v-model="actionData"
-      @update:warn="updateWarn"
-    />
+    <TimeoutSettings v-if="actionType === 'Timeout'" v-model="actionData" @update:warn="updateWarn" />
+    <SESettings v-if="['SubOnly', 'EmoteOnly'].includes(actionType)" v-model="actionData" @update:warn="updateWarn" />
     <EmoteSlotSettings v-else-if="['BttvSlot', 'FfzSlot', 'SevenTvSlot'].includes(actionType)" v-model="actionData" />
     <EmoteSwapSettings v-else-if="['BttvSwap', 'FfzSwap', 'SevenTvSwap'].includes(actionType)" v-model="actionData" />
     <SpotifyPlayOptions v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(action)" v-model="actionData" />
@@ -38,7 +35,8 @@
 <script lang="ts">
 import { computed, defineComponent, onBeforeMount, PropType, ref } from 'vue';
 import EditIcon from './icons/EditIcon.vue';
-import TSESettings from './rewards/TSESettings.vue';
+import SESettings from './rewards/SESettings.vue';
+import TimeoutSettings from './rewards/TimeoutSettings.vue';
 import EmoteSlotSettings from './rewards/EmoteSlotSettings.vue';
 import EmoteSwapSettings from './rewards/EmoteSwapSettings.vue';
 import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
@@ -49,7 +47,15 @@ import { simpleClone } from '../api/model-conversion';
 
 export default defineComponent({
   name: 'ActionEditor',
-  components: { ActionDialog, EditIcon, TSESettings, EmoteSlotSettings, EmoteSwapSettings, SpotifyPlayOptions },
+  components: {
+    ActionDialog,
+    EditIcon,
+    TimeoutSettings,
+    SESettings,
+    EmoteSlotSettings,
+    EmoteSwapSettings,
+    SpotifyPlayOptions,
+  },
   props: {
     action: {
       type: String as PropType<keyof RewardDataMap>,

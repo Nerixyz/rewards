@@ -1,4 +1,6 @@
-use crate::{actors::irc::SayMessage, log_err, AppAccessToken, RedisConn, RedisPool};
+use crate::{
+    actors::irc::SayMessage, log_err, AppAccessToken, RedisConn, RedisPool,
+};
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
 use deadpool_redis::{redis, redis::AsyncCommands};
 use sqlx::PgPool;
@@ -35,7 +37,11 @@ impl Actor for ChatActor {
 impl Handler<ExecuteCommandMessage> for ChatActor {
     type Result = ();
 
-    fn handle(&mut self, msg: ExecuteCommandMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: ExecuteCommandMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         let redis = self.redis.clone();
         let app_access_token = self.app_access_token.clone();
@@ -83,7 +89,13 @@ async fn try_handle_command(
     app_access_token: Arc<RwLock<AppAccessToken>>,
 ) -> anyhow::Result<()> {
     let mut conn = redis.get().await?;
-    if !check_update_cooldown(&mut conn, &msg.raw.channel_id, &msg.raw.sender.id).await? {
+    if !check_update_cooldown(
+        &mut conn,
+        &msg.raw.channel_id,
+        &msg.raw.sender.id,
+    )
+    .await?
+    {
         // nothing went wrong we're just on cooldown
         return Ok(());
     }

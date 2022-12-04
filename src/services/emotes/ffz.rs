@@ -48,25 +48,27 @@ impl EmoteRW for FfzEmotes {
         emote_id: &str,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote>> {
-        let (ffz_user, ffz_emote, ffz_room, ffz_history) = futures::future::try_join4(
-            ffz::get_user(broadcaster_id).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No such ffz-user")
-            }),
-            ffz::get_emote(emote_id).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No such emote")
-            }),
-            ffz::get_room(broadcaster_id).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No such ffz-room")
-            }),
-            SwapEmote::emote_count(broadcaster_id, Self::platform(), pool).map_err(|e| {
-                log::warn!("err: {}", e);
-                AnyError::msg("No emote-count?!")
-            }),
-        )
-        .await?;
+        let (ffz_user, ffz_emote, ffz_room, ffz_history) =
+            futures::future::try_join4(
+                ffz::get_user(broadcaster_id).map_err(|e| {
+                    log::warn!("err: {}", e);
+                    AnyError::msg("No such ffz-user")
+                }),
+                ffz::get_emote(emote_id).map_err(|e| {
+                    log::warn!("err: {}", e);
+                    AnyError::msg("No such emote")
+                }),
+                ffz::get_room(broadcaster_id).map_err(|e| {
+                    log::warn!("err: {}", e);
+                    AnyError::msg("No such ffz-room")
+                }),
+                SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
+                    .map_err(|e| {
+                        log::warn!("err: {}", e);
+                        AnyError::msg("No emote-count?!")
+                    }),
+            )
+            .await?;
 
         let room_emotes: Vec<ffz::FfzEmote> = ffz_room
             .sets
@@ -119,7 +121,10 @@ impl EmoteRW for FfzEmotes {
         })
     }
 
-    async fn get_platform_id(broadcaster_id: &str, _pool: &PgPool) -> AnyResult<Self::PlatformId> {
+    async fn get_platform_id(
+        broadcaster_id: &str,
+        _pool: &PgPool,
+    ) -> AnyResult<Self::PlatformId> {
         // TODO: save room id in db
         ffz::get_room(broadcaster_id)
             .await
@@ -130,7 +135,10 @@ impl EmoteRW for FfzEmotes {
         ffz::get_emote(emote_id).await
     }
 
-    async fn remove_emote(platform_id: &usize, emote_id: &usize) -> AnyResult<()> {
+    async fn remove_emote(
+        platform_id: &usize,
+        emote_id: &usize,
+    ) -> AnyResult<()> {
         ffz::delete_emote(*platform_id, *emote_id).await
     }
 
@@ -145,7 +153,10 @@ impl EmoteRW for FfzEmotes {
     ) -> AnyResult<String> {
         let room = ffz::get_room(broadcaster_id).await?;
         let (_, emote) = futures::future::try_join(
-            Self::remove_emote(&room.room._id, &emote_id.parse::<Self::EmoteId>()?),
+            Self::remove_emote(
+                &room.room._id,
+                &emote_id.parse::<Self::EmoteId>()?,
+            ),
             ffz::get_emote(emote_id),
         )
         .await?;

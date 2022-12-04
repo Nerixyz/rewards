@@ -1,5 +1,7 @@
 use crate::{
-    services::{emotes::search::search_emote_by_name, formatting::human_format_duration},
+    services::{
+        emotes::search::search_emote_by_name, formatting::human_format_duration,
+    },
     PgPool, RedisConn,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};

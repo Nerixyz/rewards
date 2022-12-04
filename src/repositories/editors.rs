@@ -26,7 +26,8 @@ async fn get_my_editors(
         .await
         .map_err(|_| errors::ErrorInternalServerError("Redis is dead"))?;
 
-    Ok(HttpResponse::Ok().json(get_many_users(editors, &token, &mut redis_conn).await?))
+    Ok(HttpResponse::Ok()
+        .json(get_many_users(editors, &token, &mut redis_conn).await?))
 }
 
 #[get("/broadcasters")]
@@ -36,7 +37,8 @@ async fn get_broadcasters(
     redis: web::Data<RedisPool>,
 ) -> Result<HttpResponse> {
     let token = claims.get_user(&pool).await?.into();
-    let broadcasters = Editor::get_broadcasters(claims.user_id(), &pool).await?;
+    let broadcasters =
+        Editor::get_broadcasters(claims.user_id(), &pool).await?;
 
     if broadcasters.is_empty() {
         let data: Vec<String> = vec![];
@@ -48,7 +50,8 @@ async fn get_broadcasters(
         .await
         .map_err(|_| errors::ErrorInternalServerError("Redis is dead"))?;
 
-    Ok(HttpResponse::Ok().json(get_many_users(broadcasters, &token, &mut redis_conn).await?))
+    Ok(HttpResponse::Ok()
+        .json(get_many_users(broadcasters, &token, &mut redis_conn).await?))
 }
 
 #[put("/{editor_name}")]

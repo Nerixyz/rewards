@@ -12,7 +12,10 @@ pub enum SpotifyAction {
     Queue,
 }
 
-pub fn format_spotify_result(res: AnyResult<String>, action: SpotifyAction) -> AnyResult<String> {
+pub fn format_spotify_result(
+    res: AnyResult<String>,
+    action: SpotifyAction,
+) -> AnyResult<String> {
     res.map(|msg| {
         format!(
             "{} {}",
@@ -28,8 +31,8 @@ pub fn format_spotify_result(res: AnyResult<String>, action: SpotifyAction) -> A
 
 pub fn get_reply_data(redemption: &Redemption) -> (String, String) {
     (
-        redemption.broadcaster_user_login.clone().into_string(),
-        redemption.user_login.clone().into_string(),
+        redemption.broadcaster_user_login.clone().take(),
+        redemption.user_login.clone().take(),
     )
 }
 

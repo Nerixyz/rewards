@@ -1,9 +1,8 @@
 use super::Redemption;
 use crate::{
-    actors::{irc::WhisperMessage, rewards::ExecuteRewardMessage},
-    log_discord,
-    services::twitch::eventsub::update_reward_redemption,
-    IrcActor, PgPool, RewardsActor, User,
+    actors::rewards::ExecuteRewardMessage, log_discord,
+    services::twitch::eventsub::update_reward_redemption, PgPool, RewardsActor,
+    User,
 };
 use actix::{Addr, MailboxError};
 use models::reward::Reward;
@@ -13,7 +12,10 @@ use std::{
 };
 use thiserror::Error;
 use twitch_api2::{
-    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, EventSubscriptionInformation},
+    eventsub::{
+        channel::ChannelPointsCustomRewardRedemptionAddV1,
+        EventSubscriptionInformation,
+    },
     helix::points::CustomRewardRedemptionStatus,
 };
 
@@ -26,9 +28,9 @@ pub enum ReceiveRedemptionError {
 pub struct ReceiveRedemptionCtx {
     pub pool: Arc<PgPool>,
     pub executor: Arc<Addr<RewardsActor>>,
-    pub irc: Arc<Addr<IrcActor>>,
     pub notification: Redemption,
-    pub subscription: EventSubscriptionInformation<ChannelPointsCustomRewardRedemptionAddV1>,
+    pub subscription:
+        EventSubscriptionInformation<ChannelPointsCustomRewardRedemptionAddV1>,
     pub user: User,
 }
 
@@ -50,8 +52,11 @@ struct RedemptionUpdateHandle {
 impl From<(&Redemption, &Reward)> for RedemptionCtx {
     fn from((notification, reward): (&Redemption, &Reward)) -> Self {
         Self {
-            executing_user_login: notification.user_name.clone().into_string(),
-            broadcaster_login: notification.broadcaster_user_login.clone().into_string(),
+            executing_user_login: notification.user_name.clone().take(),
+            broadcaster_login: notification
+                .broadcaster_user_login
+                .clone()
+                .take(),
             reward_name: notification.reward.title.clone(),
             reward_type: reward.data.0.to_string(),
             user_input: notification.user_input.clone(),
@@ -62,9 +67,12 @@ impl From<(&Redemption, &Reward)> for RedemptionCtx {
 impl From<&Redemption> for RedemptionUpdateHandle {
     fn from(notification: &Redemption) -> Self {
         Self {
-            broadcaster_id: notification.broadcaster_user_id.clone().into_string(),
-            reward_id: notification.reward.id.clone().into_string(),
-            redemption_id: notification.id.clone().into_string(),
+            broadcaster_id: notification
+                .broadcaster_user_id
+                .clone()
+                .take(),
+            reward_id: notification.reward.id.clone().take(),
+            redemption_id: notification.id.clone().take(),
         }
     }
 }
@@ -73,7 +81,6 @@ impl RedemptionCtx {
     async fn handle_execution_error(
         &self,
         error: Result<anyhow::Result<()>, MailboxError>,
-        irc: &Arc<Addr<IrcActor>>,
     ) {
         let (debug, display) = match error {
             Err(e) => (format!("{:?}", e), e.to_string()),
@@ -91,12 +98,6 @@ impl RedemptionCtx {
             "Type" = self.reward_type.clone(),
             "Error" = display
         );
-
-        match irc.send(WhisperMessage(self.executing_user_login.clone(), "[Refund] ⚠ I could not execute the reward. Make sure you provided the correct input!".to_string())).await {
-            Err(e) => log::warn!("MailboxError on sending chat: {}", e),
-            Ok(Err(e)) => log::warn!("Error sending chat: {}", e),
-            _ => ()
-        }
     }
 
     async fn log_redemption(
@@ -104,18 +105,9 @@ impl RedemptionCtx {
         status: CustomRewardRedemptionStatus,
         redemption_received: Instant,
     ) {
-        metrics::increment_counter!("rewards_redemptions",
-            "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
-            "reward" => self.reward_type.clone()
-        );
         let execution = Instant::now()
             .checked_duration_since(redemption_received)
             .unwrap_or_else(|| Duration::from_secs(0));
-        metrics::histogram!("rewards_redemption_execution_duration",
-            execution.as_secs_f64(),
-            "status" => if status == CustomRewardRedemptionStatus::Fulfilled { "fulfilled" } else { "cancelled" },
-            "reward" => self.reward_type.clone()
-        );
 
         log_discord!(
             "Rewards",
@@ -151,16 +143,19 @@ impl RedemptionUpdateHandle {
                 redemption.status,
                 redemption
             ),
-            Err(error) => log::warn!("Couldn't update reward redemption: {}", error),
+            Err(error) => {
+                log::warn!("Couldn't update reward redemption: {}", error)
+            }
         }
     }
 }
 
-pub async fn receive(ctx: ReceiveRedemptionCtx) -> Result<(), ReceiveRedemptionError> {
+pub async fn receive(
+    ctx: ReceiveRedemptionCtx,
+) -> Result<(), ReceiveRedemptionError> {
     let ReceiveRedemptionCtx {
         pool,
         executor,
-        irc,
         notification,
         user,
         subscription,
@@ -185,7 +180,7 @@ pub async fn receive(ctx: ReceiveRedemptionCtx) -> Result<(), ReceiveRedemptionE
     {
         Ok(Ok(_)) => CustomRewardRedemptionStatus::Fulfilled,
         e => {
-            ctx.handle_execution_error(e, &irc).await;
+            ctx.handle_execution_error(e).await;
             CustomRewardRedemptionStatus::Canceled
         }
     };

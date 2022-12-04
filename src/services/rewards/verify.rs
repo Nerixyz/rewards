@@ -3,8 +3,8 @@ use sqlx::PgPool;
 use twitch_api2::twitch_oauth2::UserToken;
 
 use crate::services::{
-    bttv, ffz::is_editor_in, rewards::extract, seven_tv, spotify::rewards as spotify,
-    twitch::requests::get_user,
+    bttv, ffz::is_editor_in, rewards::extract, seven_tv,
+    spotify::rewards as spotify, twitch::requests::get_user,
 };
 use models::reward::RewardData;
 
@@ -16,9 +16,11 @@ pub async fn verify_reward(
 ) -> AnyResult<()> {
     match reward {
         RewardData::EmoteOnly(duration)
-        | RewardData::Timeout(duration)
         | RewardData::SubOnly(duration) => {
             extract::duration(duration)?;
+        }
+        RewardData::Timeout(data) => {
+            extract::duration(&data.duration)?;
         }
 
         // verify editor
@@ -28,11 +30,13 @@ pub async fn verify_reward(
         RewardData::FfzSwap(_) => {
             let user = get_user(broadcaster_id.to_string(), token).await?;
             if !is_editor_in(user.login.as_ref()).await {
-                return Err(AnyError::msg("RewardMore isn't an editor for the user"));
+                return Err(AnyError::msg(
+                    "RewardMore isn't an editor for the user",
+                ));
             }
         }
         RewardData::SevenTvSwap(_) => {
-            seven_tv::verify_user(broadcaster_id, pool).await?;
+            seven_tv::verify_user(broadcaster_id).await?;
         }
         RewardData::BttvSlot(slot) => {
             bttv::verify_user(broadcaster_id, pool).await?;
@@ -46,7 +50,9 @@ pub async fn verify_reward(
         RewardData::FfzSlot(slot) => {
             let user = get_user(broadcaster_id.to_string(), token).await?;
             if !is_editor_in(user.login.as_ref()).await {
-                return Err(AnyError::msg("RewardMore isn't an editor for the user"));
+                return Err(AnyError::msg(
+                    "RewardMore isn't an editor for the user",
+                ));
             }
 
             if slot.slots > 50 {
@@ -56,7 +62,7 @@ pub async fn verify_reward(
             extract::duration(&slot.expiration)?;
         }
         RewardData::SevenTvSlot(slot) => {
-            seven_tv::verify_user(broadcaster_id, pool).await?;
+            seven_tv::verify_user(broadcaster_id).await?;
 
             if slot.slots > 100 {
                 return Err(AnyError::msg("100 slots is the max"));
@@ -64,7 +70,9 @@ pub async fn verify_reward(
 
             extract::duration(&slot.expiration)?;
         }
-        RewardData::SpotifySkip(_) | RewardData::SpotifyQueue(_) | RewardData::SpotifyPlay(_) => {
+        RewardData::SpotifySkip(_)
+        | RewardData::SpotifyQueue(_)
+        | RewardData::SpotifyPlay(_) => {
             spotify::get_spotify_token(broadcaster_id, pool).await?;
         }
     };
@@ -73,8 +81,9 @@ pub async fn verify_reward(
 
 pub fn verify_live_delay(delay: &Option<String>) -> AnyResult<()> {
     if let Some(delay) = delay {
-        humantime::parse_duration(delay)
-            .map_err(|e| AnyError::msg(format!("Could not parse duration: {}", e)))?;
+        humantime::parse_duration(delay).map_err(|e| {
+            AnyError::msg(format!("Could not parse duration: {}", e))
+        })?;
     }
     Ok(())
 }

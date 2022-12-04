@@ -3,7 +3,7 @@ use config::CONFIG;
 use lazy_static::lazy_static;
 use reqwest::{
     header::{self, HeaderMap},
-    Client, IntoUrl,
+    Client, IntoUrl, StatusCode,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, time::Duration};
@@ -30,9 +30,10 @@ lazy_static! {
 }
 
 #[derive(Serialize)]
-struct GqlRequest<'a> {
+#[serde(bound = "V: Serialize")]
+struct GqlRequest<'a, V = HashMap<&'a str, &'a str>> {
     query: &'a str,
-    variables: HashMap<&'a str, &'a str>,
+    variables: V,
 }
 
 #[derive(Deserialize, Debug)]
@@ -67,68 +68,69 @@ pub struct SevenEmote {
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
-struct SevenUserResponse {
-    user: SevenUser,
-}
-
-#[derive(Deserialize, Debug)]
-#[non_exhaustive]
-struct SevenUserEditorsResponse {
-    user: SevenUserOnlyEditors,
-}
-
-#[derive(Deserialize, Debug)]
-#[non_exhaustive]
-pub struct SevenUserOnlyEditors {
-    pub editors: Vec<OnlyName>,
-}
-
-#[derive(Deserialize, Debug)]
-#[non_exhaustive]
-pub struct OnlyName {
-    pub login: String,
+pub struct SevenUserResponse {
+    pub emote_set: SevenEmoteSet,
+    pub user: SevenUser,
 }
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenUser {
     pub id: String,
-    pub login: String,
+    pub editors: Vec<SevenEditor>,
+}
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
+pub struct SevenEmoteSet {
+    pub id: String,
+    pub capacity: usize,
     pub emotes: Vec<SevenEmote>,
-    pub twitch_id: String,
-    pub emote_slots: usize,
 }
 
-pub async fn get_user(user_id_or_login: &str) -> AnyResult<SevenUser> {
-    let user = seven_tv_post::<SevenUserResponse, _>("https://api.7tv.app/v2/gql", &GqlRequest {
-        query: "query getUser($id: String!) { user(id: $id) { id, login, emotes { id, name }, twitch_id, emote_slots } }",
-        variables: [("id", user_id_or_login)].into_iter().collect::<HashMap<_, _>>()
-    }).await?;
-
-    Ok(user.data.user)
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
+pub struct SevenEditor {
+    pub id: String,
 }
 
-pub async fn get_user_editors(user_id_or_login: &str) -> AnyResult<Vec<OnlyName>> {
-    let user = seven_tv_post::<SevenUserEditorsResponse, _>(
-        "https://api.7tv.app/v2/gql",
-        &GqlRequest {
-            query: "query getUser($id: String!) { user(id: $id) { editors { login } } }",
-            variables: [("id", user_id_or_login)]
-                .into_iter()
-                .collect::<HashMap<_, _>>(),
-        },
-    )
-    .await?;
+#[derive(Serialize)]
+struct GqlIdVars<'a> {
+    id: &'a str,
+}
 
-    Ok(user.data.user.editors)
+#[derive(Serialize)]
+struct GqlEmoteInSetVars<'a> {
+    set_id: &'a str,
+    emote_id: &'a str,
+}
+
+#[derive(Deserialize, Serialize)]
+#[non_exhaustive]
+struct VoidObject {}
+
+pub async fn get_user(user_id: &str) -> AnyResult<SevenUserResponse> {
+    seven_tv_get::<SevenUserResponse>(format!(
+        "https://7tv.io/v3/users/twitch/{}",
+        CONFIG.debug_overrides.seventv(user_id)
+    ))
+    .await
+}
+
+pub async fn get_emote_set(id: &str) -> AnyResult<SevenEmoteSet> {
+    seven_tv_get::<SevenEmoteSet>(format!(
+        "https://7tv.io/v3/emote-sets/{}",
+        id
+    ))
+    .await
 }
 
 pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
-    let emote = seven_tv_post::<SevenEmoteResponse, _>(
-        "https://api.7tv.app/v2/gql",
+    let emote = seven_tv_post::<SevenEmoteResponse>(
+        "https://7tv.io/v3/gql",
         &GqlRequest {
-            query: "query emoteQuery($id: String!){emote(id: $id){id,name, tags}}",
-            variables: [("id", emote_id)].into_iter().collect::<HashMap<_, _>>(),
+            query: "query($id: ObjectID!) { emote(id: $id) { id, name } }",
+            variables: GqlIdVars { id: emote_id },
         },
     )
     .await?;
@@ -136,40 +138,48 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
     Ok(emote.data.emote)
 }
 
-pub async fn add_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
-    seven_tv_post::<serde_json::Value, _>("https://api.7tv.app/v2/gql", &GqlRequest {
-        query: "mutation AddChannelEmote($ch: String!, $em: String!, $re: String!) {addChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
-        variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
+pub async fn add_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
+    seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: ADD) { id } } }",
+        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id }
     }).await?;
 
     Ok(())
 }
 
-pub async fn remove_emote(channel_id: &str, emote_id: &str) -> AnyResult<()> {
-    seven_tv_post::<serde_json::Value, _>("https://api.7tv.app/v2/gql", &GqlRequest {
-        query: "mutation RemoveChannelEmote($ch: String!, $em: String!, $re: String!) {removeChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {emote_ids}}",
-        variables: [("ch", channel_id), ("em", emote_id), ("re", "")].into_iter().collect::<HashMap<_,_>>()
+pub async fn remove_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
+    seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE) { id } } }",
+        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id }
     }).await?;
 
     Ok(())
 }
 
 pub async fn logged_in() -> bool {
-    seven_tv_post::<serde_json::Value, _>(
-        "https://api.7tv.app/v2/gql",
+    #[derive(Deserialize)]
+    #[non_exhaustive]
+    struct Data {
+        actor: Option<VoidObject>,
+    }
+    seven_tv_post::<Data>(
+        "https://7tv.io/v3/gql",
         &GqlRequest {
-            query: "query GetUser($id: String!) {user(id: $id) {id}}",
-            variables: [("id", "@me")].into_iter().collect::<HashMap<_, _>>(),
+            query: "query {actor { id } }",
+            variables: (),
         },
     )
     .await
-    .is_ok()
+    .map(|d| d.data.actor.is_some())
+    .unwrap_or(false)
 }
 
-async fn seven_tv_post<J, U>(url: U, request: &GqlRequest<'_>) -> AnyResult<GqlResponse<J>>
+async fn seven_tv_post<J>(
+    url: impl IntoUrl,
+    request: &GqlRequest<'_, impl Serialize>,
+) -> AnyResult<GqlResponse<J>>
 where
     J: DeserializeOwned,
-    U: IntoUrl,
 {
     let response = SEVENTV_CLIENT.post(url).json(request).send().await?;
     let status = response.status();
@@ -184,5 +194,18 @@ where
             status.as_str()
         )),
         res => Ok(res),
+    }
+}
+
+async fn seven_tv_get<R>(url: impl IntoUrl) -> AnyResult<R>
+where
+    R: DeserializeOwned,
+{
+    let response = SEVENTV_CLIENT.get(url).send().await?;
+    let status = response.status();
+    match status {
+        s if s.is_success() => Ok(response.json().await?),
+        StatusCode::NOT_FOUND => Err(anyhow!("7TV error: Not found")),
+        _ => Err(anyhow!("7TV error: {}", response.text().await?)),
     }
 }

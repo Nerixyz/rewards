@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Add};
 use tokio_postgres::{types::Json, NoTls};
 use twitch_oauth2::{
-    tokens::UserTokenBuilder, url::Url, ClientId, ClientSecret, Scope, TwitchToken,
+    tokens::UserTokenBuilder, url::Url, ClientId, ClientSecret, Scope,
+    TwitchToken,
 };
 
 #[derive(Serialize, Debug)]
@@ -42,7 +43,7 @@ struct SimpleDbConfig {
     url: String,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     let maybe_config = tokio::fs::read("config.toml")
@@ -67,7 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ),
     };
 
-    let (pg, pg_connection) = tokio_postgres::connect(&database_url, NoTls).await?;
+    let (pg, pg_connection) =
+        tokio_postgres::connect(&database_url, NoTls).await?;
     tokio::spawn(async move {
         if let Err(e) = pg_connection.await {
             eprintln!("Postgres connection error: {}", e);
@@ -90,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!(
         "SeemsGood. Make sure you have {} added as a redirect-url in the dev-console!\n",
-        style("http://localhost").cyan()
+        style("http://localhost:8082/api/v1/auth/twitch-callback").cyan()
     );
     println!(
         "Next, authenticate the app and paste either the {} or the {} here.",
@@ -101,7 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut builder = UserTokenBuilder::new(
         tw_client_id,
         tw_client_secret,
-        Url::parse("http://localhost")?,
+        Url::parse("http://localhost:8082/api/v1/auth/twitch-callback")?,
     )
     .set_scopes(vec![
         Scope::ChatEdit,
@@ -119,6 +121,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Scope::WhispersRead,
         Scope::ChannelEditCommercial,
         Scope::ChannelManageBroadcast,
+        Scope::ModeratorReadChatSettings,
+        Scope::ModeratorManageChatSettings,
+        Scope::ModeratorManageBannedUsers,
     ]);
     let (url, csrf) = builder.generate_url();
 
@@ -139,8 +144,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get_user_token(&reqwest::Client::new(), csrf.secret(), &code)
         .await?;
 
-    let token_duration = Duration::from_std(token.expires_in()).expect("Should be in range");
-    let refresh_token = token.refresh_token.expect("Could not get refresh_token");
+    let token_duration =
+        Duration::from_std(token.expires_in()).expect("Should be in range");
+    let refresh_token =
+        token.refresh_token.expect("Could not get refresh_token");
     let token = UserAccessToken {
         access_token: token.access_token.secret(),
         refresh_token: refresh_token.secret(),

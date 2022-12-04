@@ -31,7 +31,10 @@ impl ConfigEntry {
         Ok(())
     }
 
-    pub async fn update_user_token(pool: &PgPool, token: UserAccessToken) -> SqlResult<()> {
+    pub async fn update_user_token(
+        pool: &PgPool,
+        token: UserAccessToken,
+    ) -> SqlResult<()> {
         Self {
             key: "user_token".to_string(),
             value: Json(ConfigValue::UserToken(token)),

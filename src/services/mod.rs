@@ -13,5 +13,5 @@ pub mod spotify;
 pub mod sql;
 pub mod supinic;
 pub mod text;
-pub mod timed_mode;
 pub mod twitch;
+pub mod ivr;

@@ -10,7 +10,10 @@ impl Actor for SupinicActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(15 * 60), |this, ctx| {
             async move {
-                log_err!(update_activity().await, "Could not update supi activity");
+                log_err!(
+                    update_activity().await,
+                    "Could not update supi activity"
+                );
             }
             .into_actor(this)
             .spawn(ctx)

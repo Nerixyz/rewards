@@ -1,55 +1,60 @@
-use crate::services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient};
+use crate::services::twitch::{
+    errors::TwitchApiError, HelixResult, RHelixClient, HELIX_CLIENT,
+};
+use anyhow::anyhow;
+use config::CONFIG;
+use models::timed_mode;
+use reqwest::StatusCode;
 use twitch_api2::{
     helix::{
+        chat::{
+            ChatSettings, GetChatSettingsRequest, UpdateChatSettingsBody,
+            UpdateChatSettingsRequest,
+        },
+        moderation::{BanUserBody, BanUserRequest, GetBannedUsersRequest},
         points::{
             update_custom_reward::UpdateCustomReward, CreateCustomRewardBody,
-            CreateCustomRewardRequest, CreateCustomRewardResponse, CustomReward,
-            DeleteCustomRewardRequest, GetCustomRewardRequest, UpdateCustomRewardBody,
-            UpdateCustomRewardRequest,
+            CreateCustomRewardRequest, CreateCustomRewardResponse,
+            CustomReward, DeleteCustomRewardRequest, GetCustomRewardRequest,
+            UpdateCustomRewardBody, UpdateCustomRewardRequest,
         },
         streams::{GetStreamsRequest, Stream},
         users::{GetUsersRequest, User},
-        Response,
+        ClientRequestError, HelixRequestPostError, Response,
     },
     twitch_oauth2::{tokens::errors::ValidationError, TwitchToken, UserToken},
-    types::{Nickname, RewardId, UserId},
+    types::{IntoCow, RewardIdRef, UserId, UserIdRef, UserNameRef},
 };
 
-pub async fn create_reward(
+pub async fn create_reward<'a>(
     user_id: &str,
-    req: CreateCustomRewardBody,
+    req: CreateCustomRewardBody<'a>,
     token: &UserToken,
 ) -> HelixResult<CreateCustomRewardResponse> {
-    let response: Response<CreateCustomRewardRequest, CreateCustomRewardResponse> =
-        RHelixClient::default()
-            .req_post(
-                CreateCustomRewardRequest::builder()
-                    .broadcaster_id(user_id)
-                    .build(),
-                req,
-                token,
-            )
-            .await?;
-
-    Ok(response.data)
-}
-
-pub async fn update_reward(
-    user_id: impl Into<UserId>,
-    id: String,
-    req: UpdateCustomRewardBody,
-    token: &UserToken,
-) -> HelixResult<CustomReward> {
-    let response: Response<UpdateCustomRewardRequest, UpdateCustomReward> = RHelixClient::default()
-        .req_patch(
-            UpdateCustomRewardRequest::builder()
-                .broadcaster_id(user_id)
-                .id(id)
-                .build(),
+    let response: Response<
+        CreateCustomRewardRequest,
+        CreateCustomRewardResponse,
+    > = RHelixClient::default()
+        .req_post(
+            CreateCustomRewardRequest::broadcaster_id(user_id),
             req,
             token,
         )
         .await?;
+
+    Ok(response.data)
+}
+
+pub async fn update_reward<'a>(
+    user_id: impl IntoCow<'a, UserIdRef> + 'a,
+    id: impl IntoCow<'a, RewardIdRef> + 'a,
+    req: UpdateCustomRewardBody<'a>,
+    token: &UserToken,
+) -> HelixResult<CustomReward> {
+    let response: Response<UpdateCustomRewardRequest, UpdateCustomReward> =
+        RHelixClient::default()
+            .req_patch(UpdateCustomRewardRequest::new(user_id, id), req, token)
+            .await?;
 
     match response.data {
         UpdateCustomReward::Success(r) => Ok(r),
@@ -57,56 +62,48 @@ pub async fn update_reward(
     }
 }
 
-pub async fn delete_reward<I: Into<RewardId>>(
-    user_id: &str,
-    id: I,
+pub async fn delete_reward<'a>(
+    user_id: impl IntoCow<'a, UserIdRef> + 'a,
+    id: impl IntoCow<'a, RewardIdRef> + 'a,
     token: &UserToken,
 ) -> HelixResult<()> {
     RHelixClient::default()
-        .req_delete(
-            DeleteCustomRewardRequest::builder()
-                .broadcaster_id(user_id)
-                .id(id.into())
-                .build(),
-            token,
-        )
+        .req_delete(DeleteCustomRewardRequest::new(user_id, id), token)
         .await?;
 
     Ok(())
 }
 
-pub async fn get_rewards_for_id(
-    broadcaster: &str,
+pub async fn get_rewards_for_id<'a>(
+    broadcaster: impl IntoCow<'a, UserIdRef> + 'a,
     token: &UserToken,
 ) -> HelixResult<Vec<CustomReward>> {
-    let response: Response<GetCustomRewardRequest, Vec<CustomReward>> = RHelixClient::default()
-        .req_get(
-            GetCustomRewardRequest::builder()
-                .broadcaster_id(broadcaster)
-                .only_manageable_rewards(Some(true))
-                .build(),
-            token,
-        )
-        .await?;
+    let response: Response<GetCustomRewardRequest, Vec<CustomReward>> =
+        RHelixClient::default()
+            .req_get(
+                GetCustomRewardRequest::broadcaster_id(broadcaster)
+                    .only_manageable_rewards(true),
+                token,
+            )
+            .await?;
 
     Ok(response.data)
 }
 
-pub async fn get_reward_for_broadcaster_by_id(
-    broadcaster: &str,
-    id: String,
+pub async fn get_reward_for_broadcaster_by_id<'a>(
+    user_id: impl IntoCow<'a, UserIdRef> + 'a,
+    ids: &'a [&'a RewardIdRef],
     token: &UserToken,
 ) -> HelixResult<CustomReward> {
-    let response: Response<GetCustomRewardRequest, Vec<CustomReward>> = RHelixClient::default()
-        .req_get(
-            GetCustomRewardRequest::builder()
-                .broadcaster_id(broadcaster)
-                .id(vec![RewardId::new(id)])
-                .only_manageable_rewards(Some(true))
-                .build(),
-            token,
-        )
-        .await?;
+    let response: Response<GetCustomRewardRequest, Vec<CustomReward>> =
+        RHelixClient::default()
+            .req_get(
+                GetCustomRewardRequest::broadcaster_id(user_id)
+                    .only_manageable_rewards(true)
+                    .ids(ids),
+                token,
+            )
+            .await?;
 
     response
         .data
@@ -115,13 +112,15 @@ pub async fn get_reward_for_broadcaster_by_id(
         .ok_or_else(|| TwitchApiError::Other("No reward found".to_string()))
 }
 
-pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
-    let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(
-            GetUsersRequest::builder().id(vec![UserId::new(id)]).build(),
-            token,
-        )
-        .await?;
+pub async fn get_user(
+    id: impl AsRef<str>,
+    token: &UserToken,
+) -> HelixResult<User> {
+    let ids: &[&UserIdRef] = &[id.as_ref().into()];
+    let response: Response<GetUsersRequest, Vec<User>> =
+        RHelixClient::default()
+            .req_get(GetUsersRequest::ids(ids), token)
+            .await?;
 
     response
         .data
@@ -130,15 +129,15 @@ pub async fn get_user(id: String, token: &UserToken) -> HelixResult<User> {
         .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()))
 }
 
-pub async fn get_user_by_login<T: TwitchToken>(login: String, token: &T) -> HelixResult<User> {
-    let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(
-            GetUsersRequest::builder()
-                .login(vec![Nickname::new(login)])
-                .build(),
-            token,
-        )
-        .await?;
+pub async fn get_user_by_login<T: TwitchToken>(
+    login: impl AsRef<str>,
+    token: &T,
+) -> HelixResult<User> {
+    let logins: &[&UserNameRef] = &[login.as_ref().into()];
+    let response: Response<GetUsersRequest, Vec<User>> =
+        RHelixClient::default()
+            .req_get(GetUsersRequest::logins(logins), token)
+            .await?;
 
     response
         .data
@@ -147,28 +146,27 @@ pub async fn get_user_by_login<T: TwitchToken>(login: String, token: &T) -> Heli
         .ok_or_else(|| TwitchApiError::Other("Could not find user".to_string()))
 }
 
-pub async fn get_users(ids: Vec<String>, token: &UserToken) -> HelixResult<Vec<User>> {
-    let response: Response<GetUsersRequest, Vec<User>> = RHelixClient::default()
-        .req_get(
-            GetUsersRequest::builder()
-                .id(ids.into_iter().map(UserId::new).collect())
-                .build(),
-            token,
-        )
-        .await?;
+pub async fn get_users(
+    ids: &[&UserIdRef],
+    token: &UserToken,
+) -> HelixResult<Vec<User>> {
+    let response: Response<GetUsersRequest, Vec<User>> =
+        RHelixClient::default()
+            .req_get(GetUsersRequest::ids(ids), token)
+            .await?;
 
     Ok(response.data)
 }
 
-pub async fn is_user_live<T: TwitchToken>(id: String, token: &T) -> HelixResult<bool> {
-    let response: Response<GetStreamsRequest, Vec<Stream>> = RHelixClient::default()
-        .req_get(
-            GetStreamsRequest::builder()
-                .user_id(vec![UserId::new(id)])
-                .build(),
-            token,
-        )
-        .await?;
+pub async fn is_user_live<'a, T: TwitchToken>(
+    id: impl Into<&'a UserIdRef>,
+    token: &T,
+) -> HelixResult<bool> {
+    let ids: &[&UserIdRef] = &[id.into()];
+    let response: Response<GetStreamsRequest, Vec<Stream>> =
+        RHelixClient::default()
+            .req_get(GetStreamsRequest::user_ids(ids), token)
+            .await?;
 
     Ok(response.data.into_iter().next().is_some())
 }
@@ -179,4 +177,124 @@ pub async fn validate_token(token: &UserToken) -> anyhow::Result<bool> {
         Err(ValidationError::NotAuthorized) => Ok(false),
         Err(e) => Err(e.into()),
     }
+}
+
+// copesen this will work some day
+// TODO: user_ids -> user_id
+#[allow(unused)]
+pub async fn get_moderator_id_for_banned_user<'a>(
+    broadcaster_id: &'a str,
+    user_ids: &'a [&'a UserIdRef],
+    token: &impl TwitchToken,
+) -> anyhow::Result<Option<UserId>> {
+    let data = HELIX_CLIENT
+        .req_get(
+            GetBannedUsersRequest::broadcaster_id(
+                CONFIG.debug_overrides.twitch(broadcaster_id),
+            )
+            .users(user_ids),
+            token,
+        )
+        .await?;
+
+    Ok(data.data.into_iter().next().map(|u| u.moderator_id))
+}
+
+pub async fn timeout_user<'a>(
+    broadcaster_id: &'a str,
+    moderator_id: impl IntoCow<'a, UserIdRef> + 'a,
+    user_id: impl IntoCow<'a, UserIdRef> + 'a,
+    duration: std::time::Duration,
+    reason: &'a str,
+    token: &impl TwitchToken,
+) -> anyhow::Result<()> {
+    let res = HELIX_CLIENT
+        .req_post(
+            BanUserRequest::new(
+                CONFIG.debug_overrides.twitch(broadcaster_id),
+                moderator_id,
+            ),
+            BanUserBody::new(user_id, reason, Some(duration.as_secs() as u32)),
+            token,
+        )
+        .await;
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(ClientRequestError::HelixRequestPostError(
+            HelixRequestPostError::Error {
+                status: StatusCode::BAD_REQUEST,
+                message,
+                ..
+            },
+        )) if message.contains(
+            "user specified in the user_id field is already banned",
+        ) =>
+        {
+            Err(anyhow!("I can't timeout banned users."))
+        }
+        Err(ClientRequestError::HelixRequestPostError(
+            HelixRequestPostError::Error {
+                status: StatusCode::BAD_REQUEST,
+                message,
+                ..
+            },
+        )) if message.contains(
+            "user specified in the user_id field may not be banned",
+        ) =>
+        {
+            Err(anyhow!("I can't timeout mods or broadcasters."))
+        }
+        Err(e) => Err(e.into()),
+    }
+}
+
+pub async fn get_chat_settings(
+    broadcaster_id: &str,
+    token: &impl TwitchToken,
+) -> anyhow::Result<ChatSettings> {
+    let res = HELIX_CLIENT
+        .req_get(
+            GetChatSettingsRequest::broadcaster_id(
+                CONFIG.debug_overrides.twitch(broadcaster_id),
+            ),
+            token,
+        )
+        .await?;
+    Ok(res.data)
+}
+
+pub async fn update_chat_settings<'a>(
+    broadcaster_id: &'a str,
+    moderator_id: impl IntoCow<'a, UserIdRef> + 'a,
+    timed_mode: timed_mode::Mode,
+    enable: bool,
+    token: &impl TwitchToken,
+) -> anyhow::Result<()> {
+    HELIX_CLIENT
+        .req_patch(
+            UpdateChatSettingsRequest::new(
+                CONFIG.debug_overrides.twitch(broadcaster_id),
+                moderator_id,
+            ),
+            UpdateChatSettingsBody::builder()
+                .emote_mode(
+                    (timed_mode == timed_mode::Mode::Emoteonly)
+                        .then_some(enable),
+                )
+                .subscriber_mode(
+                    (timed_mode == timed_mode::Mode::Subonly).then_some(enable),
+                )
+                .follower_mode(None)
+                .follower_mode_duration(None)
+                .slow_mode(None)
+                .non_moderator_chat_delay(None)
+                .non_moderator_chat_delay_duration(None)
+                .slow_mode_wait_time(None)
+                .unique_chat_mode(None)
+                .build(),
+            token,
+        )
+        .await?;
+    Ok(())
 }

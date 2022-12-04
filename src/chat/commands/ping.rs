@@ -19,7 +19,7 @@ impl ChatCommand for Ping {
     ) -> AnyResult<String> {
         Ok(format!("@{}, 🤖 Pong! ⏱ Uptime: {uptime} 📜 Git: {git_info} 🛠 Compiled with Rust {rustc_info} on 🖥 {build_info} 📦 {build_profile}",
                    msg.sender.login,
-                   uptime = humantime::format_duration(uptimer::get_async().await.unwrap_or_default()),
+                   uptime = humantime::format_duration(uptimer::get().unwrap_or_default()),
                    git_info = env!("RW_GIT_INFO"),
                    rustc_info = env!("RW_RUSTC_INFO"),
                    build_info = env!("RW_BUILD_INFO"),
@@ -27,7 +27,10 @@ impl ChatCommand for Ping {
         ))
     }
 
-    fn parse(_cmd: &str, _msg: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>> {
+    fn parse(
+        _cmd: &str,
+        _msg: Option<&str>,
+    ) -> AnyResult<Box<dyn ChatCommand + Send>> {
         Ok(Box::new(Self))
     }
 }

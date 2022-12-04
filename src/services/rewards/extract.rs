@@ -5,7 +5,8 @@ use regex::Regex;
 
 pub fn username(str: &str) -> AnyResult<String> {
     lazy_static! {
-        static ref USERNAME_REGEX: Regex = Regex::new("@([\\w_]+)").expect("must compile");
+        static ref USERNAME_REGEX: Regex =
+            Regex::new("@([\\w_]+)").expect("must compile");
     }
 
     let str = str.trim();
@@ -39,19 +40,22 @@ pub fn ffz_id(str: &str) -> AnyResult<&str> {
         )
         .expect("must compile");
     }
-    first_capture(str, &FFZ_REGEX).ok_or_else(|| AnyError::msg("Could not find an emote there!"))
+    first_capture(str, &FFZ_REGEX)
+        .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
 pub fn seventv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
-        static ref SEVENTV_REGEX: Regex =
-            Regex::new("(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )")
-                .expect("must compile");
+        static ref SEVENTV_REGEX: Regex = Regex::new(
+            "(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
+        )
+        .expect("must compile");
     }
     first_capture(str, &SEVENTV_REGEX)
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
+/// in seconds
 pub fn duration(duration: &str) -> AnyResult<u64> {
     let duration = duration.trim();
 
@@ -59,12 +63,9 @@ pub fn duration(duration: &str) -> AnyResult<u64> {
         .expect("must compile")
         .captures(duration)
     {
-        let mut iter = captures
-            .iter()
-            .skip(1)
-            .take(2)
-            .flatten()
-            .map(|m| humantime::parse_duration(m.as_str().trim()).map(|d| d.as_secs()));
+        let mut iter = captures.iter().skip(1).take(2).flatten().map(|m| {
+            humantime::parse_duration(m.as_str().trim()).map(|d| d.as_secs())
+        });
         let (first, second) = (iter.next(), iter.next());
 
         let (first, second) = match (first, second) {
@@ -83,7 +84,10 @@ pub fn duration(duration: &str) -> AnyResult<u64> {
             (second, first - second)
         };
 
-        Ok((start as f64 + rand::random::<f64>() * (diff as f64)).floor() as u64)
+        Ok(
+            (start as f64 + rand::random::<f64>() * (diff as f64)).floor()
+                as u64,
+        )
     } else {
         Ok(humantime::parse_duration(duration)?.as_secs())
     }

@@ -44,12 +44,17 @@ impl ChatCommand for EmoteManagement {
             Self::Ban(emote) => execute_ban(&msg, emote, pool).await,
             Self::Unban(emote) => execute_unban(&msg, emote, pool).await,
             Self::Eject(emote) => execute_eject(&msg, emote, pool).await,
-            Self::Inject(emote) => execute_inject(&msg, emote, redis, pool).await,
+            Self::Inject(emote) => {
+                execute_inject(&msg, emote, redis, pool).await
+            }
             Self::Reload => execute_reload(&msg, redis, pool).await,
         }
     }
 
-    fn parse(cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(
+        cmd: &str,
+        args: Option<&str>,
+    ) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {
@@ -105,9 +110,13 @@ impl ChatCommand for EmoteManagement {
         if matches!(self, Self::Info(_)) || msg.sender.id == msg.channel_id {
             true
         } else {
-            Editor::get_broadcaster_for_editor(&msg.sender.id, &msg.channel_id, pool)
-                .await
-                .is_ok()
+            Editor::get_broadcaster_for_editor(
+                &msg.sender.id,
+                &msg.channel_id,
+                pool,
+            )
+            .await
+            .is_ok()
         }
     }
 }

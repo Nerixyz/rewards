@@ -31,21 +31,7 @@
             @after-leave="onDialogClose"
           >
             <div
-              class="
-                inline-block
-                p-6
-                my-8
-                overflow-hidden
-                text-left
-                align-middle
-                transition-all
-                transform
-                bg-gray-300
-                border-4 border-red
-                shadow-xl
-                rounded-2xl
-                text-white
-              "
+              class="inline-block p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-gray-300 border-4 border-red shadow-xl rounded-2xl text-white"
             >
               <DialogTitle as="h3" class="text-2xl mb-5 font-serif font-medium leading-6 text-white">
                 {{ title }}

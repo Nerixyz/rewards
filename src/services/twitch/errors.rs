@@ -2,8 +2,9 @@ use actix_web::{error, http::StatusCode, HttpResponse};
 use derive_more::Display;
 use errors::json_error::JsonError;
 use twitch_api2::helix::{
-    ClientRequestError, CreateRequestError, HelixRequestDeleteError, HelixRequestGetError,
-    HelixRequestPatchError, HelixRequestPostError, HelixRequestPutError,
+    ClientRequestError, CreateRequestError, HelixRequestDeleteError,
+    HelixRequestGetError, HelixRequestPatchError, HelixRequestPostError,
+    HelixRequestPutError,
 };
 
 #[derive(Display, Debug)]
@@ -60,49 +61,67 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     status, message, ..
                 } => Self::Response(status, message),
                 HelixRequestGetError::Utf8Error(_, _, _) => Self::Utf8,
-                HelixRequestGetError::DeserializeError(_, _, _, _) => Self::Serde,
-                HelixRequestGetError::InvalidResponse { status, reason, .. } => {
-                    Self::Response(status, reason.to_string())
+                HelixRequestGetError::DeserializeError(_, _, _, _) => {
+                    Self::Serde
                 }
+                HelixRequestGetError::InvalidResponse {
+                    status,
+                    reason,
+                    ..
+                } => Self::Response(status, reason.to_string()),
             },
             ClientRequestError::HelixRequestPutError(e) => match e {
                 HelixRequestPutError::Error {
                     status, message, ..
                 } => Self::Response(status, message),
                 HelixRequestPutError::Utf8Error(_, _, _) => Self::Utf8,
-                HelixRequestPutError::DeserializeError(_, _, _, _) => Self::Serde,
-                HelixRequestPutError::InvalidResponse { status, reason, .. } => {
-                    Self::Response(status, reason.to_string())
+                HelixRequestPutError::DeserializeError(_, _, _, _) => {
+                    Self::Serde
                 }
+                HelixRequestPutError::InvalidResponse {
+                    status,
+                    reason,
+                    ..
+                } => Self::Response(status, reason.to_string()),
             },
             ClientRequestError::HelixRequestPostError(e) => match e {
                 HelixRequestPostError::Error {
                     status, message, ..
                 } => Self::Response(status, message),
                 HelixRequestPostError::Utf8Error(_, _, _) => Self::Utf8,
-                HelixRequestPostError::DeserializeError(_, _, _, _) => Self::Serde,
-                HelixRequestPostError::InvalidResponse { status, reason, .. } => {
-                    Self::Response(status, reason.to_string())
+                HelixRequestPostError::DeserializeError(_, _, _, _) => {
+                    Self::Serde
                 }
+                HelixRequestPostError::InvalidResponse {
+                    status,
+                    reason,
+                    ..
+                } => Self::Response(status, reason.to_string()),
             },
             ClientRequestError::HelixRequestPatchError(e) => match e {
                 HelixRequestPatchError::Error {
                     status, message, ..
                 } => Self::Response(status, message),
                 HelixRequestPatchError::Utf8Error(_, _, _) => Self::Utf8,
-                HelixRequestPatchError::DeserializeError(_, _, _, _) => Self::Serde,
-                HelixRequestPatchError::InvalidResponse { status, reason, .. } => {
-                    Self::Response(status, reason.to_string())
+                HelixRequestPatchError::DeserializeError(_, _, _, _) => {
+                    Self::Serde
                 }
+                HelixRequestPatchError::InvalidResponse {
+                    status,
+                    reason,
+                    ..
+                } => Self::Response(status, reason.to_string()),
             },
             ClientRequestError::HelixRequestDeleteError(e) => match e {
                 HelixRequestDeleteError::Error {
                     status, message, ..
                 } => Self::Response(status, message),
                 HelixRequestDeleteError::Utf8Error(_, _, _) => Self::Utf8,
-                HelixRequestDeleteError::InvalidResponse { status, reason, .. } => {
-                    Self::Response(status, reason.to_string())
-                }
+                HelixRequestDeleteError::InvalidResponse {
+                    status,
+                    reason,
+                    ..
+                } => Self::Response(status, reason.to_string()),
             },
             ClientRequestError::Custom(_) => Self::Custom,
             ClientRequestError::HyperError(_) => Self::ReqwestError,

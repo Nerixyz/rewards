@@ -1,7 +1,8 @@
 use actix_web::Result;
 use config::CONFIG;
 use jsonwebtoken::{
-    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation,
+    decode, encode, Algorithm, DecodingKey, EncodingKey, Header, TokenData,
+    Validation,
 };
 use models::user::User;
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,8 @@ pub struct JwtClaims {
 impl JwtClaims {
     pub fn new(user_id: String) -> Self {
         Self {
-            exp: (OffsetDateTime::now_utc() + Duration::days(365)).unix_timestamp() as usize,
+            exp: (OffsetDateTime::now_utc() + Duration::days(365))
+                .unix_timestamp() as usize,
             user_id,
         }
     }
@@ -26,7 +28,8 @@ impl JwtClaims {
     /// Creates a new short lived token (for the `state` in oauth)
     pub fn new_short(user_id: String) -> Self {
         Self {
-            exp: (OffsetDateTime::now_utc() + Duration::hours(2)).unix_timestamp() as usize,
+            exp: (OffsetDateTime::now_utc() + Duration::hours(2))
+                .unix_timestamp() as usize,
             user_id,
         }
     }
@@ -46,10 +49,13 @@ impl JwtClaims {
     }
 }
 
-pub fn decode_jwt(token: &str) -> jsonwebtoken::errors::Result<TokenData<JwtClaims>> {
+pub fn decode_jwt(
+    token: &str,
+) -> jsonwebtoken::errors::Result<TokenData<JwtClaims>> {
     decode::<JwtClaims>(
         token,
-        &DecodingKey::from_base64_secret(&CONFIG.auth.jwt_secret).expect("invalid key"),
+        &DecodingKey::from_base64_secret(&CONFIG.auth.jwt_secret)
+            .expect("invalid key"),
         &Validation::new(Algorithm::HS256),
     )
 }
@@ -58,6 +64,7 @@ pub fn encode_jwt(claims: &JwtClaims) -> jsonwebtoken::errors::Result<String> {
     encode(
         &Header::new(Algorithm::HS256),
         claims,
-        &EncodingKey::from_base64_secret(&CONFIG.auth.jwt_secret).expect("invalid key"),
+        &EncodingKey::from_base64_secret(&CONFIG.auth.jwt_secret)
+            .expect("invalid key"),
     )
 }

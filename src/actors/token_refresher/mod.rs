@@ -36,7 +36,9 @@ impl Actor for TokenRefresher {
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(40 * 60), |this, ctx| {
             let pool = this.pool.clone();
-            ctx.spawn(async move { Self::refresh(&pool).await }.into_actor(this));
+            ctx.spawn(
+                async move { Self::refresh(&pool).await }.into_actor(this),
+            );
         });
         let pool = self.pool.clone();
         ctx.spawn(async move { Self::refresh(&pool).await }.into_actor(self));
@@ -76,7 +78,12 @@ async fn refresh_spotify_tokens(pool: &PgPool) -> AnyResult<()> {
         match refresh_token(&user.refresh_token).await {
             Ok(res) => {
                 log_err!(
-                    SpotifyData::update_token(&user.user_id, &res.access_token, pool).await,
+                    SpotifyData::update_token(
+                        &user.user_id,
+                        &res.access_token,
+                        pool
+                    )
+                    .await,
                     "Failed to insert"
                 );
             }

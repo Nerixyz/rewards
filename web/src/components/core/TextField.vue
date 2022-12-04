@@ -41,18 +41,7 @@
       </span>
       <WarnIcon
         v-if="warn"
-        class="
-          text-yellow-400
-          absolute
-          left-auto
-          right-2
-          max-w-full
-          overflow-hidden overflow-ellipsis
-          whitespace-nowrap
-          pointer-events-none
-          origin-top-left
-          top-4
-        "
+        class="text-yellow-400 absolute left-auto right-2 max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap pointer-events-none origin-top-left top-4"
       />
       <input
         :value="modelValue"

@@ -5,10 +5,12 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use twitch_api2::eventsub::{user::UserAuthorizationRevokeV1Payload, Event, Message, Payload};
+use twitch_api2::eventsub::{
+    user::UserAuthorizationRevokeV1Payload, Event, Message, Payload,
+};
 
 use crate::{
-    actors::{irc::IrcActor, rewards::RewardsActor},
+    actors::rewards::RewardsActor,
     extractors::eventsub::EventsubPayload,
     log_discord,
     services::rewards::{
@@ -21,7 +23,6 @@ use models::user::User;
 #[post("/reward")]
 async fn reward_redemption(
     pool: web::Data<PgPool>,
-    irc: web::Data<Addr<IrcActor>>,
     payload: EventsubPayload,
     executor: web::Data<Addr<RewardsActor>>,
 ) -> Result<HttpResponse> {
@@ -40,13 +41,20 @@ async fn reward_redemption(
             ..
         }) => {
             // main path
-            let user = User::get_by_id(notification.broadcaster_user_id.as_ref(), &pool).await?;
+            let user = User::get_by_id(
+                notification.broadcaster_user_id.as_ref(),
+                &pool,
+            )
+            .await?;
 
-            log::info!("redemption: {:?} - sub: {:?}", notification, subscription);
+            log::info!(
+                "redemption: {:?} - sub: {:?}",
+                notification,
+                subscription
+            );
 
             let ctx = ReceiveRedemptionCtx {
                 pool: pool.into_inner(),
-                irc: irc.into_inner(),
                 executor: executor.into_inner(),
                 user,
                 notification,
@@ -67,12 +75,15 @@ async fn reward_redemption(
                 "Auth",
                 "Unhandled revocation",
                 "User Login/Id" = match re.message {
-                    Message::Notification(UserAuthorizationRevokeV1Payload {
-                        user_name: Some(login),
-                        ..
-                    }) => login.into_string(),
-                    Message::Notification(UserAuthorizationRevokeV1Payload { user_id, .. }) =>
-                        user_id.into_string(),
+                    Message::Notification(
+                        UserAuthorizationRevokeV1Payload {
+                            user_name: Some(login),
+                            ..
+                        },
+                    ) => login.take(),
+                    Message::Notification(
+                        UserAuthorizationRevokeV1Payload { user_id, .. },
+                    ) => user_id.take(),
                     _ => "no login or id".to_string(),
                 }
             );

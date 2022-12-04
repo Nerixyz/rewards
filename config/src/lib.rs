@@ -2,9 +2,10 @@ use anyhow::Result as AnyResult;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use sqlx::postgres::PgConnectOptions;
-use std::{convert::TryFrom, str::FromStr};
+use std::{collections::HashMap, convert::TryFrom, str::FromStr};
 
 #[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Config {
     // keep in sync with /setup
     pub db: DbConfig,
@@ -20,6 +21,8 @@ pub struct Config {
     #[serde(default)]
     pub supinic: Option<SupinicConfig>,
     pub owner: OwnerConfig,
+    #[serde(default)]
+    pub debug_overrides: DebugOverrides,
 }
 
 #[derive(Deserialize)]
@@ -86,8 +89,10 @@ pub struct FfzConfig {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct SevenTvConfig {
     pub jwt: String,
+    pub user_id: String,
 }
 
 #[derive(Deserialize)]
@@ -137,6 +142,24 @@ pub struct SupinicConfig {
 pub struct OwnerConfig {
     pub id: String,
     pub username: String,
+}
+
+#[derive(Deserialize, Default)]
+pub struct DebugOverrides {
+    #[serde(default)]
+    pub seventv: HashMap<String, String>,
+    #[serde(default)]
+    pub twitch: HashMap<String, String>,
+}
+
+impl DebugOverrides {
+    pub fn seventv<'a>(&'a self, id: &'a str) -> &'a str {
+        self.seventv.get(id).map(|k| k.as_str()).unwrap_or(id)
+    }
+
+    pub fn twitch<'a>(&'a self, id: &'a str) -> &'a str {
+        self.twitch.get(id).map(|k| k.as_str()).unwrap_or(id)
+    }
 }
 
 impl TryFrom<&DbConfig> for PgConnectOptions {

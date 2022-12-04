@@ -19,12 +19,14 @@ use twitch_api2::{
     helix::{
         eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest},
         points::{
-            CustomRewardRedemption, CustomRewardRedemptionStatus, GetCustomRewardRedemptionRequest,
-            UpdateRedemptionStatusBody, UpdateRedemptionStatusRequest,
+            CustomRewardRedemption, CustomRewardRedemptionStatus,
+            GetCustomRewardRedemptionRequest, UpdateRedemptionStatusBody,
+            UpdateRedemptionStatusRequest,
         },
         Response,
     },
     twitch_oauth2::{AppAccessToken, UserToken},
+    types::{IntoCow, RewardIdRef},
 };
 
 pub async fn register_eventsub_for_id(
@@ -40,7 +42,7 @@ pub async fn register_eventsub_for_id(
 
     let reward = subscribe_to_rewards(&token, id).await?;
 
-    User::set_eventsub_id(id, &reward.id.into_string(), pool).await?;
+    User::set_eventsub_id(id, &reward.id.take(), pool).await?;
 
     Ok(())
 }
@@ -101,7 +103,10 @@ pub async fn clear_invalid_rewards(
 ) -> AnyhowResult<()> {
     let token = token.read().await;
     let client = RHelixClient::default();
-    let mut rewards: Response<GetEventSubSubscriptionsRequest, EventSubSubscriptions> = client
+    let mut rewards: Response<
+        GetEventSubSubscriptionsRequest,
+        EventSubSubscriptions,
+    > = client
         .req_get(GetEventSubSubscriptionsRequest::builder().build(), &*token)
         .await?;
 
@@ -110,21 +115,32 @@ pub async fn clear_invalid_rewards(
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
             let is_enabled = sub.status == Status::Enabled;
-            let is_this_server = sub.transport.callback.starts_with(&CONFIG.server.url);
+            let is_this_server =
+                sub.transport.callback.starts_with(&CONFIG.server.url);
 
             if !is_enabled || !is_this_server {
-                if let Err(e) = User::clear_eventsub_id(sub.id.as_ref(), pool).await {
-                    log::warn!("Error clearing eventsub in db, but ignoring: {:?}", e);
+                if let Err(e) =
+                    User::clear_eventsub_id(sub.id.as_ref(), pool).await
+                {
+                    log::warn!(
+                        "Error clearing eventsub in db, but ignoring: {:?}",
+                        e
+                    );
                 }
             }
             if !is_enabled
                 || (!is_this_server
-                    && Regex::new("https?://[\\w_]+(:?\\.\\w+)?.ngrok.io")
+                    && Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io")
                         .unwrap()
                         .is_match(&sub.transport.callback))
             {
-                if let Err(e) = delete_subscription(&token, sub.id.clone()).await {
-                    log::warn!("Error deleting eventsub on twitch, but ignoring: {:?}", e);
+                if let Err(e) =
+                    delete_subscription(&token, sub.id.clone()).await
+                {
+                    log::warn!(
+                        "Error deleting eventsub on twitch, but ignoring: {:?}",
+                        e
+                    );
                 }
             }
         }
@@ -148,7 +164,10 @@ pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
     while let Some(reward_with_user) = stream.try_next().await? {
         if let Ok((reward_id, token)) = reward_with_user.try_into() {
             log_err!(
-                clear_unfulfilled_redemptions_for_id(reward_id, &token, &client).await,
+                clear_unfulfilled_redemptions_for_id(
+                    reward_id, &token, &client
+                )
+                .await,
                 "Could not clear redemptions for id"
             );
         }
@@ -157,22 +176,23 @@ pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
     Ok(())
 }
 
-pub async fn clear_unfulfilled_redemptions_for_id(
-    reward_id: String,
-    token: &UserToken,
+pub async fn clear_unfulfilled_redemptions_for_id<'a>(
+    reward_id: impl IntoCow<'a, RewardIdRef> + 'a,
+    token: &'a UserToken,
     client: &RHelixClient<'_>,
 ) -> AnyhowResult<()> {
-    let mut rewards: Response<GetCustomRewardRedemptionRequest, Vec<CustomRewardRedemption>> =
-        client
-            .req_get(
-                GetCustomRewardRedemptionRequest::builder()
-                    .broadcaster_id(token.user_id.clone())
-                    .reward_id(reward_id)
-                    .status(Some(CustomRewardRedemptionStatus::Unfulfilled))
-                    .build(),
-                token,
+    let mut rewards: Response<
+        GetCustomRewardRedemptionRequest,
+        Vec<CustomRewardRedemption>,
+    > = client
+        .req_get(
+            GetCustomRewardRedemptionRequest::broadcaster_id(
+                token.user_id.as_str(),
             )
-            .await?;
+            .reward_id(reward_id),
+            token,
+        )
+        .await?;
 
     loop {
         for redemption in &rewards.data {

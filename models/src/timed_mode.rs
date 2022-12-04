@@ -15,7 +15,9 @@ pub struct TimedMode {
     pub end_ts: DateTime<Utc>,
 }
 
-#[derive(sqlx::Type, Debug, derive_more::Display, Copy, Clone)]
+#[derive(
+    sqlx::Type, Debug, derive_more::Display, Copy, Clone, Eq, PartialEq,
+)]
 #[sqlx(type_name = "timed_mode", rename_all = "snake_case")]
 pub enum Mode {
     // the display values are for IRC
@@ -34,7 +36,10 @@ impl TimedMode {
     ) -> SqlResult<i32> {
         let end = Utc::now()
             + (chrono::Duration::from_std(duration).map_err(|_| {
-                JsonError::new(SqlReason::Internal, StatusCode::INTERNAL_SERVER_ERROR)
+                JsonError::new(
+                    SqlReason::Internal,
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
             })?);
 
         // language=PostgreSQL

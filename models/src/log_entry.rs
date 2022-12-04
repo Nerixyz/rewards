@@ -23,7 +23,11 @@ impl LogEntry {
         Ok(logs)
     }
 
-    pub async fn create(id: &str, content: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn create(
+        id: &str,
+        content: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             "INSERT INTO logs (user_id, date, content) VALUES ($1, $2, $3)",

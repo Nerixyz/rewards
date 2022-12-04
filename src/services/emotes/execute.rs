@@ -38,7 +38,7 @@ where
         redemption.broadcaster_user_login
     );
 
-    let user: String = redemption.user_login.into_string();
+    let user: String = redemption.user_login.take();
 
     Ok(
         match swap::swap_or_add_emote::<RW, I, E, EI>(
@@ -54,7 +54,7 @@ where
                 let msg = format!("☑ Added {} - 🗑 Removed {}", added, removed);
                 send_discord!(
                     discord,
-                    redemption.user_id.into_string(),
+                    redemption.user_id.take(),
                     embed_builder!(
                         "Emotes",
                         "Added an emote",
@@ -72,7 +72,7 @@ where
                 let msg = format!("☑ Added {}", added);
                 send_discord!(
                     discord,
-                    redemption.broadcaster_user_id.into_string(),
+                    redemption.broadcaster_user_id.take(),
                     embed_builder!(
                         "Emotes",
                         "Added an emote",
@@ -104,8 +104,8 @@ where
 {
     let platform_id = extractor(&redemption.user_input)?;
 
-    let broadcaster: String = redemption.broadcaster_user_login.into_string();
-    let user: String = redemption.user_login.into_string();
+    let broadcaster: String = redemption.broadcaster_user_login.take();
+    let user: String = redemption.user_login.take();
 
     log::info!(
         "Adding {:?} emote {} in {}",
@@ -136,7 +136,7 @@ where
 
     send_discord!(
         discord,
-        redemption.broadcaster_user_id.into_string(),
+        redemption.broadcaster_user_id.take(),
         embed_builder!(
             "Emotes",
             "Added an emote",

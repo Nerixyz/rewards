@@ -85,7 +85,7 @@ interface TwitchRewardImage {
 export type RewardData<K extends keyof RewardDataMap = keyof RewardDataMap> = { type: K; data: RewardDataMap[K] };
 
 export interface RewardDataMap {
-  Timeout: string;
+  Timeout: TimeoutRewardData;
   SubOnly: string;
   EmoteOnly: string;
   BttvSwap: SwapRewardData | null;
@@ -97,6 +97,11 @@ export interface RewardDataMap {
   SpotifySkip: null;
   SpotifyPlay: SpotifyPlayOptions;
   SpotifyQueue: SpotifyPlayOptions;
+}
+
+export interface TimeoutRewardData {
+  duration: string;
+  vip: boolean;
 }
 
 export interface SlotRewardData {

@@ -3,7 +3,6 @@ extern crate twitch_api as twitch_api2;
 use actix::{Actor, Addr, SystemRegistry};
 use actix_cors::Cors;
 use actix_files::NamedFile;
-use actix_metrics::Metrics;
 use actix_web::{
     http::header::{AUTHORIZATION, CONTENT_TYPE},
     middleware::{DefaultHeaders, Logger},
@@ -11,7 +10,6 @@ use actix_web::{
 };
 use anyhow::Error as AnyError;
 use log::LevelFilter;
-use metrics_exporter_prometheus::PrometheusBuilder;
 use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use tokio::sync::RwLock;
 use twitch_api2::{
@@ -42,10 +40,10 @@ use crate::{
             clear_invalid_rewards, clear_unfulfilled_redemptions,
             register_eventsub_for_all_unregistered,
         },
-        metrics::register_metrics,
-        timed_mode::resolve_timed_modes,
+        twitch,
     },
 };
+use actix_web_prom::PrometheusMetricsBuilder;
 use config::CONFIG;
 use models::user::User;
 use std::convert::TryInto;
@@ -69,19 +67,24 @@ async fn main() -> std::io::Result<()> {
 
     lazy_static::initialize(&CONFIG);
 
-    let prom_recorder = Box::leak(Box::new(PrometheusBuilder::new().build().unwrap().0));
-    let prom_handle = prom_recorder.handle();
-    metrics::set_recorder(prom_recorder).expect("Couldn't set recorder");
-    Metrics::register_metrics();
-    register_metrics();
+    let prometheus = PrometheusMetricsBuilder::new("actix")
+        .endpoint("/api/v1/metrics")
+        .build()
+        .unwrap();
 
     log::info!("Connecting to database");
 
-    let mut pool_options: PgConnectOptions = (&CONFIG.db).try_into().expect("invalid db config");
+    let mut pool_options: PgConnectOptions =
+        (&CONFIG.db).try_into().expect("invalid db config");
     pool_options.log_statements(LevelFilter::Debug);
     let pg_pool = PgPool::connect_with(pool_options)
         .await
         .expect("Could not connect to database");
+    twitch::set_token(
+        models::config::ConfigEntry::get_user_token(&pg_pool)
+            .await
+            .expect("must have token"),
+    );
 
     log::info!("Connecting to redis");
 
@@ -117,7 +120,6 @@ async fn main() -> std::io::Result<()> {
     let db_actor = DbActor::new(pg_pool.clone()).start();
     let irc_actor = IrcActor::new(
         db_actor.clone(),
-        pg_pool.clone(),
         chat_actor.recipient(),
         timeout_actor.clone(),
     )
@@ -146,7 +148,8 @@ async fn main() -> std::io::Result<()> {
 
     TokenRefresher::new(pg_pool.clone()).start();
     let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
-    let pubsub = PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
+    let pubsub =
+        PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
     let initial_listens = make_initial_pubsub_listens(&pg_pool)
         .await
         .expect("sql thingy");
@@ -177,15 +180,11 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not register eventsub FeelsMan");
 
     let clear_pool = pg_pool.clone();
-    let clear_irc = irc_actor.clone();
     actix::spawn(async move {
-        let (redemptions, timed_mode) = futures::future::join(
-            clear_unfulfilled_redemptions(&clear_pool),
-            resolve_timed_modes(clear_irc, &clear_pool),
-        )
-        .await;
-        log_err!(redemptions, "Failed to clear redemptions");
-        log_err!(timed_mode, "Could not clear timed modes");
+        log_err!(
+            clear_unfulfilled_redemptions(&clear_pool).await,
+            "Failed to clear redemptions"
+        );
     });
 
     HttpServer::new(move || {
@@ -196,18 +195,21 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(timeout_actor.clone()))
             .app_data(web::Data::new(rewards_actor.clone()))
             .app_data(web::Data::new(pubsub.clone()))
-            .app_data(web::Data::new(prom_handle.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
             .wrap(create_cors())
+            .wrap(prometheus.clone())
             .wrap(Logger::default().exclude("/api/v1/metrics"))
             .service(
                 web::scope("/api/v1")
                     .configure(init_repositories)
                     .default_service(web::route().to(HttpResponse::NotFound)),
             )
-            .service(actix_files::Files::new("/", "web/dist").index_file("index.html"))
+            .service(
+                actix_files::Files::new("/", "web/dist")
+                    .index_file("index.html"),
+            )
             .default_service(NamedFile::open("web/dist/index.html").unwrap())
     })
     .bind(&CONFIG.server.bind_addr)?
@@ -243,7 +245,9 @@ fn create_cors() -> Cors {
     }
 }
 
-async fn make_initial_pubsub_listens(pool: &PgPool) -> Result<Vec<String>, AnyError> {
+async fn make_initial_pubsub_listens(
+    pool: &PgPool,
+) -> Result<Vec<String>, AnyError> {
     let users = User::get_all(pool).await?;
 
     Ok(users.into_iter().map(|user| user.id).collect())
@@ -277,8 +281,11 @@ fn announce_start(addr: Addr<IrcActor>) {
                 "Could not join announce channel"
             );
             log_err!(
-                addr.send(SayMessage(channel, format!("{} {}", prefix, instance_str)))
-                    .await,
+                addr.send(SayMessage(
+                    channel,
+                    format!("{} {}", prefix, instance_str)
+                ))
+                .await,
                 "Could not announce in channel"
             );
         });

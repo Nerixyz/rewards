@@ -11,7 +11,11 @@ pub struct ChannelData {
 }
 
 impl ChannelData {
-    pub async fn get(channel_id: &str, channel_login: &str, pool: &PgPool) -> AnyResult<Self> {
+    pub async fn get(
+        channel_id: &str,
+        channel_login: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Self> {
         future::try_join(
             EmoteData::get(channel_id, channel_login, pool),
             Self::get_twitch_auth(channel_id, pool),
@@ -23,7 +27,10 @@ impl ChannelData {
         })
     }
 
-    async fn get_twitch_auth(channel_id: &str, pool: &PgPool) -> AnyResult<bool> {
+    async fn get_twitch_auth(
+        channel_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<bool> {
         let user = user::User::get_by_id(channel_id, pool).await?;
         let token = user.into();
 

@@ -25,7 +25,11 @@ impl Actor for DbActor {
 impl Handler<GetToken> for DbActor {
     type Result = ResponseFuture<SqlResult<UserAccessToken>>;
 
-    fn handle(&mut self, _msg: GetToken, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        _msg: GetToken,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         Box::pin(async move { ConfigEntry::get_user_token(&pool).await })
     }
@@ -34,8 +38,14 @@ impl Handler<GetToken> for DbActor {
 impl Handler<SaveToken> for DbActor {
     type Result = ResponseFuture<SqlResult<()>>;
 
-    fn handle(&mut self, msg: SaveToken, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: SaveToken,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
-        Box::pin(async move { ConfigEntry::update_user_token(&pool, msg.0).await })
+        Box::pin(
+            async move { ConfigEntry::update_user_token(&pool, msg.0).await },
+        )
     }
 }

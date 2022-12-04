@@ -8,7 +8,9 @@ use sqlx::{types::Json, FromRow, PgPool};
 use std::{convert::TryFrom, pin::Pin, time::Duration};
 use twitch_api2::{
     helix::points::CreateCustomRewardResponse,
-    twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken},
+    twitch_oauth2::{
+        AccessToken, ClientId, ClientSecret, RefreshToken, UserToken,
+    },
     types::{Nickname, UserId},
 };
 
@@ -40,7 +42,7 @@ pub struct LiveRewardAT {
 #[serde(tag = "type", content = "data")]
 pub enum RewardData {
     #[display(fmt = "timeout")]
-    Timeout(String),
+    Timeout(TimeoutRewardData),
     #[display(fmt = "mode::sub")]
     SubOnly(String),
     #[display(fmt = "mode::emote")]
@@ -63,6 +65,13 @@ pub enum RewardData {
     SpotifyQueue(SpotifyPlayOptions),
     #[display(fmt = "spotify::play")]
     SpotifyPlay(SpotifyPlayOptions),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TimeoutRewardData {
+    pub duration: String,
+    #[serde(default)]
+    pub vip: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -93,9 +102,9 @@ impl Reward {
         live_delay: Option<String>,
     ) -> Self {
         Self {
-            user_id: res.broadcaster_id.clone().into_string(),
+            user_id: res.broadcaster_id.clone().take(),
             data: Json(data),
-            id: res.id.clone().into_string(),
+            id: res.id.clone().take(),
             live_delay,
         }
     }
@@ -172,7 +181,10 @@ impl Reward {
         Ok(data)
     }
 
-    pub async fn get_all_live_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<LiveReward>> {
+    pub async fn get_all_live_for_user(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<LiveReward>> {
         // language=PostgreSQL
         let rewards = sqlx::query_as!(
             LiveReward,
@@ -209,7 +221,9 @@ impl Reward {
         Ok(rewards)
     }
 
-    pub async fn get_all_pending_live(pool: &PgPool) -> SqlResult<Vec<LiveRewardAT>> {
+    pub async fn get_all_pending_live(
+        pool: &PgPool,
+    ) -> SqlResult<Vec<LiveRewardAT>> {
         // language=PostgreSQL
         let rewards = sqlx::query_as!(
             LiveRewardAT,

@@ -42,15 +42,32 @@ impl ChatCommand for Emotes {
                 slots.append(&mut swap);
                 slots
             }),
-            Some(Requested::Slots) => Slot::get_occupied_emotes(&msg.channel_id, pool).await,
+            Some(Requested::Slots) => {
+                Slot::get_occupied_emotes(&msg.channel_id, pool).await
+            }
             Some(Requested::Bttv) => {
-                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::Bttv, pool).await
+                SwapEmote::platform_emote_names(
+                    &msg.channel_id,
+                    SlotPlatform::Bttv,
+                    pool,
+                )
+                .await
             }
             Some(Requested::Ffz) => {
-                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::Ffz, pool).await
+                SwapEmote::platform_emote_names(
+                    &msg.channel_id,
+                    SlotPlatform::Ffz,
+                    pool,
+                )
+                .await
             }
             Some(Requested::SevenTv) => {
-                SwapEmote::platform_emote_names(&msg.channel_id, SlotPlatform::SevenTv, pool).await
+                SwapEmote::platform_emote_names(
+                    &msg.channel_id,
+                    SlotPlatform::SevenTv,
+                    pool,
+                )
+                .await
             }
         }?;
         Ok(if resp.is_empty() {
@@ -63,19 +80,23 @@ impl ChatCommand for Emotes {
         })
     }
 
-    fn parse(_cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(
+        _cmd: &str,
+        args: Option<&str>,
+    ) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {
-        let requested =
-            args.map(opt_next_space)
-                .and_then(|(arg, _)| match arg.to_lowercase().as_str() {
-                    "slot" | "slots" => Some(Requested::Slots),
-                    "bttv" | "betterttv" => Some(Requested::Bttv),
-                    "ffz" | "frankerfacez" => Some(Requested::Ffz),
-                    "seventv" | "7tv" => Some(Requested::SevenTv),
-                    _ => None,
-                });
+        let requested = args.map(opt_next_space).and_then(|(arg, _)| match arg
+            .to_lowercase()
+            .as_str()
+        {
+            "slot" | "slots" => Some(Requested::Slots),
+            "bttv" | "betterttv" => Some(Requested::Bttv),
+            "ffz" | "frankerfacez" => Some(Requested::Ffz),
+            "seventv" | "7tv" => Some(Requested::SevenTv),
+            _ => None,
+        });
         Ok(Box::new(Self { requested }))
     }
 }

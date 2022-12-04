@@ -27,12 +27,22 @@ impl Actor for DiscordActor {
 impl Handler<LogToDiscordMessage> for DiscordActor {
     type Result = ();
 
-    fn handle(&mut self, msg: LogToDiscordMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: LogToDiscordMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let db = self.db.clone();
         async move {
-            if let Ok(Some(url)) = discord::get_discord_webhook_url(&msg.user_id, &db).await {
+            if let Ok(Some(url)) =
+                discord::get_discord_webhook_url(&msg.user_id, &db).await
+            {
                 log_err!(
-                    send_user_webhook_message(&url, &WebhookReq::Embeds(vec![msg.embed])).await,
+                    send_user_webhook_message(
+                        &url,
+                        &WebhookReq::Embeds(vec![msg.embed])
+                    )
+                    .await,
                     "Could not send user discord message"
                 );
             }
