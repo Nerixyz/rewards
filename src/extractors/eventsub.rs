@@ -25,10 +25,12 @@ impl FromRequest for EventsubPayload {
 
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
         match read_headers(req) {
-            None => Either::Left(ready(Err(errors::ErrorBadRequest("Malformed headers")))),
-            Some((headers, mac)) => {
-                Either::Right(Box::pin(read_verify_payload(headers, mac, payload.take())))
-            }
+            None => Either::Left(ready(Err(errors::ErrorBadRequest(
+                "Malformed headers",
+            )))),
+            Some((headers, mac)) => Either::Right(Box::pin(
+                read_verify_payload(headers, mac, payload.take()),
+            )),
         }
     }
 }
@@ -60,15 +62,18 @@ fn read_headers(req: &HttpRequest) -> Option<(PayloadHeaders, HmacSha256)> {
         .get("Twitch-Eventsub-Subscription-Type")?
         .to_str()
         .ok()?;
-    let message_type_header = req.headers().get("Twitch-Eventsub-Message-Type")?;
+    let message_type_header =
+        req.headers().get("Twitch-Eventsub-Message-Type")?;
 
     Some((
         PayloadHeaders {
             signature: signature_header.to_string(),
             version: version_header.to_string(),
-            event_type: EventType::deserialize(subscription_type_header.into_deserializer())
-                .map_err(|_: serde::de::value::Error| ())
-                .ok()?,
+            event_type: EventType::deserialize(
+                subscription_type_header.into_deserializer(),
+            )
+            .map_err(|_: serde::de::value::Error| ())
+            .ok()?,
             message_type: message_type_header.as_bytes().to_vec(),
         },
         mac,
@@ -77,7 +82,8 @@ fn read_headers(req: &HttpRequest) -> Option<(PayloadHeaders, HmacSha256)> {
 
 fn init_read_signature(req: &HttpRequest) -> Option<HmacSha256> {
     let id_header = req.headers().get("Twitch-Eventsub-Message-Id")?;
-    let timestamp_header = req.headers().get("Twitch-Eventsub-Message-Timestamp")?;
+    let timestamp_header =
+        req.headers().get("Twitch-Eventsub-Message-Timestamp")?;
     let timestamp = timestamp_header
         .to_str()
         .ok()?
@@ -86,7 +92,9 @@ fn init_read_signature(req: &HttpRequest) -> Option<HmacSha256> {
     if Utc::now() - timestamp > Duration::minutes(10) {
         return None;
     }
-    let mut mac = HmacSha256::new_from_slice(CONFIG.twitch.eventsub.secret.as_bytes()).ok()?;
+    let mut mac =
+        HmacSha256::new_from_slice(CONFIG.twitch.eventsub.secret.as_bytes())
+            .ok()?;
     mac.update(id_header.as_bytes());
     mac.update(timestamp_header.as_bytes());
 

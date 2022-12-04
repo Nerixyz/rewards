@@ -20,7 +20,9 @@ fn format_secs_short(secs: u64) -> String {
         x if (60..120).contains(&x) => "1 minute".into(),
         x if (120..60 * 60).contains(&x) => format!("{} minutes", x / 60),
         x if (60 * 60..60 * 60 * 2).contains(&x) => "1 hour".into(),
-        x if (60 * 60 * 2..60 * 60 * 24).contains(&x) => format!("{} hours", x / 60 / 60),
+        x if (60 * 60 * 2..60 * 60 * 24).contains(&x) => {
+            format!("{} hours", x / 60 / 60)
+        }
         x if (60 * 60 * 24..60 * 60 * 24 * 2).contains(&x) => "1 day".into(),
         x if (60 * 60 * 24 * 2..S_IN_MNTH).contains(&x) => {
             format!("{} days", x / 60 / 60 / 24)
@@ -29,7 +31,9 @@ fn format_secs_short(secs: u64) -> String {
         x if (2 * S_IN_MNTH..12 * S_IN_MNTH).contains(&x) => {
             format!("~{} months", x / S_IN_MNTH)
         }
-        x if (12 * S_IN_MNTH..12 * 2 * S_IN_MNTH).contains(&x) => "~1 year".into(),
+        x if (12 * S_IN_MNTH..12 * 2 * S_IN_MNTH).contains(&x) => {
+            "~1 year".into()
+        }
         x => format!("~{} years", x / 12 / S_IN_MNTH),
     }
 }

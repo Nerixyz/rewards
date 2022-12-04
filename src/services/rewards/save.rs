@@ -1,6 +1,8 @@
 use crate::services::{
     bttv,
-    emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap},
+    emotes::{
+        bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap,
+    },
     ffz, seven_tv,
 };
 use anyhow::Result as AnyResult;
@@ -16,19 +18,32 @@ pub async fn save_reward(
     match reward {
         RewardData::BttvSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<BttvEmotes, _, _, _>(broadcaster_id, *limit, pool)
-                    .await?;
+                swap::update_swap_limit::<BttvEmotes, _, _, _>(
+                    broadcaster_id,
+                    *limit,
+                    pool,
+                )
+                .await?;
             }
         }
         RewardData::FfzSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<FfzEmotes, _, _, _>(broadcaster_id, *limit, pool).await?;
+                swap::update_swap_limit::<FfzEmotes, _, _, _>(
+                    broadcaster_id,
+                    *limit,
+                    pool,
+                )
+                .await?;
             }
         }
         RewardData::SevenTvSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<SevenTvEmotes, _, _, _>(broadcaster_id, *limit, pool)
-                    .await?;
+                swap::update_swap_limit::<SevenTvEmotes, _, _, _>(
+                    broadcaster_id,
+                    *limit,
+                    pool,
+                )
+                .await?;
             }
         }
         RewardData::BttvSlot(slot) => {
@@ -55,7 +70,7 @@ pub async fn save_reward(
             .await?;
         }
         RewardData::SevenTvSlot(slot) => {
-            let sid = seven_tv::get_or_fetch_id(broadcaster_id, pool).await?;
+            let sid = seven_tv::requests::get_user(broadcaster_id).await?.emote_set.id;
             slots::adjust_size::<SevenTvEmotes, _, _, _>(
                 broadcaster_id,
                 &sid,

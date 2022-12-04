@@ -35,7 +35,11 @@ impl Actor for RewardsActor {
 impl Handler<ExecuteRewardMessage> for RewardsActor {
     type Result = ResponseFuture<AnyResult<()>>;
 
-    fn handle(&mut self, msg: ExecuteRewardMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: ExecuteRewardMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         match msg.reward.data.0 {
             RewardData::Timeout(timeout) => execute::timeout(
                 timeout,
@@ -52,6 +56,7 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                 timed_mode::Mode::Subonly,
                 duration,
                 msg.broadcaster,
+                msg.redemption,
                 self.irc.clone(),
             )
             .boxed(),
@@ -59,62 +64,81 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                 timed_mode::Mode::Emoteonly,
                 duration,
                 msg.broadcaster,
+                msg.redemption,
                 self.irc.clone(),
             )
             .boxed(),
-            RewardData::BttvSwap(data) => execute::swap::<BttvEmotes, _, _, _, _>(
-                extract::bttv_id,
-                msg.redemption,
-                data,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::FfzSwap(data) => execute::swap::<FfzEmotes, _, _, _, _>(
-                extract::ffz_id,
-                msg.redemption,
-                data,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::SevenTvSwap(data) => execute::swap::<SevenTvEmotes, _, _, _, _>(
-                extract::seventv_id,
-                msg.redemption,
-                data,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::BttvSlot(slot) => execute::slot::<BttvEmotes, _, _, _, _>(
-                extract::bttv_id,
-                msg.redemption,
-                slot,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::FfzSlot(slot) => execute::slot::<FfzEmotes, _, _, _, _>(
-                extract::ffz_id,
-                msg.redemption,
-                slot,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::SevenTvSlot(slot) => execute::slot::<SevenTvEmotes, _, _, _, _>(
-                extract::seventv_id,
-                msg.redemption,
-                slot,
-                (self.db.clone(), self.irc.clone(), self.discord.clone()),
-            )
-            .boxed(),
-            RewardData::SpotifySkip(_) => {
-                execute::spotify_skip(msg.redemption, (self.db.clone(), self.irc.clone())).boxed()
+            RewardData::BttvSwap(data) => {
+                execute::swap::<BttvEmotes, _, _, _, _>(
+                    extract::bttv_id,
+                    msg.redemption,
+                    data,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
             }
-            RewardData::SpotifyQueue(opts) => {
-                execute::spotify_queue(opts, msg.redemption, (self.db.clone(), self.irc.clone()))
-                    .boxed()
+            RewardData::FfzSwap(data) => {
+                execute::swap::<FfzEmotes, _, _, _, _>(
+                    extract::ffz_id,
+                    msg.redemption,
+                    data,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
             }
-            RewardData::SpotifyPlay(opts) => {
-                execute::spotify_play(opts, msg.redemption, (self.db.clone(), self.irc.clone()))
-                    .boxed()
+            RewardData::SevenTvSwap(data) => {
+                execute::swap::<SevenTvEmotes, _, _, _, _>(
+                    extract::seventv_id,
+                    msg.redemption,
+                    data,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
             }
+            RewardData::BttvSlot(slot) => {
+                execute::slot::<BttvEmotes, _, _, _, _>(
+                    extract::bttv_id,
+                    msg.redemption,
+                    slot,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
+            }
+            RewardData::FfzSlot(slot) => {
+                execute::slot::<FfzEmotes, _, _, _, _>(
+                    extract::ffz_id,
+                    msg.redemption,
+                    slot,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
+            }
+            RewardData::SevenTvSlot(slot) => {
+                execute::slot::<SevenTvEmotes, _, _, _, _>(
+                    extract::seventv_id,
+                    msg.redemption,
+                    slot,
+                    (self.db.clone(), self.irc.clone(), self.discord.clone()),
+                )
+                .boxed()
+            }
+            RewardData::SpotifySkip(_) => execute::spotify_skip(
+                msg.redemption,
+                (self.db.clone(), self.irc.clone()),
+            )
+            .boxed(),
+            RewardData::SpotifyQueue(opts) => execute::spotify_queue(
+                opts,
+                msg.redemption,
+                (self.db.clone(), self.irc.clone()),
+            )
+            .boxed(),
+            RewardData::SpotifyPlay(opts) => execute::spotify_play(
+                opts,
+                msg.redemption,
+                (self.db.clone(), self.irc.clone()),
+            )
+            .boxed(),
         }
     }
 }

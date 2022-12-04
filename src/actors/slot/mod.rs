@@ -4,19 +4,28 @@ use crate::{
     actors::discord::DiscordActor,
     embed_builder, log_discord, log_err, send_discord,
     services::{
-        emotes::{bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW},
+        emotes::{
+            bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, EmoteRW,
+        },
         twitch::requests::update_reward,
     },
     RedisPool,
 };
-use actix::{Actor, Addr, AsyncContext, Context, Handler, Supervised, SystemService, WrapFuture};
+use actix::{
+    Actor, Addr, AsyncContext, Context, Handler, Supervised, SystemService,
+    WrapFuture,
+};
 use anyhow::Result as AnyResult;
 use deadpool_redis::redis::AsyncCommands;
 pub use messages::*;
-use models::{emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User};
+use models::{
+    emote::SlotPlatform, log_entry::LogEntry, slot::Slot, user::User,
+};
 use sqlx::PgPool;
 use std::time::Duration;
-use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
+use twitch_api2::{
+    helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
+};
 
 pub struct SlotActor {
     pool: PgPool,
@@ -25,7 +34,11 @@ pub struct SlotActor {
 }
 
 impl SlotActor {
-    pub fn new(pool: PgPool, redis: RedisPool, discord: Addr<DiscordActor>) -> Self {
+    pub fn new(
+        pool: PgPool,
+        redis: RedisPool,
+        discord: Addr<DiscordActor>,
+    ) -> Self {
         Self {
             pool,
             redis,
@@ -41,18 +54,37 @@ impl SlotActor {
     ) -> AnyResult<String> {
         match platform {
             SlotPlatform::Bttv => {
-                BttvEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+                BttvEmotes::remove_emote_from_broadcaster(
+                    broadcaster_id,
+                    id,
+                    pool,
+                )
+                .await
             }
             SlotPlatform::Ffz => {
-                FfzEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+                FfzEmotes::remove_emote_from_broadcaster(
+                    broadcaster_id,
+                    id,
+                    pool,
+                )
+                .await
             }
             SlotPlatform::SevenTv => {
-                SevenTvEmotes::remove_emote_from_broadcaster(broadcaster_id, id, pool).await
+                SevenTvEmotes::remove_emote_from_broadcaster(
+                    broadcaster_id,
+                    id,
+                    pool,
+                )
+                .await
             }
         }
     }
 
-    async fn queue_rewards(pool: PgPool, redis: RedisPool, discord: Addr<DiscordActor>) {
+    async fn queue_rewards(
+        pool: PgPool,
+        redis: RedisPool,
+        discord: Addr<DiscordActor>,
+    ) {
         let pending = Slot::get_pending(&pool).await;
         let pending = match pending {
             Ok(p) => p,
@@ -93,7 +125,10 @@ impl SlotActor {
                     log_err!(
                         LogEntry::create(
                             &p.user_id,
-                            &format!("[slots::{:?}] Deleted {}", p.platform, emote),
+                            &format!(
+                                "[slots::{:?}] Deleted {}",
+                                p.platform, emote
+                            ),
                             &pool
                         )
                         .await,
@@ -111,7 +146,11 @@ impl SlotActor {
                     send_discord!(
                         discord,
                         p.user_id.clone(),
-                        embed_builder!("Emotes", format!("Removed {}", emote), 0xff5370,)
+                        embed_builder!(
+                            "Emotes",
+                            format!("Removed {}", emote),
+                            0xff5370,
+                        )
                     );
                 }
                 Err(e) => {
@@ -161,7 +200,9 @@ impl SlotActor {
             .await
             {
                 Ok(_) => log::info!("Enabled {:?}", p),
-                Err(e) => log::warn!("Could not enable: reward={:?} error={}", p, e),
+                Err(e) => {
+                    log::warn!("Could not enable: reward={:?} error={}", p, e)
+                }
             }
 
             if let (Some(name), Ok(json), Ok(mut conn)) = (
@@ -171,7 +212,11 @@ impl SlotActor {
             ) {
                 log_err!(
                     conn.set_ex::<_, _, ()>(
-                        format!("rewards:exp-slots:{}:{}", p.user_id, name.to_lowercase()),
+                        format!(
+                            "rewards:exp-slots:{}:{}",
+                            p.user_id,
+                            name.to_lowercase()
+                        ),
                         json,
                         5 * 60 * 60
                     )
@@ -189,8 +234,12 @@ impl Actor for SlotActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.run_interval(Duration::from_secs(2 * 60), |this, ctx| {
             ctx.spawn(
-                Self::queue_rewards(this.pool.clone(), this.redis.clone(), this.discord.clone())
-                    .into_actor(this),
+                Self::queue_rewards(
+                    this.pool.clone(),
+                    this.redis.clone(),
+                    this.discord.clone(),
+                )
+                .into_actor(this),
             );
         });
     }
@@ -201,8 +250,12 @@ impl Handler<Recheck> for SlotActor {
 
     fn handle(&mut self, _: Recheck, ctx: &mut Self::Context) -> Self::Result {
         ctx.spawn(
-            Self::queue_rewards(self.pool.clone(), self.redis.clone(), self.discord.clone())
-                .into_actor(self),
+            Self::queue_rewards(
+                self.pool.clone(),
+                self.redis.clone(),
+                self.discord.clone(),
+            )
+            .into_actor(self),
         );
     }
 }

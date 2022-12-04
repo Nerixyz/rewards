@@ -1,28 +1,30 @@
 import { VRewardModel } from './model-conversion';
-import { SlotRewardData, RewardDataMap, SpotifyPlayOptions, SwapRewardData } from './types';
+import { SlotRewardData, RewardDataMap, SpotifyPlayOptions, SwapRewardData, TimeoutRewardData } from './types';
+
 interface StaticData<K extends keyof RewardDataMap> {
   display: string;
   inputRequired: boolean;
   validOptions: (opts: unknown) => boolean;
   defaultOptions: RewardDataMap[K];
 }
+
 export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   Timeout: {
     display: 'Timeout',
     inputRequired: true,
-    validOptions: TSEValid,
-    defaultOptions: '1s',
+    validOptions: timeoutValid,
+    defaultOptions: { duration: '1s', vip: false },
   },
   SubOnly: {
     display: 'Subonly',
     inputRequired: false,
-    validOptions: TSEValid,
+    validOptions: SEValid,
     defaultOptions: '1s',
   },
   EmoteOnly: {
     display: 'Emoteonly',
     inputRequired: false,
-    validOptions: TSEValid,
+    validOptions: SEValid,
     defaultOptions: '1s',
   },
   BttvSwap: {
@@ -94,7 +96,15 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
   },
 };
 
-function TSEValid(opts: unknown): boolean {
+function timeoutValid(opts: unknown): boolean {
+  return (
+    typeof opts === 'object' &&
+    typeof (opts as TimeoutRewardData).duration === 'string' &&
+    typeof (opts as TimeoutRewardData).vip === 'boolean'
+  );
+}
+
+function SEValid(opts: unknown): boolean {
   return typeof opts === 'string';
 }
 

@@ -1,25 +1,15 @@
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::{collections::HashMap, time::Duration};
 
 use actix::{
-    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Recipient,
-    ResponseFuture, WrapFuture,
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
+    Handler, Recipient, ResponseFuture, WrapFuture,
 };
 use anyhow::Error as AnyError;
-use sqlx::PgPool;
-use tokio::{
-    sync::{
-        mpsc::UnboundedReceiver,
-        watch::{channel, Receiver, Sender},
-    },
-    task,
-};
+use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::{
     login::RefreshingLoginCredentials,
-    message::{ClearChatAction, ClearChatMessage, NoticeMessage, ServerMessage},
-    ClientConfig, SecureTCPTransport, TwitchIRCClient,
+    message::{ClearChatAction, ClearChatMessage, ServerMessage},
+    ClientConfig, MetricsConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
 use token_storage::PgTokenStorage;
@@ -30,27 +20,21 @@ use crate::{
     log_err,
 };
 use config::CONFIG;
-use models::timed_mode::TimedMode;
 
 mod messages;
 mod token_storage;
 use crate::actors::{
-    chat::ExecuteCommandMessage,
-    timeout::{ChannelTimeoutMessage, RemoveTimeoutMessage},
+    chat::ExecuteCommandMessage, timeout::ChannelTimeoutMessage,
 };
 pub use messages::*;
 
 type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
 type IrcClient = TwitchIRCClient<SecureTCPTransport, IrcCredentials>;
 
-type NoticeChannelMessage = (Instant, NoticeMessage);
 pub struct IrcActor {
     client: IrcClient,
-    pool: PgPool,
 
     incoming: Option<UnboundedReceiver<ServerMessage>>,
-    notice_tx: Option<Sender<Option<NoticeChannelMessage>>>,
-    notice_rx: Receiver<Option<NoticeChannelMessage>>,
 
     executor: Recipient<ExecuteCommandMessage>,
 
@@ -62,12 +46,11 @@ pub struct IrcActor {
 impl IrcActor {
     pub fn new(
         db: Addr<DbActor>,
-        pool: PgPool,
         executor: Recipient<ExecuteCommandMessage>,
         timeout_handler: Addr<TimeoutActor>,
     ) -> Self {
         let config = ClientConfig {
-            metrics_identifier: Some("rewardmore".into()),
+            metrics_config: MetricsConfig::default(),
 
             // TODO: improve this but the user isn't a verified bot yet FeelsMan
             new_connection_every: Duration::from_secs(12),
@@ -82,15 +65,11 @@ impl IrcActor {
         };
 
         let (incoming, client) = IrcClient::new(config);
-        let (notice_tx, notice_rx) = channel(None);
 
         Self {
             client,
-            pool,
 
             incoming: Some(incoming),
-            notice_tx: Some(notice_tx),
-            notice_rx,
 
             executor,
             last_messages: HashMap::new(),
@@ -104,8 +83,8 @@ impl Actor for IrcActor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let mut incoming = self.incoming.take().expect("This was set in Self:new");
-        let tx = self.notice_tx.take().expect("This was set in Self::new");
+        let mut incoming =
+            self.incoming.take().expect("This was set in Self:new");
         let addr = ctx.address();
         let timeouter = self.timeout_handler.clone();
 
@@ -113,9 +92,6 @@ impl Actor for IrcActor {
             async move {
                 while let Some(message) = incoming.recv().await {
                     match message {
-                        ServerMessage::Notice(notice) => {
-                            tx.send(Some((Instant::now(), notice))).ok();
-                        }
                         ServerMessage::Privmsg(privmsg) => {
                             addr.do_send(ChatMessage(privmsg));
                         }
@@ -147,7 +123,11 @@ impl Actor for IrcActor {
 impl Handler<JoinMessage> for IrcActor {
     type Result = ();
 
-    fn handle(&mut self, msg: JoinMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: JoinMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         log_err!(self.client.join(msg.0), "Cannot join");
     }
 }
@@ -155,7 +135,11 @@ impl Handler<JoinMessage> for IrcActor {
 impl Handler<PartMessage> for IrcActor {
     type Result = ();
 
-    fn handle(&mut self, msg: PartMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: PartMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         self.last_messages.remove(&msg.0);
         self.client.part(msg.0)
     }
@@ -164,34 +148,25 @@ impl Handler<PartMessage> for IrcActor {
 impl Handler<JoinAllMessage> for IrcActor {
     type Result = ();
 
-    fn handle(&mut self, msg: JoinAllMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: JoinAllMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         for channel in msg.0 {
             log_err!(self.client.join(channel), "Cannot join");
         }
     }
 }
 
-impl Handler<WhisperMessage> for IrcActor {
-    type Result = ResponseFuture<Result<(), AnyError>>;
-
-    fn handle(&mut self, msg: WhisperMessage, _ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
-        log::info!("whisper to={} message={}", msg.0, msg.1);
-        Box::pin(async move {
-            Ok(client
-                .privmsg(
-                    CONFIG.twitch.login.to_string(),
-                    format!("/w {} {}", msg.0, msg.1),
-                )
-                .await?)
-        })
-    }
-}
-
 impl Handler<SayMessage> for IrcActor {
     type Result = ResponseFuture<Result<(), AnyError>>;
 
-    fn handle(&mut self, mut msg: SayMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        mut msg: SayMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         let client = self.client.clone();
 
         if let Some(last) = self.last_messages.get_mut(&msg.0) {
@@ -208,143 +183,22 @@ impl Handler<SayMessage> for IrcActor {
     }
 }
 
-impl Handler<TimeoutMessage> for IrcActor {
-    type Result = ResponseFuture<Result<(), AnyError>>;
-
-    fn handle(&mut self, msg: TimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
-        let mut rx = self.notice_rx.clone();
-        let timeout_handler = self.timeout_handler.clone();
-        Box::pin(async move {
-            log::info!(
-                "timeout in {} for {} for {:?}s",
-                msg.broadcaster,
-                msg.user,
-                msg.duration
-            );
-            client
-                .timeout(
-                    msg.broadcaster.clone(),
-                    &msg.user,
-                    Duration::from_secs(msg.duration),
-                    Some("Channel Point Reward"),
-                )
-                .await?;
-            let sent = Instant::now();
-
-            while let Ok(Ok(_)) = tokio::time::timeout(Duration::from_secs(5), rx.changed()).await {
-                let value = (*rx.borrow()).clone();
-                let notice = match value {
-                    Some((now, v)) if now > sent => v,
-                    _ => continue,
-                };
-                log::info!(
-                    "NOTICE: channel={:?} id={:?} text={}",
-                    notice.channel_login,
-                    notice.message_id,
-                    notice.message_text
-                );
-                if Some(&msg.broadcaster) != notice.channel_login.as_ref() {
-                    continue;
-                }
-
-                if let Some(id) = &notice.message_id {
-                    match id.as_str() {
-                        "timeout_success" => {
-                            timeout_handler.do_send(RemoveTimeoutMessage {
-                                channel_id: msg.broadcaster_id,
-                                user_id: msg.user_id,
-                                later: Duration::from_secs(5),
-                            });
-                            return Ok(());
-                        }
-                        "usage_timeout"
-                        | "timeout_no_timeout"
-                        | "invalid_user"
-                        | "bad_timeout_duration"
-                        | "already_banned" => return Err(AnyError::msg(id.clone())),
-                        "bad_timeout_mod" => {
-                            return Err(AnyError::msg("I can't timeout moderators."))
-                        }
-                        "bad_timeout_self" => {
-                            return Err(AnyError::msg("Would be a bit silly, no?"))
-                        }
-                        "bad_timeout_broadcaster" => {
-                            return Err(AnyError::msg("I can't timeout the broadcaster."))
-                        }
-                        "bad_timeout_staff" => return Err(AnyError::msg("monkaS no...")),
-                        _ => {
-                            if id.starts_with("bad_timeout") {
-                                return Err(AnyError::msg(id.clone()));
-                            }
-                        }
-                    }
-                }
-            }
-            log::error!("No reply for timeout");
-
-            Err(AnyError::msg("No reply"))
-        })
-    }
-}
-
-impl Handler<TimedModeMessage> for IrcActor {
-    type Result = ();
-
-    fn handle(&mut self, msg: TimedModeMessage, _ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
-        let pool = self.pool.clone();
-        task::spawn(async move {
-            log::info!(
-                "{} in {} for {:?}s",
-                msg.mode,
-                msg.broadcaster,
-                msg.duration
-            );
-
-            let mode_id = TimedMode::create_mode(
-                &msg.broadcaster_id,
-                msg.mode,
-                std::time::Duration::from_secs(msg.duration),
-                &pool,
-            )
-            .await
-            .unwrap_or(0);
-
-            if let Err(e) = client
-                .privmsg(msg.broadcaster.clone(), format!("/{}", msg.mode))
-                .await
-            {
-                log::warn!("Could not enter {}: {:?}", msg.mode, e);
-            }
-            tokio::time::sleep(std::time::Duration::from_secs(msg.duration)).await;
-
-            log::info!("Leave {} in {}", msg.mode, msg.broadcaster);
-            if let Err(e) = client
-                .privmsg(msg.broadcaster, format!("/{}off", msg.mode))
-                .await
-            {
-                log::warn!("Could not leave {}: {:?}", msg.mode, e);
-            }
-
-            log_err!(
-                TimedMode::delete_mode(mode_id, &pool).await,
-                "Failed to delete timed mode"
-            );
-        });
-    }
-}
-
 impl Handler<ChatMessage> for IrcActor {
     type Result = ();
 
-    fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: ChatMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         if !msg.0.message_text.starts_with(&CONFIG.bot.prefix)
             || msg.0.message_text.len() < CONFIG.bot.prefix.len()
         {
             return;
         }
-        let (command, args) = opt_next_space(msg.0.message_text[CONFIG.bot.prefix.len()..].trim());
+        let (command, args) = opt_next_space(
+            msg.0.message_text[CONFIG.bot.prefix.len()..].trim(),
+        );
         match try_parse_command(command, args) {
             Some(Ok(ex)) => {
                 self.executor

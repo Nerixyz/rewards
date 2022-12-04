@@ -6,8 +6,8 @@ use crate::chat::commands::debug::DebugCommand;
 use anyhow::Result as AnyResult;
 use command::ChatCommand;
 use commands::{
-    about::About, emote_management::EmoteManagement, emotes::Emotes, ping::Ping,
-    slots::SlotsCommand,
+    about::About, emote_management::EmoteManagement, emotes::Emotes,
+    ping::Ping, slots::SlotsCommand,
 };
 
 pub fn try_parse_command(

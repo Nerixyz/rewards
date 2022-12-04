@@ -1,19 +1,23 @@
 use actix::{
-    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, WrapFuture,
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
+    Handler, WrapFuture,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::Utc;
 use futures::{
     future::TryFutureExt,
-    stream::{self, StreamExt},
 };
 use sqlx::PgPool;
-use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
+use twitch_api2::{
+    helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
+};
 
 use crate::{
     actors::irc::{IrcActor, SayMessage},
     log_discord, log_err,
-    services::twitch::requests::{get_reward_for_broadcaster_by_id, update_reward},
+    services::twitch::requests::{
+        get_reward_for_broadcaster_by_id, update_reward,
+    },
 };
 use models::{reward::Reward, user::User};
 
@@ -44,7 +48,8 @@ impl LiveActor {
         pool: &PgPool,
         irc: &Addr<IrcActor>,
     ) -> AnyResult<Vec<UnpauseInfo>> {
-        let user_token: UserToken = User::get_by_id(user_id, pool).await?.into();
+        let user_token: UserToken =
+            User::get_by_id(user_id, pool).await?.into();
 
         log_discord!(format!("🔴 {} is now live", user_token.login));
 
@@ -53,37 +58,36 @@ impl LiveActor {
             return Ok(vec![]);
         }
 
-        let live = stream::iter(live.into_iter());
-        let pending: Vec<(chrono::Duration, String)> = live
-            .filter_map(|reward| async {
-                if let Some(duration) = reward.live_delay.and_then(|delay| {
-                    humantime::parse_duration(&delay)
-                        .map(|d| chrono::Duration::from_std(d).ok())
-                        .ok()
-                        .flatten()
-                }) {
-                    match get_reward_for_broadcaster_by_id(user_id, reward.id, &user_token).await {
-                        Ok(reward) => {
-                            if !reward.is_paused {
-                                Some((duration, reward.id.into_string()))
-                            } else {
-                                None
-                            }
-                        }
-                        Err(_) => None,
+        let mut pending = vec![];
+        for reward in live {
+            if let Some(duration) = reward.live_delay.and_then(|delay| {
+                humantime::parse_duration(&delay)
+                    .map(|d| chrono::Duration::from_std(d).ok())
+                    .ok()
+                    .flatten()
+            }) {
+                if let Ok(res) = get_reward_for_broadcaster_by_id(
+                    user_id,
+                    &[reward.id.as_str().into()],
+                    &user_token,
+                )
+                .await
+                {
+                    if !res.is_paused {
+                        pending.push((duration, res.id.take()));
                     }
-                } else {
-                    None
                 }
-            })
-            .collect()
-            .await;
+            }
+        }
 
         log::info!("Pausing {} rewards", pending.len());
         log_err!(
             irc.send(SayMessage(
-                user_token.login.clone().into_string(),
-                format!("🔴 Live, pausing {} reward(s) at the start.", pending.len())
+                user_token.login.clone().take(),
+                format!(
+                    "🔴 Live, pausing {} reward(s) at the start.",
+                    pending.len()
+                )
             ))
             .await,
             "Could not send chat"
@@ -91,7 +95,8 @@ impl LiveActor {
 
         for (duration, id) in pending.iter() {
             log_err!(
-                Reward::set_unpause_at(id, Some(Utc::now() + *duration), pool).await,
+                Reward::set_unpause_at(id, Some(Utc::now() + *duration), pool)
+                    .await,
                 "Could not set unpause_at"
             );
             log_err!(
@@ -117,8 +122,10 @@ impl LiveActor {
     }
 
     async fn on_offline(user_id: &str, pool: &PgPool) -> AnyResult<()> {
-        let user_token: UserToken = User::get_by_id(user_id, pool).await?.into();
-        let pending = Reward::get_all_pending_live_for_user(user_id, pool).await?;
+        let user_token: UserToken =
+            User::get_by_id(user_id, pool).await?.into();
+        let pending =
+            Reward::get_all_pending_live_for_user(user_id, pool).await?;
 
         log_discord!(format!("📴 {} is now offline", user_token.login));
 
@@ -127,11 +134,14 @@ impl LiveActor {
         for reward in pending {
             log_err!(
                 futures::future::try_join(
-                    Reward::set_unpause_at(&reward.id, None, pool).map_err(AnyError::from),
+                    Reward::set_unpause_at(&reward.id, None, pool)
+                        .map_err(AnyError::from),
                     update_reward(
                         user_id,
                         reward.id.clone(),
-                        UpdateCustomRewardBody::builder().is_paused(false).build(),
+                        UpdateCustomRewardBody::builder()
+                            .is_paused(false)
+                            .build(),
                         &user_token
                     )
                     .map_err(AnyError::from)
@@ -153,11 +163,14 @@ impl LiveActor {
             let (reward, user_token) = reward.into();
             log_err!(
                 futures::future::try_join(
-                    Reward::set_unpause_at(&reward.id, None, pool).map_err(AnyError::from),
+                    Reward::set_unpause_at(&reward.id, None, pool)
+                        .map_err(AnyError::from),
                     update_reward(
                         reward.user_id.clone(),
                         reward.id.clone(),
-                        UpdateCustomRewardBody::builder().is_paused(false).build(),
+                        UpdateCustomRewardBody::builder()
+                            .is_paused(false)
+                            .build(),
                         &user_token
                     )
                     .map_err(AnyError::from)
@@ -188,7 +201,11 @@ impl Actor for LiveActor {
 impl Handler<LiveMessage> for LiveActor {
     type Result = ();
 
-    fn handle(&mut self, msg: LiveMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: LiveMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         let addr = self.irc_addr.clone();
         async move { Self::on_live(&msg.0, &pool, &addr).await }
@@ -202,7 +219,12 @@ impl Handler<LiveMessage> for LiveActor {
                             ctx.spawn(
                                 async move {
                                     log_err!(
-                                        Reward::set_unpause_at(&info.reward_id, None, &pool).await,
+                                        Reward::set_unpause_at(
+                                            &info.reward_id,
+                                            None,
+                                            &pool
+                                        )
+                                        .await,
                                         "Could not set unpause_at"
                                     );
                                     log_err!(
@@ -232,7 +254,11 @@ impl Handler<LiveMessage> for LiveActor {
 impl Handler<OfflineMessage> for LiveActor {
     type Result = ();
 
-    fn handle(&mut self, msg: OfflineMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: OfflineMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         ctx.spawn(
             async move {

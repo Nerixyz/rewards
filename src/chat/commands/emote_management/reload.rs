@@ -20,7 +20,11 @@ pub async fn execute_reload(
     ))
 }
 
-async fn reload_emotes(channel_id: &str, redis: &mut RedisConn, pg: &PgPool) -> AnyResult<usize> {
+async fn reload_emotes(
+    channel_id: &str,
+    redis: &mut RedisConn,
+    pg: &PgPool,
+) -> AnyResult<usize> {
     let (cache, swaps, slots) = future::join3(
         EmoteCache::fetch_or_load(channel_id, redis, pg),
         SwapEmote::all_for_user(channel_id, pg),
@@ -31,7 +35,8 @@ async fn reload_emotes(channel_id: &str, redis: &mut RedisConn, pg: &PgPool) -> 
 
     let mut removed = 0;
     for swap in swaps {
-        if cache.non_empty_platform(swap.platform) && !cache.contains(&swap.emote_id, swap.platform)
+        if cache.non_empty_platform(swap.platform)
+            && !cache.contains(&swap.emote_id, swap.platform)
         {
             SwapEmote::remove(swap.id, pg).await?;
             removed += 1;
@@ -39,9 +44,14 @@ async fn reload_emotes(channel_id: &str, redis: &mut RedisConn, pg: &PgPool) -> 
     }
     for slot in slots {
         if let Some(id) = &slot.emote_id {
-            if cache.non_empty_platform(slot.platform) && !cache.contains(id, slot.platform) {
-                let (db, _twitch) =
-                    future::join(Slot::clear(slot.id, pg), remove::enable_reward(&slot, pg)).await;
+            if cache.non_empty_platform(slot.platform)
+                && !cache.contains(id, slot.platform)
+            {
+                let (db, _twitch) = future::join(
+                    Slot::clear(slot.id, pg),
+                    remove::enable_reward(&slot, pg),
+                )
+                .await;
                 db?;
                 removed += 1;
             }

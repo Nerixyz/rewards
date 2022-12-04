@@ -3,7 +3,9 @@ use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 use std::time::Duration;
 use twitch_api2::{
-    twitch_oauth2::{AccessToken, ClientId, ClientSecret, RefreshToken, UserToken},
+    twitch_oauth2::{
+        AccessToken, ClientId, ClientSecret, RefreshToken, UserToken,
+    },
     types::{Nickname, UserId},
 };
 
@@ -63,16 +65,23 @@ impl User {
         Ok(names)
     }
 
-    pub async fn get_all_non_subscribers(pool: &PgPool) -> SqlResult<Vec<String>> {
+    pub async fn get_all_non_subscribers(
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
-        let ids = sqlx::query_scalar!("SELECT id FROM users WHERE eventsub_id IS null")
-            .fetch_all(pool)
-            .await?;
+        let ids = sqlx::query_scalar!(
+            "SELECT id FROM users WHERE eventsub_id IS null"
+        )
+        .fetch_all(pool)
+        .await?;
 
         Ok(ids)
     }
 
-    pub async fn get_bttv_data(user_id: &str, pool: &PgPool) -> SqlResult<UserBttvData> {
+    pub async fn get_bttv_data(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<UserBttvData> {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             UserBttvData,
@@ -85,7 +94,10 @@ impl User {
         Ok(data)
     }
 
-    pub async fn get_seventv_data(user_id: &str, pool: &PgPool) -> SqlResult<UserSevenTvData> {
+    pub async fn get_seventv_data(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<UserSevenTvData> {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             UserSevenTvData,
@@ -143,7 +155,11 @@ impl User {
         Ok(())
     }
 
-    pub async fn set_bttv_id(user_id: &str, bttv_id: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn set_bttv_id(
+        user_id: &str,
+        bttv_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query_scalar!(
             "UPDATE users SET bttv_id = $2 WHERE id = $1",
@@ -156,7 +172,11 @@ impl User {
         Ok(())
     }
 
-    pub async fn set_seventv_id(user_id: &str, seventv_id: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn set_seventv_id(
+        user_id: &str,
+        seventv_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query_scalar!(
             "UPDATE users SET seventv_id = $2 WHERE id = $1",
@@ -180,7 +200,11 @@ impl User {
         Ok(())
     }
 
-    pub async fn set_eventsub_id(user_id: &str, eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn set_eventsub_id(
+        user_id: &str,
+        eventsub_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             "UPDATE users SET eventsub_id = $2 WHERE id = $1",
@@ -192,7 +216,10 @@ impl User {
         Ok(())
     }
 
-    pub async fn clear_eventsub_id(eventsub_id: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn clear_eventsub_id(
+        eventsub_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         let _ = sqlx::query!(
             "UPDATE users SET eventsub_id = null WHERE eventsub_id = $1",

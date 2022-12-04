@@ -13,6 +13,10 @@ pub async fn get_user_or_editor(
     } else {
         Editor::get_broadcaster_for_editor(&user.id, broadcaster_id, pool)
             .await
-            .map_err(|_| errors::ErrorForbidden("The user isn't an editor for the broadcaster."))?
+            .map_err(|_| {
+                errors::ErrorForbidden(
+                    "The user isn't an editor for the broadcaster.",
+                )
+            })?
     })
 }

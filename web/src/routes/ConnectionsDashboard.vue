@@ -10,17 +10,7 @@
       <Heading>Connections</Heading>
       <div class="flex flex-wrap">
         <div
-          class="
-            flex flex-col
-            items-center
-            justify-center
-            gap-4
-            bg-gray-350
-            p-4
-            rounded-lg
-            border border-gray-900 border-opacity-30
-            text-red
-          "
+          class="flex flex-col items-center justify-center gap-4 bg-gray-350 p-4 rounded-lg border border-gray-900 border-opacity-30 text-red"
         >
           <SpotifyIcon class="h-14 w-auto" />
           <div v-if="state.value.spotify" class="flex flex-col items-center gap-3">

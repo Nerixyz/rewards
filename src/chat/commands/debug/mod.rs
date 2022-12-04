@@ -38,16 +38,30 @@ impl ChatCommand for DebugCommand {
             DebugCommand::Channel(chan) => {
                 let data = match chan.take() {
                     Some(username) => {
-                        let (id, login) =
-                            get_user_by_login(username, &*app_access_token.read().await)
-                                .await
-                                .map(|user| (user.id.into_string(), user.login.into_string()))
-                                .map_err(|e| {
-                                    AnyError::msg(format!("This user doesn't seem to exist: {}", e))
-                                })?;
+                        let (id, login) = get_user_by_login(
+                            username,
+                            &*app_access_token.read().await,
+                        )
+                        .await
+                        .map(|user| {
+                            (user.id.take(), user.login.take())
+                        })
+                        .map_err(|e| {
+                            AnyError::msg(format!(
+                                "This user doesn't seem to exist: {}",
+                                e
+                            ))
+                        })?;
                         ChannelData::get(&id, &login, pool).await?
                     }
-                    None => ChannelData::get(&msg.channel_id, &msg.channel_login, pool).await?,
+                    None => {
+                        ChannelData::get(
+                            &msg.channel_id,
+                            &msg.channel_login,
+                            pool,
+                        )
+                        .await?
+                    }
                 };
                 Ok(format!("@{}, {}", msg.sender.login, data))
             }
@@ -56,17 +70,30 @@ impl ChatCommand for DebugCommand {
                 Ok(format!("@{}, {}", msg.sender.login, platforms))
             }
             DebugCommand::Editor(username) => {
-                editor::Editor::add_editor_for_name(username, &CONFIG.owner.id, pool).await?;
+                editor::Editor::add_editor_for_name(
+                    username,
+                    &CONFIG.owner.id,
+                    pool,
+                )
+                .await?;
                 Ok(format!("@{}, done.", msg.sender.login))
             }
             DebugCommand::RmEditor(username) => {
-                editor::Editor::delete_editor_for_name(username, &CONFIG.owner.id, pool).await?;
+                editor::Editor::delete_editor_for_name(
+                    username,
+                    &CONFIG.owner.id,
+                    pool,
+                )
+                .await?;
                 Ok(format!("@{}, done.", msg.sender.login))
             }
         }
     }
 
-    fn parse(_cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(
+        _cmd: &str,
+        args: Option<&str>,
+    ) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send,
     {
@@ -84,10 +111,12 @@ impl ChatCommand for DebugCommand {
                 cmd.map(|c| opt_next_space(c).0.to_string())
                     .ok_or_else(|| anyhow!("expected username"))?,
             ))),
-            "rmedit" | "rm-edit" | "deledit" | "del-edit" => Ok(Box::new(Self::RmEditor(
-                cmd.map(|c| opt_next_space(c).0.to_string())
-                    .ok_or_else(|| anyhow!("expected username"))?,
-            ))),
+            "rmedit" | "rm-edit" | "deledit" | "del-edit" => {
+                Ok(Box::new(Self::RmEditor(
+                    cmd.map(|c| opt_next_space(c).0.to_string())
+                        .ok_or_else(|| anyhow!("expected username"))?,
+                )))
+            }
             _ => Err(anyhow!(
                 "Expected subcommand (one of 'channel', 'platforms')"
             )),

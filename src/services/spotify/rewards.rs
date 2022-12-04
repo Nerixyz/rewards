@@ -12,7 +12,10 @@ use regex::Regex;
 use sqlx::PgPool;
 use twitch_api2::twitch_oauth2::UserToken;
 
-pub async fn get_spotify_token(user_id: &str, pool: &PgPool) -> AnyResult<String> {
+pub async fn get_spotify_token(
+    user_id: &str,
+    pool: &PgPool,
+) -> AnyResult<String> {
     SpotifyData::get_by_id(user_id, pool)
         .await?
         .ok_or_else(|| AnyError::msg("No spotify connection"))
@@ -34,7 +37,11 @@ pub async fn skip_track(user_id: &str, pool: &PgPool) -> AnyResult<String> {
         .unwrap_or_else(|| "?".to_string()))
 }
 
-pub async fn queue_track(user_id: &str, track: TrackObject, pool: &PgPool) -> AnyResult<String> {
+pub async fn queue_track(
+    user_id: &str,
+    track: TrackObject,
+    pool: &PgPool,
+) -> AnyResult<String> {
     let token = get_token_and_verify(user_id, pool).await?;
 
     get_playing_player(&token).await?;
@@ -49,7 +56,11 @@ pub async fn queue_track(user_id: &str, track: TrackObject, pool: &PgPool) -> An
     Ok(track.to_string())
 }
 
-pub async fn play_track(user_id: &str, track: TrackObject, pool: &PgPool) -> AnyResult<String> {
+pub async fn play_track(
+    user_id: &str,
+    track: TrackObject,
+    pool: &PgPool,
+) -> AnyResult<String> {
     let token = get_token_and_verify(user_id, pool).await?;
 
     get_playing_player(&token).await?;
@@ -114,7 +125,10 @@ async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
     Ok(player)
 }
 
-async fn get_token_and_verify(user_id: &str, pool: &PgPool) -> AnyResult<String> {
+async fn get_token_and_verify(
+    user_id: &str,
+    pool: &PgPool,
+) -> AnyResult<String> {
     // TODO: for now, every user has only_while_live set to true, so the token is always needed.
     // In the future this might not be true anymore.
     let (data, user) = futures::future::try_join(
@@ -125,7 +139,9 @@ async fn get_token_and_verify(user_id: &str, pool: &PgPool) -> AnyResult<String>
     let data = data.ok_or_else(|| AnyError::msg("No spotify connection"))?;
     let user_token = user.into();
 
-    if data.only_while_live && !is_user_live::<UserToken>(user_id.to_string(), &user_token).await? {
+    if data.only_while_live
+        && !is_user_live::<UserToken>(user_id, &user_token).await?
+    {
         return Err(AnyError::msg("The broadcaster isn't live"));
     }
 

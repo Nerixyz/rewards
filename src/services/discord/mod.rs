@@ -70,7 +70,10 @@ pub async fn send_webhook_message(req: &WebhookReq) -> AnyResult<()> {
     }
 }
 
-pub async fn send_user_webhook_message(url: &str, req: &WebhookReq) -> AnyResult<()> {
+pub async fn send_user_webhook_message(
+    url: &str,
+    req: &WebhookReq,
+) -> AnyResult<()> {
     let res = DISCORD_CLIENT.post(url).json(req).send().await?;
     let status = res.status();
     if status.is_success() {

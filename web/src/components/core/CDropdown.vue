@@ -2,23 +2,7 @@
   <Listbox :model-value="modelValue" @update:model-value="onUpdate">
     <div class="relative min-w-10rem w-full outline-none">
       <ListboxButton
-        class="
-          relative
-          w-full
-          py-1
-          pl-3
-          pr-5
-          text-left
-          bg-transparent
-          border border-gray-900 border-opacity-30
-          focus:border-opacity-100 focus:border-red focus:bg-gray-350
-          hover:bg-gray-350 hover:border-red
-          transition-colors
-          rounded-md
-          shadow-md
-          outline-none
-          focus:outline-none
-        "
+        class="relative w-full py-1 pl-3 pr-5 text-left bg-transparent border border-gray-900 border-opacity-30 focus:border-opacity-100 focus:border-red focus:bg-gray-350 hover:bg-gray-350 hover:border-red transition-colors rounded-md shadow-md outline-none focus:outline-none"
       >
         <span class="block truncate">{{ modelValue }}</span>
         <span class="absolute inset-0 left-auto right-0 flex items-center pr-2 pointer-events-none"
@@ -35,20 +19,7 @@
         leave-to-class="opacity-0 scale-75"
       >
         <ListboxOptions
-          class="
-            transform
-            transition-transform
-            absolute
-            origin-top
-            w-full
-            mt-1
-            text-base
-            bg-gray-500 bg-opacity-20
-            backdrop-filter backdrop-blur-md
-            border border-gray-900 border-opacity-20
-            rounded-md
-            shadow-lg
-          "
+          class="transform transition-transform absolute origin-top w-full mt-1 text-base bg-gray-500 bg-opacity-20 backdrop-filter backdrop-blur-md border border-gray-900 border-opacity-20 rounded-md shadow-lg"
         >
           <ListboxOption
             v-for="option of options"

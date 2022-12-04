@@ -9,10 +9,15 @@ use crate::{
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::{Duration, Utc};
 use futures::TryFutureExt;
-use models::{banned_emote, log_entry::LogEntry, reward::SlotRewardData, slot::Slot, user::User};
+use models::{
+    banned_emote, log_entry::LogEntry, reward::SlotRewardData, slot::Slot,
+    user::User,
+};
 use sqlx::PgPool;
 use std::{cmp::Ordering, fmt::Display};
-use twitch_api2::{helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken};
+use twitch_api2::{
+    helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
+};
 
 pub async fn adjust_size<RW, I, E, EI>(
     broadcaster_id: &str,
@@ -29,7 +34,8 @@ where
     if n_slots == 0 {
         return Err(AnyError::msg("You can't have 0 slots"));
     }
-    let mut current = Slot::get_all_slots(broadcaster_id, reward_id, pool).await?;
+    let mut current =
+        Slot::get_all_slots(broadcaster_id, reward_id, pool).await?;
 
     match current.len() {
         n_current_emotes if n_current_emotes > n_slots => {
@@ -41,7 +47,8 @@ where
             });
 
             let n_to_delete = current.len() - n_slots;
-            let to_delete: Vec<Slot> = current.into_iter().take(n_to_delete).collect();
+            let to_delete: Vec<Slot> =
+                current.into_iter().take(n_to_delete).collect();
             for emote in to_delete.iter().filter(|e| e.emote_id.is_some()) {
                 if let Err(e) = RW::remove_emote(
                     platform_id,
@@ -54,7 +61,11 @@ where
                 )
                 .await
                 {
-                    log::warn!("Couldn't delete {:?} error={}", emote.emote_id, e);
+                    log::warn!(
+                        "Couldn't delete {:?} error={}",
+                        emote.emote_id,
+                        e
+                    );
                 }
             }
             for row in to_delete {
@@ -66,10 +77,11 @@ where
             // create slots
             let (env, available_slots) = futures::future::try_join(
                 RW::get_emote_env_data(broadcaster_id, platform_id),
-                Slot::get_available_slots(broadcaster_id, reward_id, pool).map_err(|e| {
-                    log::warn!("Could not get slots {}", e);
-                    AnyError::msg("Internal error")
-                }),
+                Slot::get_available_slots(broadcaster_id, reward_id, pool)
+                    .map_err(|e| {
+                        log::warn!("Could not get slots {}", e);
+                        AnyError::msg("Internal error")
+                    }),
             )
             .await?;
 
@@ -94,7 +106,8 @@ where
             }
 
             for _ in 0..needed_slots {
-                Slot::create(broadcaster_id, reward_id, RW::platform(), pool).await?;
+                Slot::create(broadcaster_id, reward_id, RW::platform(), pool)
+                    .await?;
             }
         }
         _ => (),
@@ -107,7 +120,9 @@ where
         reward_id.to_string(),
         UpdateCustomRewardBody::builder()
             .is_paused(Some(
-                Slot::get_n_available_slots(broadcaster_id, reward_id, pool).await? <= 0,
+                Slot::get_n_available_slots(broadcaster_id, reward_id, pool)
+                    .await?
+                    <= 0,
             ))
             .build(),
         &token,
@@ -130,21 +145,25 @@ where
     E: Emote<EI>,
     EI: Display,
 {
-    if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool).await? {
+    if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool)
+        .await?
+    {
         return Err(AnyError::msg("This emote is banned"));
     }
-    let available_slots = Slot::get_available_slots(broadcaster_id, reward_id, pool)
-        .await
-        .map_err(|e| {
-            log::warn!("Could not query: {}", e);
-            AnyError::msg("Internal error")
-        })?;
+    let available_slots =
+        Slot::get_available_slots(broadcaster_id, reward_id, pool)
+            .await
+            .map_err(|e| {
+                log::warn!("Could not query: {}", e);
+                AnyError::msg("Internal error")
+            })?;
     let n_available = available_slots.len();
     let mut slot = available_slots
         .into_iter()
         .next()
         .ok_or_else(|| AnyError::msg("No free slot is available!"))?;
-    let emote_data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
+    let emote_data =
+        RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
 
     if emote_data.current_emotes >= emote_data.max_emotes {
         return Err(AnyError::msg("There's no free slot!"));
@@ -181,10 +200,11 @@ where
     if n_available == 1 {
         log::info!("Disabling {} because all slots are filled", reward_id);
 
-        let this_user = User::get_by_id(broadcaster_id, pool).await.map_err(|e| {
-            log::warn!("Could not get user: {}", e);
-            AnyError::msg("Internal error")
-        })?;
+        let this_user =
+            User::get_by_id(broadcaster_id, pool).await.map_err(|e| {
+                log::warn!("Could not get user: {}", e);
+                AnyError::msg("Internal error")
+            })?;
 
         let token: UserToken = this_user.into();
 

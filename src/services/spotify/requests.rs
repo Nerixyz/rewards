@@ -1,7 +1,8 @@
 use crate::services::spotify::{
     auth::get_redirect_url,
     responses::{
-        AccessTokenResponse, PlayerResponse, RefreshTokenResponse, SearchResponse, TrackObject,
+        AccessTokenResponse, PlayerResponse, RefreshTokenResponse,
+        SearchResponse, TrackObject,
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
@@ -73,7 +74,9 @@ pub async fn get_token(code: &str) -> AnyResult<AccessTokenResponse> {
         .and_then(Response::json)
         .await?)
 }
-pub async fn refresh_token(refresh_token: &str) -> AnyResult<RefreshTokenResponse> {
+pub async fn refresh_token(
+    refresh_token: &str,
+) -> AnyResult<RefreshTokenResponse> {
     Ok(SPOTIFY_CLIENT
         .post("https://accounts.spotify.com/api/token")
         .form(&RefreshRequest {
@@ -104,7 +107,8 @@ pub async fn queue_item(uri: &str, auth_token: &str) -> AnyResult<()> {
     post204(
         format!(
             "https://api.spotify.com/v1/me/player/queue?{}",
-            serde_qs::to_string(&QueueTrack { uri }).unwrap_or_else(|_| String::new())
+            serde_qs::to_string(&QueueTrack { uri })
+                .unwrap_or_else(|_| String::new())
         ),
         auth_token,
     )
@@ -136,8 +140,12 @@ pub async fn get_player(auth_token: &str) -> AnyResult<PlayerResponse> {
     })
 }
 
-const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
-pub async fn get_track(track_id: &str, auth_token: &str) -> AnyResult<TrackObject> {
+const FRAGMENT: &AsciiSet =
+    &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
+pub async fn get_track(
+    track_id: &str,
+    auth_token: &str,
+) -> AnyResult<TrackObject> {
     get(
         format!(
             "https://api.spotify.com/v1/tracks/{}",
@@ -148,7 +156,10 @@ pub async fn get_track(track_id: &str, auth_token: &str) -> AnyResult<TrackObjec
     .await
 }
 
-pub async fn search_track(q: &str, auth_token: &str) -> AnyResult<SearchResponse> {
+pub async fn search_track(
+    q: &str,
+    auth_token: &str,
+) -> AnyResult<SearchResponse> {
     get(
         format!(
             "https://api.spotify.com/v1/search?{}",
@@ -169,7 +180,11 @@ async fn post204<U: IntoUrl>(url: U, auth_token: &str) -> AnyResult<()> {
     no_content_result(response)
 }
 
-async fn put204<U: IntoUrl, T: Serialize>(url: U, body: &T, auth_token: &str) -> AnyResult<()> {
+async fn put204<U: IntoUrl, T: Serialize>(
+    url: U,
+    body: &T,
+    auth_token: &str,
+) -> AnyResult<()> {
     let response = SPOTIFY_CLIENT
         .put(url)
         .json(body)

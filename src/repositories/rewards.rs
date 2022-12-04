@@ -8,8 +8,8 @@ use crate::{
         },
         sql::get_user_or_editor,
         twitch::requests::{
-            create_reward, delete_reward, get_reward_for_broadcaster_by_id, get_rewards_for_id,
-            update_reward,
+            create_reward, delete_reward, get_reward_for_broadcaster_by_id,
+            get_rewards_for_id, update_reward,
         },
     },
 };
@@ -17,18 +17,21 @@ use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
 use models::reward::{Reward, RewardData};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use twitch_api2::helix::points::{CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody};
+use twitch_api2::helix::points::{
+    CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody,
+};
+use twitch_api2::types::{RewardId, RewardIdRef};
 
 #[derive(Deserialize, Debug)]
 struct CreateRewardBody {
-    pub twitch: CreateCustomRewardBody,
+    pub twitch: CreateCustomRewardBody<'static>,
     pub data: RewardData,
     pub live_delay: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 struct UpdateRewardBody {
-    pub twitch: UpdateCustomRewardBody,
+    pub twitch: UpdateCustomRewardBody<'static>,
     pub data: RewardData,
     pub live_delay: Option<String>,
 }
@@ -59,23 +62,33 @@ async fn create(
         body
     );
 
-    verify_live_delay(&body.live_delay)
-        .map_err(|e| errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e)))?;
+    verify_live_delay(&body.live_delay).map_err(|e| {
+        errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e))
+    })?;
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
-        .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+        .map_err(|e| {
+            errors::ErrorBadRequest(format!(
+                "Your reward action is invalid: {}",
+                e
+            ))
+        })?;
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
 
-    let db_reward = Reward::from_response(&reward, body.data.clone(), body.live_delay);
+    let db_reward =
+        Reward::from_response(&reward, body.data.clone(), body.live_delay);
     db_reward.create(&pool).await?;
 
-    if let Err(e) = save_reward(&body.data, reward.id.as_ref(), &broadcaster_id, &pool).await {
+    if let Err(e) =
+        save_reward(&body.data, reward.id.as_ref(), &broadcaster_id, &pool)
+            .await
+    {
         log::warn!("Could not save reward: {}", e);
 
         let (internal, twitch) = futures::future::join(
             Reward::delete(reward.id.as_ref(), &pool),
-            delete_reward(&broadcaster_id, reward.id.clone(), &token),
+            delete_reward(broadcaster_id.as_str(), <RewardId as AsRef<RewardIdRef>>::as_ref(&reward.id), &token),
         )
         .await;
         if let Err(e) = internal {
@@ -95,10 +108,10 @@ async fn create(
         "Rewards",
         "🎉 Created reward",
         0x9355fb,
-        "User" = reward.broadcaster_login.clone().into_string(),
+        "User" = reward.broadcaster_login.clone().take(),
         "Title" = reward.title.clone(),
         "Type" = body.data.to_string(),
-        "Id" = reward.id.clone().into_string()
+        "Id" = reward.id.clone().take()
     );
 
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
@@ -129,14 +142,22 @@ async fn update(
         body
     );
 
-    verify_live_delay(&body.live_delay)
-        .map_err(|e| errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e)))?;
+    verify_live_delay(&body.live_delay).map_err(|e| {
+        errors::ErrorBadRequest(format!("Your live delay is invalid: {}", e))
+    })?;
     verify_reward(&body.data, &broadcaster_id, &pool, &token)
         .await
-        .map_err(|e| errors::ErrorBadRequest(format!("Your reward action is invalid: {}", e)))?;
+        .map_err(|e| {
+            errors::ErrorBadRequest(format!(
+                "Your reward action is invalid: {}",
+                e
+            ))
+        })?;
 
     // check this before it's actually saved
-    if let Err(e) = save_reward(&body.data, &reward_id, &broadcaster_id, &pool).await {
+    if let Err(e) =
+        save_reward(&body.data, &reward_id, &broadcaster_id, &pool).await
+    {
         log::warn!("Could not save reward: {}", e);
 
         return Err(errors::ErrorBadRequest(format!(
@@ -145,7 +166,8 @@ async fn update(
         )));
     }
 
-    let reward = update_reward(broadcaster_id, reward_id, body.twitch, &token).await?;
+    let reward =
+        update_reward(broadcaster_id, reward_id, body.twitch, &token).await?;
     let data_type = body.data.to_string();
     let db_reward = Reward::from_response(&reward, body.data, body.live_delay);
     db_reward.update(&pool).await?;
@@ -154,10 +176,10 @@ async fn update(
         "Rewards",
         "🔁 Updated reward",
         0xf99500,
-        "User" = reward.broadcaster_login.clone().into_string(),
+        "User" = reward.broadcaster_login.clone().take(),
         "Title" = reward.title.clone(),
         "Type" = data_type,
-        "Id" = reward.id.clone().into_string()
+        "Id" = reward.id.clone().take()
     );
 
     Ok(HttpResponse::Ok().json(CustomRewardResponse {
@@ -186,7 +208,7 @@ async fn delete(
         "Rewards",
         "🗑 Deleted reward",
         0xff0a12,
-        "User" = token.login.into_string(),
+        "User" = token.login.take(),
         "Id" = reward_id
     );
 
@@ -210,7 +232,7 @@ async fn list_for_user(
         .into();
 
     let (rewards, saved_rewards) = futures::future::join(
-        get_rewards_for_id(&broadcaster_id, &token),
+        get_rewards_for_id(broadcaster_id.as_str(), &token),
         Reward::get_all_for_user(broadcaster_id.as_str(), &pool),
     )
     .await;
@@ -239,7 +261,11 @@ async fn get_reward(
         .into();
 
     let (reward, saved_reward) = futures::future::join(
-        get_reward_for_broadcaster_by_id(&broadcaster_id, reward_id.clone(), &token),
+        get_reward_for_broadcaster_by_id(
+            &broadcaster_id,
+            &[reward_id.as_str().into()],
+            &token,
+        ),
         Reward::get_by_id(&reward_id, &pool),
     )
     .await;

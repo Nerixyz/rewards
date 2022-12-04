@@ -15,7 +15,10 @@ pub trait ChatCommand: Send {
         redis: &mut RedisConn,
         app_access_token: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String>;
-    fn parse(cmd: &str, args: Option<&str>) -> AnyResult<Box<dyn ChatCommand + Send>>
+    fn parse(
+        cmd: &str,
+        args: Option<&str>,
+    ) -> AnyResult<Box<dyn ChatCommand + Send>>
     where
         Self: Sized + Send;
 

@@ -42,6 +42,8 @@ remember = ""
 [emotes.seven-tv]
 # the JWT of the 7TV bot user
 jwt = ""
+# the object-id of the 7TV bot user
+user-id = ""
 
 [spotify]
 # from your spotify app

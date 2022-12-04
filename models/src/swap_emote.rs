@@ -77,7 +77,11 @@ impl SwapEmote {
         Ok(count.unwrap_or_default())
     }
 
-    pub async fn by_name(user_id: &str, name: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
+    pub async fn by_name(
+        user_id: &str,
+        name: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
         let emote = sqlx::query_as!(
             Self,
@@ -115,16 +119,24 @@ impl SwapEmote {
         Ok(emote)
     }
 
-    pub async fn all_emote_names(user_id: &str, pool: &PgPool) -> SqlResult<Vec<String>> {
+    pub async fn all_emote_names(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
-        let emotes =
-            sqlx::query_scalar!("SELECT name FROM swap_emotes WHERE user_id = $1", user_id,)
-                .fetch_all(pool)
-                .await?;
+        let emotes = sqlx::query_scalar!(
+            "SELECT name FROM swap_emotes WHERE user_id = $1",
+            user_id,
+        )
+        .fetch_all(pool)
+        .await?;
         Ok(emotes)
     }
 
-    pub async fn all_for_user(user_id: &str, pool: &PgPool) -> SqlResult<Vec<Self>> {
+    pub async fn all_for_user(
+        user_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<Self>> {
         // language=PostgreSQL
         let emotes = sqlx::query_as!(
             Self,

@@ -1,5 +1,6 @@
 use actix::{
-    Actor, AsyncContext, Context, ContextFutureSpawner, Handler, ResponseFuture, WrapFuture,
+    Actor, AsyncContext, Context, ContextFutureSpawner, Handler,
+    ResponseFuture, WrapFuture,
 };
 
 use crate::{log_err, RedisPool};
@@ -25,7 +26,11 @@ impl Actor for TimeoutActor {
 impl Handler<ChannelTimeoutMessage> for TimeoutActor {
     type Result = ();
 
-    fn handle(&mut self, msg: ChannelTimeoutMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: ChannelTimeoutMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         async move {
             if let Ok(mut conn) = pool.get().await {
@@ -38,7 +43,10 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
 
                 log_err!(
                     conn.set_ex::<_, _, ()>(
-                        format!("rewards:timeout:{}:{}", msg.channel_id, msg.user_id),
+                        format!(
+                            "rewards:timeout:{}:{}",
+                            msg.channel_id, msg.user_id
+                        ),
                         1,
                         msg.duration.as_secs() as usize
                     )
@@ -55,7 +63,11 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
 impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
     type Result = ResponseFuture<anyhow::Result<bool>>;
 
-    fn handle(&mut self, msg: CheckValidTimeoutMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: CheckValidTimeoutMessage,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         let pool = self.pool.clone();
         Box::pin(async move {
             let mut conn = pool.get().await?;
@@ -74,12 +86,20 @@ impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
 impl Handler<RemoveTimeoutMessage> for TimeoutActor {
     type Result = ();
 
-    fn handle(&mut self, msg: RemoveTimeoutMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: RemoveTimeoutMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         ctx.run_later(msg.later, |this, ctx| {
             let pool = this.pool.clone();
             async move {
                 if let Ok(mut conn) = pool.get().await {
-                    log::info!("Clear in {} for {}", msg.channel_id, msg.user_id);
+                    log::info!(
+                        "Clear in {} for {}",
+                        msg.channel_id,
+                        msg.user_id
+                    );
 
                     log_err!(
                         conn.del::<_, ()>(format!(

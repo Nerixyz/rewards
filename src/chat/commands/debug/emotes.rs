@@ -24,7 +24,11 @@ pub struct EmotePlatformData {
 pub struct EpDataOpt(Option<EmotePlatformData>);
 
 impl EmoteData {
-    pub async fn get(channel_id: &str, channel_login: &str, pool: &PgPool) -> AnyResult<Self> {
+    pub async fn get(
+        channel_id: &str,
+        channel_login: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Self> {
         future::try_join3(
             extract_seventv(channel_id, pool),
             extract_ffz(channel_id, channel_login, pool),
@@ -58,29 +62,34 @@ impl Display for EpDataOpt {
     }
 }
 
-async fn extract_seventv(channel_id: &str, pool: &PgPool) -> AnyResult<Option<EmotePlatformData>> {
-    let stv_id = match seven_tv::get_or_fetch_id(channel_id, pool).await {
-        Ok(id) => id,
-        Err(_) => return Ok(None),
-    };
-    if !seven_tv::requests::get_user_editors(&stv_id)
-        .await?
+async fn extract_seventv(
+    channel_id: &str,
+    pool: &PgPool,
+) -> AnyResult<Option<EmotePlatformData>> {
+    let stv_user = seven_tv::requests::get_user(channel_id)
+        .await?;
+    // check if we're an editor
+    if !stv_user.user.editors
         .iter()
-        .any(|e| e.login == CONFIG.twitch.login)
+        .any(|e| e.id == CONFIG.emotes.seven_tv.user_id)
     {
         return Ok(None);
     }
+
     let (slots, swaps, user) = future::try_join3(
         get_open_slots(channel_id, SlotPlatform::SevenTv, pool),
         get_swap_data(channel_id, SlotPlatform::SevenTv, pool),
-        seven_tv::requests::get_user(&stv_id),
+        seven_tv::requests::get_user(channel_id),
     )
     .await?;
 
     Ok(Some(EmotePlatformData {
-        remaining_emotes: user.emote_slots.saturating_sub(user.emotes.len()),
+        remaining_emotes: user.emote_set.capacity.saturating_sub(user.emote_set.emotes.len()),
         open_slots: slots,
-        swap_capacity: swaps.1.unwrap_or(user.emote_slots).saturating_sub(swaps.0),
+        swap_capacity: swaps
+            .1
+            .unwrap_or(user.emote_set.capacity)
+            .saturating_sub(swaps.0),
     }))
 }
 
@@ -100,7 +109,8 @@ async fn extract_ffz(
         ffz::requests::get_room(channel_id),
     )
     .await?;
-    let added_emotes: usize = room.sets.values().map(|s| s.emoticons.len()).sum();
+    let added_emotes: usize =
+        room.sets.values().map(|s| s.emoticons.len()).sum();
     Ok(Some(EmotePlatformData {
         remaining_emotes: user.max_emoticons.saturating_sub(added_emotes),
         open_slots: slots,
@@ -111,7 +121,10 @@ async fn extract_ffz(
     }))
 }
 
-async fn extract_bttv(channel_id: &str, pool: &PgPool) -> AnyResult<Option<EmotePlatformData>> {
+async fn extract_bttv(
+    channel_id: &str,
+    pool: &PgPool,
+) -> AnyResult<Option<EmotePlatformData>> {
     let bttv_id = match bttv::get_or_fetch_id(channel_id, pool).await {
         Ok(id) => id,
         Err(_) => return Ok(None),
@@ -146,8 +159,10 @@ async fn get_open_slots(
     platform: SlotPlatform,
     pool: &PgPool,
 ) -> AnyResult<usize> {
-    let available =
-        slot::Slot::get_n_available_slots_for_platform(channel_id, platform, pool).await?;
+    let available = slot::Slot::get_n_available_slots_for_platform(
+        channel_id, platform, pool,
+    )
+    .await?;
     Ok(available as usize)
 }
 

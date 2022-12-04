@@ -21,7 +21,9 @@ pub async fn execute_inject(
 ) -> AnyResult<String> {
     let emote = find_emote(emote, &msg.channel_id, redis, pool)
         .await
-        .ok_or_else(|| anyhow!("Could not find emote. Try to specify the emote url!"))?;
+        .ok_or_else(|| {
+            anyhow!("Could not find emote. Try to specify the emote url!")
+        })?;
     track_emote(
         &msg.channel_id,
         &msg.sender.login,

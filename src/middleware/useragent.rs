@@ -28,7 +28,8 @@ impl UserAgentGuard {
 
 impl<S> Transform<S, ServiceRequest> for UserAgentGuard
 where
-    S: Service<ServiceRequest, Response = ServiceResponse, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse, Error = Error>
+        + 'static,
     S::Future: 'static,
 {
     type Response = ServiceResponse;
@@ -52,7 +53,8 @@ pub struct UserAgentMiddleware<S> {
 
 impl<S> Service<ServiceRequest> for UserAgentMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse, Error = Error>
+        + 'static,
     S::Future: 'static,
 {
     type Response = ServiceResponse;
@@ -60,7 +62,10 @@ where
     #[allow(clippy::type_complexity)]
     type Future = Either<S::Future, Ready<Result<Self::Response, Self::Error>>>;
 
-    fn poll_ready(&self, ctx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(
+        &self,
+        ctx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(ctx)
     }
 
@@ -72,14 +77,16 @@ where
                 header
                     .to_str()
                     .ok()
-                    .filter(|ua| self.banned.iter().any(|banned| ua.contains(banned)))
+                    .filter(|ua| {
+                        self.banned.iter().any(|banned| ua.contains(banned))
+                    })
                     .is_some()
             })
             .is_some();
         if any_banned {
-            Either::Right(ok(
-                req.into_response(HttpResponse::build(StatusCode::IM_A_TEAPOT).finish())
-            ))
+            Either::Right(ok(req.into_response(
+                HttpResponse::build(StatusCode::IM_A_TEAPOT).finish(),
+            )))
         } else {
             Either::Left(self.service.call(req))
         }

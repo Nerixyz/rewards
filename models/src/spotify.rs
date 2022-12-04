@@ -18,9 +18,10 @@ pub struct SpotifySettings {
 impl SpotifyData {
     pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
-        let data = sqlx::query_as!(Self, "SELECT * FROM spotify WHERE user_id=$1", id)
-            .fetch_optional(pool)
-            .await?;
+        let data =
+            sqlx::query_as!(Self, "SELECT * FROM spotify WHERE user_id=$1", id)
+                .fetch_optional(pool)
+                .await?;
 
         Ok(data)
     }
@@ -55,7 +56,11 @@ impl SpotifyData {
         Ok(())
     }
 
-    pub async fn update_token(id: &str, access_token: &str, pool: &PgPool) -> SqlResult<()> {
+    pub async fn update_token(
+        id: &str,
+        access_token: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!(
             "UPDATE spotify SET access_token=$2 WHERE user_id=$1",

@@ -21,11 +21,11 @@ actix-web = "4.1.0"
 actix-files = "0.6.2"
 actix-cors = "0.6.2"
 actix-utils = "3.0.0"
-actix-metrics = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "actix-metrics-v0.4.0" }
+actix-web-prom = "0.6.0"
 
-twitch-irc = { version = "4.0.0", features = ["refreshing-token-native-tls", "transport-tcp-native-tls", "metrics-collection"] }
-twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", rev = "340a582", features = ["eventsub", "helix", "twitch_oauth2", "reqwest", "client", "unsupported"], default-features = false }
-twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", rev = "eb1f170", features = ["native-tls", "unsupported"], default-features = false }
+twitch-irc = { version = "5.0.0", features = ["refreshing-token-native-tls", "transport-tcp-native-tls", "metrics-collection"] }
+twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", features = ["eventsub", "helix", "twitch_oauth2", "reqwest", "client", "unsupported", "typed-builder"], default-features = false }
+twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", features = ["native-tls", "unsupported"], default-features = false }
 
 tokio = { version = "1", features = ["rt", "time", "sync"] }
 tokio-stream = "0.1"
@@ -50,9 +50,8 @@ humantime = "2.1"
 chrono = "0.4"
 time = "0.3"
 
-metrics = "=0.18"
-metrics-exporter-prometheus = "=0.8"
-uptimer = { git = "https://github.com/Nerixyz/uptimer.git", rev = "04002e9", features = ["async"] }
+prometheus = "0.13.2"
+uptimer = { git = "https://github.com/Nerixyz/uptimer.git" }
 
 anyhow = "1.0"
 errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.2.2", features = ["sql-result", "sql-log"] }
@@ -71,6 +70,7 @@ either = "1.6"
 url = "2.2"
 
 lazy_static = "1.4"
+once_cell = "1.15"
 
 pin-project = "1.0"
 async-stream = "0.3"
@@ -84,7 +84,6 @@ hmac = "0.12"
 # workaround for https://github.com/twitch-rs/twitch_api/issues/256
 [patch.crates-io.twitch_types]
 git = "https://github.com/twitch-rs/twitch_api.git"
-rev = "340a582"
 
 [build-dependencies]
 git_info = "0.1.2"

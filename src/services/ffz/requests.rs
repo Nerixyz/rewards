@@ -96,19 +96,26 @@ struct FfzUserReply {
 }
 
 pub async fn get_emote<T: Display>(id: T) -> AnyResult<FfzEmote> {
-    ffz_get_json::<FfzEmoteReply, _>(format!("https://api.frankerfacez.com/v1/emote/{}", id))
-        .await
-        .map(|e| e.emote)
+    ffz_get_json::<FfzEmoteReply, _>(format!(
+        "https://api.frankerfacez.com/v1/emote/{}",
+        id
+    ))
+    .await
+    .map(|e| e.emote)
 }
 
 pub async fn get_room(id: &str) -> AnyResult<FfzRoomData> {
-    ffz_get_json(format!("https://api.frankerfacez.com/v1/room/id/{}", id)).await
+    ffz_get_json(format!("https://api.frankerfacez.com/v1/room/id/{}", id))
+        .await
 }
 
 pub async fn get_user(id: &str) -> AnyResult<FfzUser> {
-    ffz_get_json::<FfzUserReply, _>(format!("https://api.frankerfacez.com/v1/user/id/{}", id))
-        .await
-        .map(|u| u.user)
+    ffz_get_json::<FfzUserReply, _>(format!(
+        "https://api.frankerfacez.com/v1/user/id/{}",
+        id
+    ))
+    .await
+    .map(|u| u.user)
 }
 
 pub async fn get_channels() -> AnyResult<Vec<String>> {
@@ -133,9 +140,11 @@ pub async fn logged_in() -> AnyResult<bool> {
 pub async fn add_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
     lazy_static! {
         static ref SUCCESS_REGEX: Regex =
-            Regex::new("Added the emote [^ ]+ to the channel").expect("must compile");
+            Regex::new("Added the emote [^ ]+ to the channel")
+                .expect("must compile");
         static ref REASON_REGEX: Regex =
-            Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>").expect("must compile");
+            Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>")
+                .expect("must compile");
     }
 
     let text = ffz_get_text_auth(
@@ -152,9 +161,11 @@ pub async fn add_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
 pub async fn delete_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
     lazy_static! {
         static ref SUCCESS_REGEX: Regex =
-            Regex::new("Removed the emote [^ ]+ from the channel").expect("must compile");
+            Regex::new("Removed the emote [^ ]+ from the channel")
+                .expect("must compile");
         static ref REASON_REGEX: Regex =
-            Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>").expect("must compile");
+            Regex::new("&times;</span></button>\\n([^<][^\\n]+)\\n</div>")
+                .expect("must compile");
     }
 
     let text = ffz_get_text_auth(
@@ -168,13 +179,19 @@ pub async fn delete_emote(channel_id: usize, emote_id: usize) -> AnyResult<()> {
     check_for_success(&text, &SUCCESS_REGEX, &REASON_REGEX)
 }
 
-fn check_for_success(text: &str, success: &Regex, reason: &Regex) -> AnyResult<()> {
+fn check_for_success(
+    text: &str,
+    success: &Regex,
+    reason: &Regex,
+) -> AnyResult<()> {
     if success.is_match(text) {
         Ok(())
     } else {
         let reason = reason
             .captures(text)
-            .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str().to_string()))
+            .and_then(|c| {
+                c.iter().nth(1).flatten().map(|m| m.as_str().to_string())
+            })
             .unwrap_or_else(|| "No reason found".to_string());
 
         Err(AnyError::msg(reason))

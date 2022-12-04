@@ -3,7 +3,8 @@ use anyhow::Result as AnyResult;
 use config::CONFIG;
 use serde::{Deserialize, Serialize};
 
-pub const SPOTIFY_SCOPES: &str = "user-modify-playback-state user-read-currently-playing";
+pub const SPOTIFY_SCOPES: &str =
+    "user-modify-playback-state user-read-currently-playing";
 
 #[derive(Deserialize)]
 #[serde(untagged)]

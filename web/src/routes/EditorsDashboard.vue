@@ -7,15 +7,7 @@
           <TextField v-model="editorAddName" class="flex-grow" label="Name" :disabled="state.loading" />
           <button
             type="submit"
-            class="
-              mx-3
-              px-3
-              py-3
-              rounded-full
-              bg-gray-350 bg-opacity-40
-              hover:bg-gray-500 hover:bg-opacity-40
-              transition transition-color
-            "
+            class="mx-3 px-3 py-3 rounded-full bg-gray-350 bg-opacity-40 hover:bg-gray-500 hover:bg-opacity-40 transition transition-color"
           >
             <PlaneIcon />
           </button>
@@ -47,18 +39,7 @@
           <div
             v-for="editor of state.value"
             :key="editor.id"
-            class="
-              flex
-              items-center
-              flex-col
-              gap-4
-              bg-gray-300
-              rounded-lg
-              overflow-hidden
-              border border-gray-900 border-opacity-30
-              pt-4
-              select-none
-            "
+            class="flex items-center flex-col gap-4 bg-gray-300 rounded-lg overflow-hidden border border-gray-900 border-opacity-30 pt-4 select-none"
           >
             <img
               :src="editor.profile_image_url"
@@ -67,18 +48,7 @@
             />
             <h3>{{ editor.login }}</h3>
             <button
-              class="
-                bg-red
-                text-black
-                font-bold
-                uppercase
-                w-full
-                px-7
-                py-2
-                transition transition-colors
-                hover:bg-transparent hover:text-red
-                focus:bg-transparent focus:text-red focus:outline-none
-              "
+              class="bg-red text-black font-bold uppercase w-full px-7 py-2 transition transition-colors hover:bg-transparent hover:text-red focus:bg-transparent focus:text-red focus:outline-none"
               @click="removeEditor(editor.login)"
             >
               Remove

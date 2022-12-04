@@ -38,7 +38,9 @@ pub enum PlayingItem {
 impl ToString for PlayingItem {
     fn to_string(&self) -> String {
         match self {
-            PlayingItem::Episode(ep) => format!("{} from {}", ep.name, ep.show.name),
+            PlayingItem::Episode(ep) => {
+                format!("{} from {}", ep.name, ep.show.name)
+            }
             PlayingItem::Track(track) => track.to_string(),
         }
     }

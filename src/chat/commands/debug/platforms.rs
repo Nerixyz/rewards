@@ -14,7 +14,8 @@ pub struct Platforms {
 
 impl Platforms {
     pub async fn get() -> AnyResult<Self> {
-        let (bttv, ffz, seventv) = future::join3(get_bttv(), get_ffz(), get_seventv()).await;
+        let (bttv, ffz, seventv) =
+            future::join3(get_bttv(), get_ffz(), get_seventv()).await;
         let ffz = ffz?;
         Ok(Self { bttv, ffz, seventv })
     }

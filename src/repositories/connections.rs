@@ -23,7 +23,10 @@ struct ConnectionsList {
 }
 
 #[get("")]
-async fn list_connections(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
+async fn list_connections(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse> {
     let spotify = SpotifySettings::by_id(claims.user_id(), &pool).await?;
 
     Ok(HttpResponse::Ok().json(ConnectionsList { spotify }))
@@ -37,14 +40,19 @@ async fn spotify_callback(
 ) -> Result<HttpResponse> {
     let (code, claims, cookie) = match query.into_inner() {
         SpotifyAuthResponse::Success { code, state } => {
-            let cookie = raw
-                .cookie("csrf")
-                .ok_or_else(|| RedirectError::new("/failed-auth", Some("No csrf")))?;
+            let cookie = raw.cookie("csrf").ok_or_else(|| {
+                RedirectError::new("/failed-auth", Some("No csrf"))
+            })?;
             if cookie.value() != state {
-                return Err(RedirectError::new("/failed-auth", Some("Invalid csrf")).into());
+                return Err(RedirectError::new(
+                    "/failed-auth",
+                    Some("Invalid csrf"),
+                )
+                .into());
             }
-            let claims = decode_jwt(&state)
-                .map_err(|_| RedirectError::new("/failed-auth", Some("Invalid state")))?;
+            let claims = decode_jwt(&state).map_err(|_| {
+                RedirectError::new("/failed-auth", Some("Invalid state"))
+            })?;
             (code, claims.claims, cookie)
         }
         SpotifyAuthResponse::Error { error, .. } => {
@@ -52,9 +60,9 @@ async fn spotify_callback(
         }
     };
 
-    let auth_data = get_token(&code)
-        .await
-        .map_err(|_| RedirectError::new("/failed-auth", Some("Invalid code")))?;
+    let auth_data = get_token(&code).await.map_err(|_| {
+        RedirectError::new("/failed-auth", Some("Invalid code"))
+    })?;
     SpotifyData::add(
         claims.user_id(),
         &auth_data.access_token,
@@ -101,7 +109,10 @@ async fn update_spotify_data(
 }
 
 #[delete("/spotify")]
-async fn remove_spotify_data(claims: JwtClaims, pool: web::Data<PgPool>) -> Result<HttpResponse> {
+async fn remove_spotify_data(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse> {
     SpotifyData::remove_for_id(claims.user_id(), &pool).await?;
 
     Ok(HttpResponse::NoContent().finish())

@@ -1,19 +1,20 @@
 use std::time::Duration;
 
 use actix::{
-    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner, Handler,
-    StreamHandler, WrapFuture,
+    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
+    Handler, StreamHandler, WrapFuture,
 };
 use sqlx::PgPool;
 use token_provider::PubsubTokenProvider;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use twitch_pubsub::{
     moderation::{
-        ChatModeratorActions, ChatModeratorActionsReply, ModerationAction, ModerationActionCommand,
+        ChatModeratorActions, ChatModeratorActionsReply, ModerationAction,
+        ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, ConnectionClosed, ListenError, ParseError, PubsubClient, ServerMessage, Topic,
-    TopicData, TopicDef,
+    ClientConfig, ConnectionClosed, ListenError, ParseError, PubsubClient,
+    ServerMessage, Topic, TopicData, TopicDef,
 };
 
 use crate::{
@@ -73,19 +74,28 @@ impl Actor for PubSubActor {
 }
 
 impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
-    fn handle(&mut self, item: ServerMessage<PubsubTokenProvider>, ctx: &mut Self::Context) {
+    fn handle(
+        &mut self,
+        item: ServerMessage<PubsubTokenProvider>,
+        ctx: &mut Self::Context,
+    ) {
         match item {
-            ServerMessage::Data(TopicData::ChatModeratorActions { topic, reply }) => {
-                if let ChatModeratorActionsReply::ModerationAction(ModerationAction {
-                    moderation_action: ModerationActionCommand::Untimeout,
-                    target_user_id,
-                    ..
-                }) = *reply
+            ServerMessage::Data(TopicData::ChatModeratorActions {
+                topic,
+                reply,
+            }) => {
+                if let ChatModeratorActionsReply::ModerationAction(
+                    ModerationAction {
+                        moderation_action: ModerationActionCommand::Untimeout,
+                        target_user_id,
+                        ..
+                    },
+                ) = *reply
                 {
                     self.timeout_handler
                         .send(RemoveTimeoutMessage {
                             channel_id: topic.channel_id.to_string(),
-                            user_id: target_user_id.into_string(),
+                            user_id: target_user_id.take(),
                             later: Duration::from_secs(0),
                         })
                         .into_actor(self)
@@ -95,14 +105,20 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                         .spawn(ctx);
                 }
             }
-            ServerMessage::Data(TopicData::VideoPlaybackById { topic, reply }) => match *reply {
+            ServerMessage::Data(TopicData::VideoPlaybackById {
+                topic,
+                reply,
+            }) => match *reply {
                 VideoPlaybackReply::StreamUp { .. } => {
                     log::info!("{} is now live", topic.channel_id);
 
                     let addr = self.live_addr.clone();
                     async move {
                         log_err!(
-                            addr.send(LiveMessage(topic.channel_id.to_string())).await,
+                            addr.send(LiveMessage(
+                                topic.channel_id.to_string()
+                            ))
+                            .await,
                             "Could not send live message"
                         );
                     }
@@ -115,8 +131,10 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                     let addr = self.live_addr.clone();
                     async move {
                         log_err!(
-                            addr.send(OfflineMessage(topic.channel_id.to_string()))
-                                .await,
+                            addr.send(OfflineMessage(
+                                topic.channel_id.to_string()
+                            ))
+                            .await,
                             "Could not send offline message"
                         );
                     }
@@ -168,7 +186,11 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
 impl Handler<SubMessage> for PubSubActor {
     type Result = ();
 
-    fn handle(&mut self, msg: SubMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: SubMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let target_id = msg.0.parse::<u32>().unwrap_or(0);
         let client = self.client.clone();
@@ -188,12 +210,18 @@ impl Handler<SubMessage> for PubSubActor {
 impl Handler<SubAllMessage> for PubSubActor {
     type Result = ();
 
-    fn handle(&mut self, msg: SubAllMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: SubAllMessage,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let topics = msg
             .0
             .iter()
-            .flat_map(|user| Self::make_topics(user.parse::<u32>().unwrap_or(0), my_id))
+            .flat_map(|user| {
+                Self::make_topics(user.parse::<u32>().unwrap_or(0), my_id)
+            })
             .collect();
 
         let client = self.client.clone();

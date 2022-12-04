@@ -23,10 +23,13 @@ where
     EI: Display + ToOwned<Owned = EI> + FromStr + Default,
     E: Emote<EI>,
 {
-    if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool).await? {
+    if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool)
+        .await?
+    {
         return Err(AnyError::msg("This emote is banned"));
     }
-    let data = RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
+    let data =
+        RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
     let removed_emote = if data.current_emotes >= data.max_emotes
         || reward_data
             .limit
@@ -34,9 +37,13 @@ where
             .unwrap_or(false)
     {
         Some(
-            remove_last_emote::<RW, I, E, EI>(broadcaster_id, &data.platform_id, pool)
-                .await
-                .0?,
+            remove_last_emote::<RW, I, E, EI>(
+                broadcaster_id,
+                &data.platform_id,
+                pool,
+            )
+            .await
+            .0?,
         )
     } else {
         None
@@ -81,7 +88,9 @@ where
 {
     let mut emote = None;
     let mut removed_from_db = 0;
-    while let Ok(Some(db_emote)) = SwapEmote::oldest(user_id, RW::platform(), pool).await {
+    while let Ok(Some(db_emote)) =
+        SwapEmote::oldest(user_id, RW::platform(), pool).await
+    {
         let actually_removed = if let Err(e) = RW::remove_emote(
             platform_id,
             &EI::from_str(&db_emote.emote_id).unwrap_or_default(),
@@ -107,7 +116,9 @@ where
     (
         emote.map(|e| e.name).ok_or_else(|| {
             log::info!("Could not remove any emotes in {}.", user_id);
-            AnyError::msg("There are no recent emotes to remove - refusing to remove random emote.")
+            AnyError::msg(
+                "There are no recent emotes to remove - refusing to remove random emote.",
+            )
         }),
         removed_from_db,
     )
@@ -126,13 +137,18 @@ where
 {
     let limit = limit as usize;
     let mut current_emotes =
-        SwapEmote::emote_count(broadcaster_id, RW::platform(), pool).await? as usize;
+        SwapEmote::emote_count(broadcaster_id, RW::platform(), pool).await?
+            as usize;
     if current_emotes > limit {
         let platform_id = RW::get_platform_id(broadcaster_id, pool).await?;
         // remove the last emotes
         loop {
-            let (res, removed) =
-                remove_last_emote::<RW, _, _, _>(broadcaster_id, &platform_id, pool).await;
+            let (res, removed) = remove_last_emote::<RW, _, _, _>(
+                broadcaster_id,
+                &platform_id,
+                pool,
+            )
+            .await;
             current_emotes -= removed;
             let _ = res?;
 

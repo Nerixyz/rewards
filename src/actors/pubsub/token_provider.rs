@@ -9,7 +9,9 @@ use models::config::ConfigEntry;
 pub struct PubsubTokenProvider(pub PgPool);
 
 impl PubsubTokenProvider {
-    async fn get_token(&self) -> Result<String, <Self as TokenProvider>::Error> {
+    async fn get_token(
+        &self,
+    ) -> Result<String, <Self as TokenProvider>::Error> {
         ConfigEntry::get_user_token(&self.0)
             .await
             .map(|conf| conf.access_token)
@@ -20,7 +22,10 @@ impl PubsubTokenProvider {
 impl TokenProvider for PubsubTokenProvider {
     type Error = JsonError<SqlReason>;
 
-    async fn provide_token(&self, _: &Topic) -> Result<Option<String>, Self::Error> {
+    async fn provide_token(
+        &self,
+        _: &Topic,
+    ) -> Result<Option<String>, Self::Error> {
         Ok(Some(self.get_token().await?))
     }
 

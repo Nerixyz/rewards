@@ -46,8 +46,7 @@ impl EmoteCache {
     pub async fn fetch(user_id: &str, pg: &PgPool) -> Self {
         let (seventv, bttv, ffz) = future::join3(
             async move {
-                let id = seven_tv::get_or_fetch_id(user_id, pg).await?;
-                seven_tv::requests::get_user(&id).await
+                seven_tv::requests::get_user(user_id).await
             },
             async move {
                 let id = bttv::get_or_fetch_id(user_id, pg).await?;
@@ -59,7 +58,7 @@ impl EmoteCache {
 
         Self {
             seventv: seventv
-                .map(|s| s.emotes)
+                .map(|s| s.emote_set.emotes)
                 .unwrap_or_else(|_| Vec::with_capacity(0)),
             bttv: bttv
                 .map(|s| s.shared_emotes)
@@ -75,7 +74,11 @@ impl EmoteCache {
         }
     }
 
-    pub fn find_name_by_id(&self, emote_id: &str, platform: SlotPlatform) -> Option<&str> {
+    pub fn find_name_by_id(
+        &self,
+        emote_id: &str,
+        platform: SlotPlatform,
+    ) -> Option<&str> {
         match platform {
             SlotPlatform::Bttv => self
                 .bttv
@@ -107,12 +110,16 @@ impl EmoteCache {
 
     pub fn contains(&self, emote_id: &str, platform: SlotPlatform) -> bool {
         match platform {
-            SlotPlatform::Bttv => self.bttv.iter().any(|emote| emote.id == emote_id),
+            SlotPlatform::Bttv => {
+                self.bttv.iter().any(|emote| emote.id == emote_id)
+            }
             SlotPlatform::Ffz => {
                 let id = emote_id.parse::<usize>().ok().unwrap_or(usize::MAX);
                 self.ffz.iter().any(|emote| emote.id == id)
             }
-            SlotPlatform::SevenTv => self.seventv.iter().any(|emote| emote.id == emote_id),
+            SlotPlatform::SevenTv => {
+                self.seventv.iter().any(|emote| emote.id == emote_id)
+            }
         }
     }
 }

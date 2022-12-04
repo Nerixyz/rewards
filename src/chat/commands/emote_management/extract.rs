@@ -10,12 +10,15 @@ use std::borrow::Cow;
 
 lazy_static! {
     static ref BTTV_REGEX: Regex =
-        Regex::new("(?:https?://)?betterttv\\.com/emotes/([a-f0-9]{24})").expect("must compile");
-    static ref FFZ_REGEX: Regex =
-        Regex::new("(?:https?://)?(?:www\\.)?frankerfacez\\.com/emoticon/(\\d+)")
+        Regex::new("(?:https?://)?betterttv\\.com/emotes/([a-f0-9]{24})")
             .expect("must compile");
+    static ref FFZ_REGEX: Regex = Regex::new(
+        "(?:https?://)?(?:www\\.)?frankerfacez\\.com/emoticon/(\\d+)"
+    )
+    .expect("must compile");
     static ref SEVENTV_REGEX: Regex =
-        Regex::new("(?:https?://)?7tv\\.app/emotes/([a-f0-9]{24})").expect("must compile");
+        Regex::new("(?:https?://)?7tv\\.app/emotes/([a-f0-9]{24})")
+            .expect("must compile");
 }
 
 pub async fn extract_emote_data<'a>(
@@ -39,6 +42,7 @@ pub fn extract_emote_by_url(emote: &str) -> Option<(Cow<str>, SlotPlatform)> {
     } else if let Some(id) = first_capture(emote, &FFZ_REGEX) {
         Some((id.into(), SlotPlatform::Ffz))
     } else {
-        first_capture(emote, &SEVENTV_REGEX).map(|id| (id.into(), SlotPlatform::SevenTv))
+        first_capture(emote, &SEVENTV_REGEX)
+            .map(|id| (id.into(), SlotPlatform::SevenTv))
     }
 }
