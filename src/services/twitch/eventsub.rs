@@ -21,18 +21,17 @@ use twitch_api2::{
         Response,
     },
     twitch_oauth2::{AppAccessToken, UserToken},
+    types::{
+        EventSubIdRef, IntoCow, RedemptionIdRef, RewardIdRef, UserId, UserIdRef,
+    },
 };
-use twitch_api2::types::{EventSubIdRef, IntoCow, RedemptionIdRef, RewardIdRef, UserId, UserIdRef};
 
 pub async fn delete_subscription<'a>(
     token: &AppAccessToken,
     id: impl IntoCow<'a, EventSubIdRef> + 'a,
 ) -> HelixResult<()> {
     RHelixClient::default()
-        .req_delete(
-            DeleteEventSubSubscriptionRequest::id(id),
-            token,
-        )
+        .req_delete(DeleteEventSubSubscriptionRequest::id(id), token)
         .await?;
 
     Ok(())
@@ -86,7 +85,11 @@ pub async fn update_reward_redemption<'a>(
         UpdateRedemptionStatusInformation,
     > = RHelixClient::default()
         .req_patch(
-            UpdateRedemptionStatusRequest::new(broadcaster_id, reward_id, redemption_id),
+            UpdateRedemptionStatusRequest::new(
+                broadcaster_id,
+                reward_id,
+                redemption_id,
+            ),
             UpdateRedemptionStatusBody::builder().status(status).build(),
             token,
         )

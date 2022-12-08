@@ -1,6 +1,6 @@
 use crate::services::{
     emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW},
-    seven_tv::{requests as seven_tv},
+    seven_tv::requests as seven_tv,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;

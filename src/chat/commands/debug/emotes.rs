@@ -66,10 +66,11 @@ async fn extract_seventv(
     channel_id: &str,
     pool: &PgPool,
 ) -> AnyResult<Option<EmotePlatformData>> {
-    let stv_user = seven_tv::requests::get_user(channel_id)
-        .await?;
+    let stv_user = seven_tv::requests::get_user(channel_id).await?;
     // check if we're an editor
-    if !stv_user.user.editors
+    if !stv_user
+        .user
+        .editors
         .iter()
         .any(|e| e.id == CONFIG.emotes.seven_tv.user_id)
     {
@@ -84,7 +85,10 @@ async fn extract_seventv(
     .await?;
 
     Ok(Some(EmotePlatformData {
-        remaining_emotes: user.emote_set.capacity.saturating_sub(user.emote_set.emotes.len()),
+        remaining_emotes: user
+            .emote_set
+            .capacity
+            .saturating_sub(user.emote_set.emotes.len()),
         open_slots: slots,
         swap_capacity: swaps
             .1

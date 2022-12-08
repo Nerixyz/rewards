@@ -43,9 +43,7 @@ impl ChatCommand for DebugCommand {
                             &*app_access_token.read().await,
                         )
                         .await
-                        .map(|user| {
-                            (user.id.take(), user.login.take())
-                        })
+                        .map(|user| (user.id.take(), user.login.take()))
                         .map_err(|e| {
                             AnyError::msg(format!(
                                 "This user doesn't seem to exist: {}",

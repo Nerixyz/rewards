@@ -6,7 +6,7 @@ use twitch_api2::{
     twitch_oauth2::{
         client::Client,
         tokens::{errors::RefreshTokenError, BearerTokenType},
-        AccessToken, TwitchToken,
+        AccessToken, RefreshToken, TwitchToken,
     },
     types::{UserIdRef, UserNameRef},
 };
@@ -14,18 +14,25 @@ use twitch_api2::{
 static TOKEN: OnceCell<std::sync::Mutex<DbToken>> = OnceCell::new();
 
 #[derive(Debug)]
-struct TokenData {
-    access_token: AccessToken,
-    client_id: ClientId,
+pub struct TokenData {
+    pub access_token: AccessToken,
+    pub refresh_token: RefreshToken,
+    pub client_id: ClientId,
 }
 
 #[derive(Debug)]
 pub struct DbToken(Arc<TokenData>);
 
-pub fn update_token(t: twitch_irc::login::UserAccessToken) {
-    let data = t.into();
-    *always_lock(TOKEN.get().expect("must have set token")) =
-        DbToken(Arc::new(data));
+pub fn update_token(
+    access_token: impl Into<AccessToken>,
+    refresh_token: impl Into<RefreshToken>,
+) {
+    always_lock(TOKEN.get().expect("must have set token")).0 =
+        Arc::new(TokenData {
+            access_token: access_token.into(),
+            refresh_token: refresh_token.into(),
+            client_id: CONFIG.twitch.client_id.to_owned().into(),
+        });
 }
 
 pub fn set_token(t: twitch_irc::login::UserAccessToken) {
@@ -44,10 +51,17 @@ impl Clone for DbToken {
     }
 }
 
+impl DbToken {
+    pub fn data(&self) -> &TokenData {
+        return self.0.as_ref();
+    }
+}
+
 impl From<twitch_irc::login::UserAccessToken> for TokenData {
     fn from(t: twitch_irc::login::UserAccessToken) -> Self {
         Self {
             access_token: t.access_token.into(),
+            refresh_token: t.refresh_token.into(),
             client_id: CONFIG.twitch.client_id.to_owned().into(),
         }
     }

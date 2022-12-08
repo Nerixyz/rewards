@@ -146,7 +146,7 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not get users");
     irc_actor.do_send(JoinAllMessage(names));
 
-    TokenRefresher::new(pg_pool.clone()).start();
+    TokenRefresher::new(pg_pool.clone(), db_actor).start();
     let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
     let pubsub =
         PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
