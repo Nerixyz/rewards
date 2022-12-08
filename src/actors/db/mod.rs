@@ -6,6 +6,7 @@ use twitch_irc::login::UserAccessToken;
 use models::config::ConfigEntry;
 
 mod messages;
+use crate::services::twitch;
 pub use messages::*;
 
 pub struct DbActor {
@@ -40,12 +41,17 @@ impl Handler<SaveToken> for DbActor {
 
     fn handle(
         &mut self,
-        msg: SaveToken,
+        SaveToken(msg): SaveToken,
         _ctx: &mut Self::Context,
     ) -> Self::Result {
+        twitch::update_token(
+            msg.access_token.clone(),
+            msg.refresh_token.clone(),
+        );
+
         let pool = self.pool.clone();
         Box::pin(
-            async move { ConfigEntry::update_user_token(&pool, msg.0).await },
+            async move { ConfigEntry::update_user_token(&pool, msg).await },
         )
     }
 }

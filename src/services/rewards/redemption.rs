@@ -67,10 +67,7 @@ impl From<(&Redemption, &Reward)> for RedemptionCtx {
 impl From<&Redemption> for RedemptionUpdateHandle {
     fn from(notification: &Redemption) -> Self {
         Self {
-            broadcaster_id: notification
-                .broadcaster_user_id
-                .clone()
-                .take(),
+            broadcaster_id: notification.broadcaster_user_id.clone().take(),
             reward_id: notification.reward.id.clone().take(),
             redemption_id: notification.id.clone().take(),
         }

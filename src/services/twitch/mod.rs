@@ -6,9 +6,9 @@ use crate::{
 use deadpool_redis::redis;
 use itertools::{Either, Itertools};
 use twitch_api2::{
-    helix::users::User as HelixUser, twitch_oauth2::UserToken, HelixClient,
+    helix::users::User as HelixUser, twitch_oauth2::UserToken,
+    types::UserIdRef, HelixClient,
 };
-use twitch_api2::types::UserIdRef;
 
 pub mod errors;
 pub mod eventsub;
@@ -58,7 +58,8 @@ pub async fn get_many_users(
                 return Ok(done);
             }
 
-            let to_get: Vec<&UserIdRef> = pending.iter().map(|i| i.as_str().into()).collect();
+            let to_get: Vec<&UserIdRef> =
+                pending.iter().map(|i| i.as_str().into()).collect();
             let mut users = get_users(&to_get, token).await?;
             save_users_to_redis(&users, redis).await?;
 
@@ -67,7 +68,8 @@ pub async fn get_many_users(
             Ok(done)
         }
         _ => {
-            let to_get: Vec<&UserIdRef> = ids.iter().map(|i| i.as_str().into()).collect();
+            let to_get: Vec<&UserIdRef> =
+                ids.iter().map(|i| i.as_str().into()).collect();
             let users = get_users(&to_get, token).await?;
             save_users_to_redis(&users, redis).await?;
 

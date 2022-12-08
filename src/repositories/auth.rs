@@ -115,8 +115,8 @@ async fn twitch_callback(
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.take()))
         .map_err(|_| {
-        RedirectError::new("/failed-auth", Some("Could not encode"))
-    })?;
+            RedirectError::new("/failed-auth", Some("Could not encode"))
+        })?;
     Ok(HttpResponse::Found()
         .append_header(("location", "/"))
         .cookie(

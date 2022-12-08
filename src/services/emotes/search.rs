@@ -45,9 +45,7 @@ impl EmoteCache {
 
     pub async fn fetch(user_id: &str, pg: &PgPool) -> Self {
         let (seventv, bttv, ffz) = future::join3(
-            async move {
-                seven_tv::requests::get_user(user_id).await
-            },
+            async move { seven_tv::requests::get_user(user_id).await },
             async move {
                 let id = bttv::get_or_fetch_id(user_id, pg).await?;
                 bttv::requests::get_user(&id).await

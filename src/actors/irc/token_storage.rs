@@ -5,10 +5,7 @@ use anyhow::Error as AnyError;
 use async_trait::async_trait;
 use twitch_irc::login::{TokenStorage, UserAccessToken};
 
-use crate::{
-    actors::db::{DbActor, GetToken, SaveToken},
-    services::twitch,
-};
+use crate::actors::db::{DbActor, GetToken, SaveToken};
 
 pub struct PgTokenStorage(pub Addr<DbActor>);
 
@@ -32,7 +29,6 @@ impl TokenStorage for PgTokenStorage {
         token: &UserAccessToken,
     ) -> Result<(), Self::UpdateError> {
         log::info!("Token updated");
-        twitch::update_token(token.clone());
         self.0
             .send(SaveToken(UserAccessToken {
                 refresh_token: token.refresh_token.clone(),

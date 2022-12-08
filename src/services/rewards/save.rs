@@ -70,7 +70,10 @@ pub async fn save_reward(
             .await?;
         }
         RewardData::SevenTvSlot(slot) => {
-            let sid = seven_tv::requests::get_user(broadcaster_id).await?.emote_set.id;
+            let sid = seven_tv::requests::get_user(broadcaster_id)
+                .await?
+                .emote_set
+                .id;
             slots::adjust_size::<SevenTvEmotes, _, _, _>(
                 broadcaster_id,
                 &sid,

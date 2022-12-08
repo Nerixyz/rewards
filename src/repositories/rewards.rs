@@ -17,10 +17,12 @@ use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
 use models::reward::{Reward, RewardData};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use twitch_api2::helix::points::{
-    CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody,
+use twitch_api2::{
+    helix::points::{
+        CreateCustomRewardBody, CustomReward, UpdateCustomRewardBody,
+    },
+    types::{RewardId, RewardIdRef},
 };
-use twitch_api2::types::{RewardId, RewardIdRef};
 
 #[derive(Deserialize, Debug)]
 struct CreateRewardBody {
@@ -88,7 +90,11 @@ async fn create(
 
         let (internal, twitch) = futures::future::join(
             Reward::delete(reward.id.as_ref(), &pool),
-            delete_reward(broadcaster_id.as_str(), <RewardId as AsRef<RewardIdRef>>::as_ref(&reward.id), &token),
+            delete_reward(
+                broadcaster_id.as_str(),
+                <RewardId as AsRef<RewardIdRef>>::as_ref(&reward.id),
+                &token,
+            ),
         )
         .await;
         if let Err(e) = internal {

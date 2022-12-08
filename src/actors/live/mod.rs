@@ -4,9 +4,7 @@ use actix::{
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::Utc;
-use futures::{
-    future::TryFutureExt,
-};
+use futures::future::TryFutureExt;
 use sqlx::PgPool;
 use twitch_api2::{
     helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,

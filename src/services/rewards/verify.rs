@@ -15,8 +15,7 @@ pub async fn verify_reward(
     token: &UserToken,
 ) -> AnyResult<()> {
     match reward {
-        RewardData::EmoteOnly(duration)
-        | RewardData::SubOnly(duration) => {
+        RewardData::EmoteOnly(duration) | RewardData::SubOnly(duration) => {
             extract::duration(duration)?;
         }
         RewardData::Timeout(data) => {
