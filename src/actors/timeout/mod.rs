@@ -6,8 +6,11 @@ use actix::{
 use crate::{log_err, RedisPool};
 
 mod messages;
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::{cmd, AsyncCommands};
 pub use messages::*;
+
+const SELF_TIMEOUT: i32 = 2;
+const REGULAR_TIMEOUT: i32 = 1;
 
 pub struct TimeoutActor {
     pool: RedisPool,
@@ -42,15 +45,21 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
                 );
 
                 log_err!(
-                    conn.set_ex::<_, _, ()>(
-                        format!(
+                    cmd("SET")
+                        .arg(format!(
                             "rewards:timeout:{}:{}",
                             msg.channel_id, msg.user_id
-                        ),
-                        1,
-                        msg.duration.as_secs() as usize
-                    )
-                    .await,
+                        ))
+                        .arg(if msg.is_self {
+                            SELF_TIMEOUT
+                        } else {
+                            REGULAR_TIMEOUT
+                        })
+                        .arg("NX")
+                        .arg("EX")
+                        .arg(msg.duration.as_secs() as usize)
+                        .query_async::<_, ()>(&mut conn)
+                        .await,
                     "Couldn't set timeout"
                 );
             }
@@ -71,14 +80,18 @@ impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
         let pool = self.pool.clone();
         Box::pin(async move {
             let mut conn = pool.get().await?;
-            let exists: bool = conn
-                .exists(format!(
+            let val: Option<i32> = conn
+                .get(format!(
                     "rewards:timeout:{}:{}",
                     msg.channel_id, msg.user_id
                 ))
                 .await?;
 
-            Ok(!exists)
+            match val {
+                Some(SELF_TIMEOUT) => Ok(true),
+                Some(_) /* REGULAR_TIMEOUT */ => Ok(false),
+                None => Ok(false)
+            }
         })
     }
 }

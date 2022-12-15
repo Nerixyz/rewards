@@ -9,7 +9,9 @@ use twitch_api2::twitch_oauth2::AppAccessToken;
 
 use crate::{
     actors::{
-        discord::DiscordActor, irc::IrcActor, timeout::CheckValidTimeoutMessage,
+        discord::DiscordActor,
+        irc::IrcActor,
+        timeout::{ChannelTimeoutMessage, CheckValidTimeoutMessage},
     },
     log_err,
     services::{
@@ -102,6 +104,16 @@ pub async fn timeout(
                 "This user was timed out by another moderator."
             ));
         }
+
+        timeout_handler
+            .send(ChannelTimeoutMessage {
+                channel_id: broadcaster.id.clone(),
+                user_id: user.id.clone().take(),
+                duration: std::time::Duration::from_secs(duration),
+                is_self: true,
+            })
+            .await
+            .map_err(|_| anyhow!("Too much traffic"))?;
 
         timeout_user(
             &broadcaster.id,

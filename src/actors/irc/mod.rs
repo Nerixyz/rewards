@@ -109,6 +109,7 @@ impl Actor for IrcActor {
                                 channel_id,
                                 user_id,
                                 duration: timeout_length,
+                                is_self: false,
                             });
                         }
                         _ => (),
