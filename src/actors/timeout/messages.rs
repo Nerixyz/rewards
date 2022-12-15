@@ -7,6 +7,7 @@ pub struct ChannelTimeoutMessage {
     pub channel_id: String,
     pub user_id: String,
     pub duration: Duration,
+    pub is_self: bool,
 }
 
 #[derive(Message)]

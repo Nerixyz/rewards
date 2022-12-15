@@ -10,7 +10,9 @@ use config::CONFIG;
 use models::{spotify::SpotifyData, user::User};
 use sqlx::PgPool;
 use std::time::Duration;
-use twitch_api2::twitch_oauth2::{ClientId, ClientSecret, TwitchToken, UserToken};
+use twitch_api2::twitch_oauth2::{
+    ClientId, ClientSecret, TwitchToken, UserToken,
+};
 use twitch_irc::login::UserAccessToken;
 
 pub struct TokenRefresher {
