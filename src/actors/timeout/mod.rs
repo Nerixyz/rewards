@@ -90,7 +90,7 @@ impl Handler<CheckValidTimeoutMessage> for TimeoutActor {
             match val {
                 Some(SELF_TIMEOUT) => Ok(true),
                 Some(_) /* REGULAR_TIMEOUT */ => Ok(false),
-                None => Ok(false)
+                None => Ok(true)
             }
         })
     }
