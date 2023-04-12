@@ -51,6 +51,7 @@ pub trait EmoteRW {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>>;
     async fn get_emote_env_data(

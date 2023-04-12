@@ -39,6 +39,7 @@ impl EmoteRW for SevenTvEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>> {
         let (history_len, emote, stv_user) = futures::future::try_join3(
@@ -59,6 +60,12 @@ impl EmoteRW for SevenTvEmotes {
         {
             return Err(AnyError::msg(
                 "The emote or an emote with the same name already exists.",
+            ));
+        }
+
+        if !allow_unlisted && !emote.listed {
+            return Err(AnyError::msg(
+                "Attempted to add an unlisted emote, but unlisted emotes aren't allowed.",
             ));
         }
 

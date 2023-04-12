@@ -46,6 +46,7 @@ impl EmoteRW for FfzEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        _allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote>> {
         let (ffz_user, ffz_emote, ffz_room, ffz_history) =

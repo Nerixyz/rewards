@@ -1,6 +1,8 @@
 <template>
   <CSwitch :model-value="sliderEnabled" label="Limit emotes" @update:model-value="updateSliderEnabled" />
   <CSlider v-if="state.limit !== null" v-model="state.limit" class="mt-2" :min="1" :max="100" />
+  <!-- TODO: fix this (xd) -->
+  <CSwitch v-model="state.allow_unlisted" label="Allow unlisted emotes" />
 </template>
 
 <script lang="ts">
@@ -22,7 +24,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const { modelValue } = toRefs(props);
 
-    const state = reactive(modelValue.value ?? { limit: null });
+    const state = reactive(modelValue.value ?? { limit: null, allow_unlisted: true });
     const sliderEnabled = computed(() => state.limit !== null);
     const updateSliderEnabled = (enabled: boolean) => {
       // set the "default" to 1
@@ -31,6 +33,7 @@ export default defineComponent({
 
     watch(modelValue, newValue => {
       state.limit = newValue?.limit ?? null;
+      state.allow_unlisted = newValue?.allow_unlisted ?? true;
     });
     watch(state, value => {
       emit('update:modelValue', value);

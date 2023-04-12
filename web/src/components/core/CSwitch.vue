@@ -38,7 +38,7 @@ export default defineComponent({
   emits: ['update:modelValue'],
   setup(_, { emit }) {
     const onUpdate = (v: boolean) => {
-      emit('update:modelValue', v);
+      emit('update:modelValue', !!v);
     };
     return { onUpdate };
   },

@@ -78,11 +78,28 @@ pub struct TimeoutRewardData {
 pub struct SlotRewardData {
     pub slots: usize,
     pub expiration: String,
+    #[serde(default = "always_true")]
+    pub allow_unlisted: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SwapRewardData {
     pub limit: Option<u8>,
+    #[serde(default = "always_true")]
+    pub allow_unlisted: bool,
+}
+
+impl Default for SwapRewardData {
+    fn default() -> Self {
+        Self {
+            limit: Default::default(),
+            allow_unlisted: true,
+        }
+    }
+}
+
+const fn always_true() -> bool {
+    true
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

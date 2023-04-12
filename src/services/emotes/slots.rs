@@ -162,8 +162,13 @@ where
         .into_iter()
         .next()
         .ok_or_else(|| AnyError::msg("No free slot is available!"))?;
-    let emote_data =
-        RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
+    let emote_data = RW::get_check_initial_data(
+        broadcaster_id,
+        emote_id,
+        slot_data.allow_unlisted,
+        pool,
+    )
+    .await?;
 
     if emote_data.current_emotes >= emote_data.max_emotes {
         return Err(AnyError::msg("There's no free slot!"));
