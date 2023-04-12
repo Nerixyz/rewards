@@ -64,6 +64,8 @@ struct SevenEmoteResponse {
 pub struct SevenEmote {
     pub name: String,
     pub id: String,
+    #[serde(default)]
+    pub listed: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -129,7 +131,7 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
     let emote = seven_tv_post::<SevenEmoteResponse>(
         "https://7tv.io/v3/gql",
         &GqlRequest {
-            query: "query($id: ObjectID!) { emote(id: $id) { id, name } }",
+            query: "query($id: ObjectID!) { emote(id: $id) { id, name, listed } }",
             variables: GqlIdVars { id: emote_id },
         },
     )

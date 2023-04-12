@@ -28,8 +28,13 @@ where
     {
         return Err(AnyError::msg("This emote is banned"));
     }
-    let data =
-        RW::get_check_initial_data(broadcaster_id, emote_id, pool).await?;
+    let data = RW::get_check_initial_data(
+        broadcaster_id,
+        emote_id,
+        reward_data.allow_unlisted,
+        pool,
+    )
+    .await?;
     let removed_emote = if data.current_emotes >= data.max_emotes
         || reward_data
             .limit
