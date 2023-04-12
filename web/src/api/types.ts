@@ -107,10 +107,12 @@ export interface TimeoutRewardData {
 export interface SlotRewardData {
   slots: number;
   expiration: string;
+  allow_unlisted?: boolean;
 }
 
 export interface SwapRewardData {
   limit: number | null;
+  allow_unlisted?: boolean;
 }
 
 export interface SpotifyPlayOptions {
