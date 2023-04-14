@@ -19,7 +19,7 @@ jobs:
         with:
           profile: minimal
           override: true
-          toolchain: stable
+          toolchain: nightly
       - run: rustup component add rustfmt
       - name: rustfmt
         run: cargo fmt --check
