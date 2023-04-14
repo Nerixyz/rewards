@@ -4,6 +4,7 @@
     {
       "rules": {
         "vue/no-dupe-keys": "off",
+        "vue/multi-word-component-names": "off",
         "@typescript-eslint/ban-ts-comment": "off"
       },
       "files": ["*.ts", "*.tsx", "*.vue", "*.js"]
