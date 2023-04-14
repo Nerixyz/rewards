@@ -29,9 +29,9 @@ jobs:
           cargo install sqlx-cli --version 0.6.3 --locked --no-default-features --features native-tls,postgres
           sqlx database setup
       - name: Build
-        run: cargo build
+        run: cargo build --locked
       - name: Lint
-        run: cargo clippy
+        run: cargo clippy --locked
 
   build-js:
     name: Build and Lint JS Code
