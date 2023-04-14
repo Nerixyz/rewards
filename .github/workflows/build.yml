@@ -26,7 +26,7 @@ jobs:
       - name: Setup sqlx
         run: |
           echo "DATABASE_URL=postgres://rewards:alien@localhost/rewards" >> .env
-          cargo install sqlx-cli --no-default-features --features postgres
+          cargo install sqlx-cli --no-default-features --features native-tls,postgres
           sqlx database setup
       - name: Build
         run: cargo build
