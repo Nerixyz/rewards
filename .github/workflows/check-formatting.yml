@@ -1,0 +1,29 @@
+name: Check Formatting
+
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-format:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          toolchain: nightly
+      - run: rustup component add rustfmt
+      - name: rustfmt
+        run: cargo fmt --check
+      - name: prettier
+        uses: actionsx/prettier@e90ec5455552f0f640781bdd5f5d2415acb52f1a
+        with:
+          args: -c .
