@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-rs:
+    name: Build and Lint Rust Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Setup Postgres
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql version: 'latest'
+          postgresql user: 'rewards'
+          postgresql password: 'alien'
+      - name: Setup sqlx
+        run: |
+          echo "DATABASE_URL=postgres://rewards:alien@localhost/rewards" >> .env
+          cargo install sqlx-cli --no-default-features --features postgres
+          sqlx database setup
+      - name: Build
+        run: cargo build
+      - name: Lint
+        run: cargo clippy
+
+  build-js:
+    name: Build and Lint JS Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - name: Install Dependencies
+        working-directory: web
+        run: npm ci
+      - name: Build
+        working-directory: web
+        run: npm run vite-build
+      - name: Lint
+        working-directory: web
+        run: npm run lint
