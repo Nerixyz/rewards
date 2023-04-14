@@ -7,7 +7,8 @@
     "vite-build": "vite build",
     "serve": "vite preview",
     "format": "prettier -w src/**/*.{vue,ts,tsx,js,html} --loglevel warn",
-    "lint": "eslint --fix src/**/*.{vue,ts,tsx,js,html}"
+    "lint-fix": "eslint --fix src/**/*.{vue,ts,tsx,js,html}",
+    "lint": "eslint src/**/*.{vue,ts,tsx,js,html}"
   },
   "dependencies": {
     "@headlessui/vue": "^1.5.0",
