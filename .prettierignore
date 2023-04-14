@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+target
+target
+.idea
+.vscode
+.env
+config.toml
+restart.sh

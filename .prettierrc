@@ -3,5 +3,5 @@
   "arrowParens": "avoid",
   "trailingComma": "all",
   "singleQuote": true,
-  "endOfLine": "crlf"
+  "endOfLine": "auto"
 }
