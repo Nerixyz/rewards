@@ -143,5 +143,6 @@ export function defaultNewReward(): VRewardModel {
     },
     liveDelay: '',
     imageUrl: null,
+    autoAccept: true,
   };
 }

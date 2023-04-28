@@ -124,6 +124,7 @@ export interface InternalCustomReward {
   user_id: string;
   data: RewardData;
   live_delay?: string;
+  auto_accept: boolean;
 }
 
 export interface Reward {
