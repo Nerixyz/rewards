@@ -75,7 +75,7 @@ import ActionEditor from './ActionEditor.vue';
 
 export default defineComponent({
   name: 'RewardEditor',
-  components: { ActionEditor, TextField, CButton, OutlinedButton, WarnIcon },
+  components: { ActionEditor, TextField, CButton, CSwitch, OutlinedButton, WarnIcon },
   props: {
     rewardModel: {
       type: Object as PropType<Reward>,
