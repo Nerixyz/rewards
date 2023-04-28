@@ -13,6 +13,7 @@ export interface VRewardModel {
   imageUrl: string | null;
 
   liveDelay: string;
+  autoAccept: boolean;
 
   action: RewardData;
 }
@@ -43,6 +44,7 @@ export function toVRewardModel(reward: Reward): VRewardModel {
     },
 
     liveDelay: reward.live_delay ?? '',
+    autoAccept: reward.auto_accept,
   };
 }
 
@@ -67,6 +69,7 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   };
 
   model.liveDelay = reward.live_delay ?? '';
+  model.autoAccept = reward.auto_accept;
 }
 
 export function toInputReward(vmodel: VRewardModel): InputReward {
@@ -101,6 +104,7 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
           : vmodel.action.data,
     },
     live_delay: vmodel.liveDelay.trim() || undefined,
+    auto_accept: vmodel.autoAccept,
   };
 }
 
@@ -110,7 +114,7 @@ export function assignDefaultToModel(model: VRewardModel): void {
 
 export function copyModel(from: VRewardModel, to: VRewardModel): void {
   for (const [key, value] of Object.entries(from)) {
-    to[key as keyof VRewardModel] = value;
+    (to as any)[key] = value; // TODO: this is ugly
   }
 }
 

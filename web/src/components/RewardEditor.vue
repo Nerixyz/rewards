@@ -18,6 +18,7 @@
           <TextField v-model="reward.usesPerStream" label="Uses per Stream" :warn="v$.usesPerStream.$invalid" />
           <TextField v-model="reward.usesPerUser" label="Uses per User" :warn="v$.usesPerUser.$invalid" />
           <TextField v-model="reward.liveDelay" label="Live Delay" :warn="v$.liveDelay.$invalid" />
+          <CSwitch v-model="reward.autoAccept" label="Automatically Accept Redemptions" />
         </div>
         <div class="flex flex-col items-center justify-center gap-5 p-5">
           <div
@@ -63,6 +64,7 @@ import { assignDefaultToModel, assignToVRewardModel, toInputReward } from '../ap
 import { defaultNewReward } from '../api/rewards-data';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
+import CSwitch from './core/CSwitch.vue';
 import WarnIcon from './icons/WarnIcon.vue';
 import { Reward } from '../api/types';
 import useVuelidate from '@vuelidate/core';
@@ -117,6 +119,7 @@ export default defineComponent({
         cooldown: { isValidDuration },
         prompt: { required },
         liveDelay: {},
+        autoAccept: {},
       },
       reward,
     );
