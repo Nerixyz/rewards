@@ -5,7 +5,7 @@ use errors::sql::SqlResult;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
-use std::{convert::TryFrom, pin::Pin, time::Duration};
+use std::{pin::Pin, time::Duration};
 use twitch_api2::{
     helix::points::CreateCustomRewardResponse,
     twitch_oauth2::{
