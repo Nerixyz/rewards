@@ -166,6 +166,7 @@ pub async fn receive(
     let ctx = RedemptionCtx::from((&notification, &reward));
     let update_handle = RedemptionUpdateHandle::from(&notification);
 
+    let auto_accept = reward.auto_accept;
     let status = match executor
         .send(ExecuteRewardMessage {
             redemption: notification,
@@ -182,9 +183,10 @@ pub async fn receive(
         }
     };
     // here, the redemption is finally updated, so we'll log this
-    ctx.log_redemption(status.clone(), redemption_received)
-        .await;
-    update_handle.update(user, status).await;
+    ctx.log_redemption(status, redemption_received).await;
+    if auto_accept {
+        update_handle.update(user, status).await;
+    }
 
     Ok(())
 }

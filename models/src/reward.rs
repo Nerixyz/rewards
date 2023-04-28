@@ -20,6 +20,7 @@ pub struct Reward {
     pub user_id: String,
     pub data: Json<RewardData>,
     pub live_delay: Option<String>,
+    pub auto_accept: bool,
 }
 
 #[derive(FromRow)]
@@ -117,12 +118,14 @@ impl Reward {
         res: &CreateCustomRewardResponse,
         data: RewardData,
         live_delay: Option<String>,
+        auto_accept: bool,
     ) -> Self {
         Self {
             user_id: res.broadcaster_id.clone().take(),
             data: Json(data),
             id: res.id.clone().take(),
             live_delay,
+            auto_accept,
         }
     }
 
@@ -131,7 +134,7 @@ impl Reward {
         let reward: Self = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay, auto_accept
             FROM rewards
             WHERE id = $1
             "#,
@@ -151,7 +154,7 @@ impl Reward {
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay, auto_accept
             FROM rewards
             WHERE user_id = $1
             "#,
@@ -340,6 +343,7 @@ impl RewardToUpdate {
             SELECT u.id as broadcaster_id, access_token, refresh_token, rewards.id as reward_id
             FROM rewards
                 LEFT JOIN users u on u.id = rewards.user_id
+            WHERE rewards.auto_accept
         "
         )
         .fetch(pool)

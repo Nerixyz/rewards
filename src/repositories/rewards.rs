@@ -29,6 +29,7 @@ struct CreateRewardBody {
     pub twitch: CreateCustomRewardBody<'static>,
     pub data: RewardData,
     pub live_delay: Option<String>,
+    pub auto_accept: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,6 +37,7 @@ struct UpdateRewardBody {
     pub twitch: UpdateCustomRewardBody<'static>,
     pub data: RewardData,
     pub live_delay: Option<String>,
+    pub auto_accept: bool,
 }
 
 #[derive(Serialize)]
@@ -43,6 +45,7 @@ struct CustomRewardResponse {
     twitch: CustomReward,
     data: RewardData,
     live_delay: Option<String>,
+    auto_accept: bool,
 }
 
 #[put("/{broadcaster_id}")]
@@ -78,8 +81,12 @@ async fn create(
 
     let reward = create_reward(&broadcaster_id, body.twitch, &token).await?;
 
-    let db_reward =
-        Reward::from_response(&reward, body.data.clone(), body.live_delay);
+    let db_reward = Reward::from_response(
+        &reward,
+        body.data.clone(),
+        body.live_delay,
+        body.auto_accept,
+    );
     db_reward.create(&pool).await?;
 
     if let Err(e) =
@@ -124,6 +131,7 @@ async fn create(
         twitch: reward,
         data: db_reward.data.0,
         live_delay: db_reward.live_delay,
+        auto_accept: db_reward.auto_accept,
     }))
 }
 
@@ -175,7 +183,12 @@ async fn update(
     let reward =
         update_reward(broadcaster_id, reward_id, body.twitch, &token).await?;
     let data_type = body.data.to_string();
-    let db_reward = Reward::from_response(&reward, body.data, body.live_delay);
+    let db_reward = Reward::from_response(
+        &reward,
+        body.data,
+        body.live_delay,
+        body.auto_accept,
+    );
     db_reward.update(&pool).await?;
 
     log_discord!(
@@ -192,6 +205,7 @@ async fn update(
         twitch: reward,
         data: db_reward.data.0,
         live_delay: db_reward.live_delay,
+        auto_accept: db_reward.auto_accept,
     }))
 }
 
