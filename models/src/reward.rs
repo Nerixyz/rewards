@@ -326,9 +326,9 @@ impl Reward {
 
 #[derive(FromRow)]
 pub struct RewardToUpdate {
-    broadcaster_id: Option<String>,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
+    broadcaster_id: String,
+    access_token: String,
+    refresh_token: String,
     reward_id: String,
 }
 
@@ -339,39 +339,38 @@ impl RewardToUpdate {
         // language=PostgreSQL
         sqlx::query_as!(
             RewardToUpdate,
-            "
-            SELECT u.id as broadcaster_id, access_token, refresh_token, rewards.id as reward_id
+            r#"
+            SELECT 
+                u.id as "broadcaster_id!",
+                access_token as "access_token!",
+                refresh_token as "refresh_token!",
+                rewards.id as "reward_id!"
             FROM rewards
                 LEFT JOIN users u on u.id = rewards.user_id
             WHERE rewards.auto_accept
-        "
+        "#
         )
         .fetch(pool)
     }
 }
 
-impl TryFrom<RewardToUpdate> for (String, UserToken) {
-    type Error = ();
-    fn try_from(r: RewardToUpdate) -> Result<Self, Self::Error> {
-        if let (Some(access_token), Some(refresh_token), Some(broadcaster_id)) =
-            (r.access_token, r.refresh_token, r.broadcaster_id)
-        {
-            Ok((
-                r.reward_id,
-                UserToken::from_existing_unchecked(
-                    AccessToken::new(access_token),
-                    RefreshToken::new(refresh_token),
-                    ClientId::new(CONFIG.twitch.client_id.to_string()),
-                    ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
-                    Nickname::from(""),
-                    UserId::from(broadcaster_id),
-                    None,
-                    Some(Duration::from_secs(1000)),
-                ),
-            ))
-        } else {
-            Err(())
-        }
+impl From<RewardToUpdate> for (String, UserToken) {
+    fn from(r: RewardToUpdate) -> Self {
+        let (access_token, refresh_token, broadcaster_id) =
+            (r.access_token, r.refresh_token, r.broadcaster_id);
+        (
+            r.reward_id,
+            UserToken::from_existing_unchecked(
+                AccessToken::new(access_token),
+                RefreshToken::new(refresh_token),
+                ClientId::new(CONFIG.twitch.client_id.to_string()),
+                ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
+                Nickname::from(""),
+                UserId::from(broadcaster_id),
+                None,
+                Some(Duration::from_secs(1000)),
+            ),
+        )
     }
 }
 
