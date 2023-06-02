@@ -20,7 +20,7 @@ jobs:
       - name: Setup Postgres
         uses: harmon758/postgresql-action@v1
         with:
-          postgresql version: 'latest'
+          postgresql version: '13'
           postgresql user: 'rewards'
           postgresql password: 'alien'
       - name: Setup sqlx

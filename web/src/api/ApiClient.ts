@@ -65,6 +65,7 @@ class HttpClient extends BaseClient {
       if (el) {
         el.data = internal.data;
         el.live_delay = internal.live_delay || '';
+        el.auto_accept = internal.auto_accept;
       }
     }
 

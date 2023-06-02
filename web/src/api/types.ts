@@ -124,18 +124,21 @@ export interface InternalCustomReward {
   user_id: string;
   data: RewardData;
   live_delay?: string;
+  auto_accept: boolean;
 }
 
 export interface Reward {
   twitch: TwitchReward;
   data: RewardData;
   live_delay?: string;
+  auto_accept: boolean;
 }
 
 export interface InputReward {
   twitch: TwitchInputReward;
   data: RewardData;
   live_delay?: string;
+  auto_accept: boolean;
 }
 
 export interface LogEntry {

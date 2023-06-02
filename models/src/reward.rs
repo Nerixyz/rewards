@@ -5,7 +5,7 @@ use errors::sql::SqlResult;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
-use std::{convert::TryFrom, pin::Pin, time::Duration};
+use std::{pin::Pin, time::Duration};
 use twitch_api2::{
     helix::points::CreateCustomRewardResponse,
     twitch_oauth2::{
@@ -20,6 +20,7 @@ pub struct Reward {
     pub user_id: String,
     pub data: Json<RewardData>,
     pub live_delay: Option<String>,
+    pub auto_accept: bool,
 }
 
 #[derive(FromRow)]
@@ -117,12 +118,14 @@ impl Reward {
         res: &CreateCustomRewardResponse,
         data: RewardData,
         live_delay: Option<String>,
+        auto_accept: bool,
     ) -> Self {
         Self {
             user_id: res.broadcaster_id.clone().take(),
             data: Json(data),
             id: res.id.clone().take(),
             live_delay,
+            auto_accept,
         }
     }
 
@@ -131,7 +134,7 @@ impl Reward {
         let reward: Self = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay, auto_accept
             FROM rewards
             WHERE id = $1
             "#,
@@ -151,7 +154,7 @@ impl Reward {
         let rewards: Vec<Self> = sqlx::query_as!(
             Reward,
             r#"
-            SELECT id, user_id, data as "data: Json<RewardData>", live_delay
+            SELECT id, user_id, data as "data: Json<RewardData>", live_delay, auto_accept
             FROM rewards
             WHERE user_id = $1
             "#,
@@ -323,9 +326,9 @@ impl Reward {
 
 #[derive(FromRow)]
 pub struct RewardToUpdate {
-    broadcaster_id: Option<String>,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
+    broadcaster_id: String,
+    access_token: String,
+    refresh_token: String,
     reward_id: String,
 }
 
@@ -336,38 +339,38 @@ impl RewardToUpdate {
         // language=PostgreSQL
         sqlx::query_as!(
             RewardToUpdate,
-            "
-            SELECT u.id as broadcaster_id, access_token, refresh_token, rewards.id as reward_id
+            r#"
+            SELECT 
+                u.id as "broadcaster_id!",
+                access_token as "access_token!",
+                refresh_token as "refresh_token!",
+                rewards.id as "reward_id!"
             FROM rewards
                 LEFT JOIN users u on u.id = rewards.user_id
-        "
+            WHERE rewards.auto_accept
+        "#
         )
         .fetch(pool)
     }
 }
 
-impl TryFrom<RewardToUpdate> for (String, UserToken) {
-    type Error = ();
-    fn try_from(r: RewardToUpdate) -> Result<Self, Self::Error> {
-        if let (Some(access_token), Some(refresh_token), Some(broadcaster_id)) =
-            (r.access_token, r.refresh_token, r.broadcaster_id)
-        {
-            Ok((
-                r.reward_id,
-                UserToken::from_existing_unchecked(
-                    AccessToken::new(access_token),
-                    RefreshToken::new(refresh_token),
-                    ClientId::new(CONFIG.twitch.client_id.to_string()),
-                    ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
-                    Nickname::from(""),
-                    UserId::from(broadcaster_id),
-                    None,
-                    Some(Duration::from_secs(1000)),
-                ),
-            ))
-        } else {
-            Err(())
-        }
+impl From<RewardToUpdate> for (String, UserToken) {
+    fn from(r: RewardToUpdate) -> Self {
+        let (access_token, refresh_token, broadcaster_id) =
+            (r.access_token, r.refresh_token, r.broadcaster_id);
+        (
+            r.reward_id,
+            UserToken::from_existing_unchecked(
+                AccessToken::new(access_token),
+                RefreshToken::new(refresh_token),
+                ClientId::new(CONFIG.twitch.client_id.to_string()),
+                ClientSecret::new(CONFIG.twitch.client_secret.to_string()),
+                Nickname::from(""),
+                UserId::from(broadcaster_id),
+                None,
+                Some(Duration::from_secs(1000)),
+            ),
+        )
     }
 }
 
