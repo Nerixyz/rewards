@@ -10,7 +10,7 @@ use models::{banned_emote, reward::SwapRewardData, swap_emote::SwapEmote};
 use sqlx::PgPool;
 use std::{fmt::Display, str::FromStr};
 
-pub async fn swap_or_add_emote<RW, I, E, EI>(
+pub async fn swap_or_add_emote<RW>(
     broadcaster_id: &str,
     emote_id: &str,
     reward_data: SwapRewardData,
@@ -18,10 +18,10 @@ pub async fn swap_or_add_emote<RW, I, E, EI>(
     pool: &PgPool,
 ) -> AnyResult<(Option<String>, String)>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    I: Display,
-    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::PlatformId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display + ToOwned<Owned = RW::EmoteId> + FromStr + Default,
 {
     if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool)
         .await?
@@ -42,13 +42,9 @@ where
             .unwrap_or(false)
     {
         Some(
-            remove_last_emote::<RW, I, E, EI>(
-                broadcaster_id,
-                &data.platform_id,
-                pool,
-            )
-            .await
-            .0?,
+            remove_last_emote::<RW>(broadcaster_id, &data.platform_id, pool)
+                .await
+                .0?,
         )
     } else {
         None
@@ -80,16 +76,16 @@ where
     Ok((removed_emote, data.emote.into_name()))
 }
 
-pub async fn remove_last_emote<RW, I, E, EI>(
+pub async fn remove_last_emote<RW>(
     user_id: &str,
-    platform_id: &I,
+    platform_id: &RW::PlatformId,
     pool: &PgPool,
 ) -> (AnyResult<String>, usize)
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    I: Display,
-    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::PlatformId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display + ToOwned<Owned = RW::EmoteId> + FromStr + Default,
 {
     let mut emote = None;
     let mut removed_from_db = 0;
@@ -98,7 +94,7 @@ where
     {
         let actually_removed = if let Err(e) = RW::remove_emote(
             platform_id,
-            &EI::from_str(&db_emote.emote_id).unwrap_or_default(),
+            &RW::EmoteId::from_str(&db_emote.emote_id).unwrap_or_default(),
         )
         .await
         {
@@ -129,16 +125,16 @@ where
     )
 }
 
-pub async fn update_swap_limit<RW, I, E, EI>(
+pub async fn update_swap_limit<RW>(
     broadcaster_id: &str,
     limit: u8,
     pool: &PgPool,
 ) -> AnyResult<()>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    I: Display,
-    EI: Display + ToOwned<Owned = EI> + FromStr + Default,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::PlatformId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display + ToOwned<Owned = RW::EmoteId> + FromStr + Default,
 {
     let limit = limit as usize;
     let mut current_emotes =
@@ -148,12 +144,9 @@ where
         let platform_id = RW::get_platform_id(broadcaster_id, pool).await?;
         // remove the last emotes
         loop {
-            let (res, removed) = remove_last_emote::<RW, _, _, _>(
-                broadcaster_id,
-                &platform_id,
-                pool,
-            )
-            .await;
+            let (res, removed) =
+                remove_last_emote::<RW>(broadcaster_id, &platform_id, pool)
+                    .await;
             current_emotes -= removed;
             let _ = res?;
 

@@ -3,10 +3,7 @@ use crate::services::twitch::{
 };
 use config::CONFIG;
 use twitch_api2::{
-    eventsub::{
-        channel::ChannelPointsCustomRewardRedemptionAddV1, Transport,
-        TransportMethod,
-    },
+    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport},
     helix::{
         eventsub::{
             CreateEventSubSubscription, CreateEventSubSubscriptionBody,
@@ -50,17 +47,16 @@ pub async fn subscribe_to_rewards(
         CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>,
     > = RHelixClient::default()
         .req_post(
-            CreateEventSubSubscriptionRequest::builder().build(),
+            CreateEventSubSubscriptionRequest::default(),
             CreateEventSubSubscriptionBody::builder()
                 .transport(
-                    Transport::builder()
-                        .method(TransportMethod::Webhook)
-                        .secret(CONFIG.twitch.eventsub.secret.to_string())
-                        .callback(format!(
+                    Transport::webhook(
+                        format!(
                             "{}/api/v1/eventsub/reward",
                             CONFIG.server.url
-                        ))
-                        .build(),
+                        ),
+                        CONFIG.twitch.eventsub.secret.to_string()
+                    ),
                 )
                 .subscription(
                     ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(id),

@@ -14,8 +14,8 @@ use regex::Regex;
 use sqlx::PgPool;
 use std::{convert::TryInto, sync::Arc};
 use tokio::sync::RwLock;
-use twitch_api2::{
-    eventsub::Status,
+use twitch_api::{
+    eventsub::{Status, TransportResponse},
     helix::{
         eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest},
         points::{
@@ -107,16 +107,20 @@ pub async fn clear_invalid_rewards(
         GetEventSubSubscriptionsRequest,
         EventSubSubscriptions,
     > = client
-        .req_get(GetEventSubSubscriptionsRequest::builder().build(), &*token)
+        .req_get(GetEventSubSubscriptionsRequest::default(), &*token)
         .await?;
 
     loop {
         for sub in &rewards.data.subscriptions {
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
+            let TransportResponse::Webhook(transport) = &sub.transport else {
+                continue; // websocket
+            };
+
             let is_enabled = sub.status == Status::Enabled;
             let is_this_server =
-                sub.transport.callback.starts_with(&CONFIG.server.url);
+                transport.callback.starts_with(&CONFIG.server.url);
 
             if !is_enabled || !is_this_server {
                 if let Err(e) =
@@ -132,7 +136,7 @@ pub async fn clear_invalid_rewards(
                 || (!is_this_server
                     && Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io")
                         .unwrap()
-                        .is_match(&sub.transport.callback))
+                        .is_match(&transport.callback))
             {
                 if let Err(e) =
                     delete_subscription(&token, sub.id.clone()).await

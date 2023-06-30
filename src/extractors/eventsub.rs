@@ -136,7 +136,7 @@ async fn read_verify_payload(
 
     Ok(match_event! {
         channel::ChannelUpdateV1;
-        channel::ChannelFollowV1;
+        channel::ChannelFollowV2;
         channel::ChannelSubscribeV1;
         channel::ChannelCheerV1;
         channel::ChannelBanV1;

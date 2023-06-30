@@ -25,6 +25,8 @@ pub enum TwitchApiError {
     Response(StatusCode, String),
     #[display(fmt = "Some custom error")]
     Custom,
+    #[display(fmt = "Unknown and unexpected Twitch error (no further info)")]
+    Unknown,
     #[display(fmt = "{}", _0)]
     Other(String),
 }
@@ -55,6 +57,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                 CreateRequestError::SerializeError(_) => Self::Serde,
                 CreateRequestError::InvalidUri(_) => Self::InvalidUri,
                 CreateRequestError::Custom(_) => Self::Custom,
+                _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestGetError(e) => match e {
                 HelixRequestGetError::Error {
@@ -69,6 +72,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     reason,
                     ..
                 } => Self::Response(status, reason.to_string()),
+                _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPutError(e) => match e {
                 HelixRequestPutError::Error {
@@ -83,6 +87,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     reason,
                     ..
                 } => Self::Response(status, reason.to_string()),
+                _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPostError(e) => match e {
                 HelixRequestPostError::Error {
@@ -97,6 +102,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     reason,
                     ..
                 } => Self::Response(status, reason.to_string()),
+                _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPatchError(e) => match e {
                 HelixRequestPatchError::Error {
@@ -111,6 +117,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     reason,
                     ..
                 } => Self::Response(status, reason.to_string()),
+                _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestDeleteError(e) => match e {
                 HelixRequestDeleteError::Error {
@@ -122,9 +129,11 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     reason,
                     ..
                 } => Self::Response(status, reason.to_string()),
+                _ => Self::Unknown,
             },
             ClientRequestError::Custom(_) => Self::Custom,
             ClientRequestError::HyperError(_) => Self::ReqwestError,
+            _ => Self::Unknown,
         }
     }
 }

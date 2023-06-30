@@ -19,17 +19,17 @@ use twitch_api2::{
     helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
 };
 
-pub async fn adjust_size<RW, I, E, EI>(
+pub async fn adjust_size<RW>(
     broadcaster_id: &str,
-    platform_id: &I,
+    platform_id: &RW::PlatformId,
     reward_id: &str,
     n_slots: usize,
     pool: &PgPool,
 ) -> AnyResult<()>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    EI: EmoteId,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::EmoteId: EmoteId,
+    RW::Emote: Emote<RW::EmoteId>,
 {
     if n_slots == 0 {
         return Err(AnyError::msg("You can't have 0 slots"));
@@ -52,7 +52,7 @@ where
             for emote in to_delete.iter().filter(|e| e.emote_id.is_some()) {
                 if let Err(e) = RW::remove_emote(
                     platform_id,
-                    &EI::from_db(
+                    &RW::EmoteId::from_db(
                         emote
                             .emote_id
                             .as_ref()
@@ -132,7 +132,7 @@ where
     Ok(())
 }
 
-pub async fn add_slot_emote<RW, I, E, EI>(
+pub async fn add_slot_emote<RW>(
     broadcaster_id: &str,
     reward_id: &str,
     slot_data: SlotRewardData,
@@ -141,9 +141,9 @@ pub async fn add_slot_emote<RW, I, E, EI>(
     pool: &PgPool,
 ) -> AnyResult<(String, usize)>
 where
-    RW: EmoteRW<PlatformId = I, EmoteId = EI, Emote = E>,
-    E: Emote<EI>,
-    EI: Display,
+    RW: EmoteRW,
+    RW::EmoteId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
 {
     if banned_emote::is_banned(broadcaster_id, emote_id, RW::platform(), pool)
         .await?
