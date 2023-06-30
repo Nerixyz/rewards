@@ -18,7 +18,7 @@ pub async fn save_reward(
     match reward {
         RewardData::BttvSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<BttvEmotes, _, _, _>(
+                swap::update_swap_limit::<BttvEmotes>(
                     broadcaster_id,
                     *limit,
                     pool,
@@ -28,7 +28,7 @@ pub async fn save_reward(
         }
         RewardData::FfzSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<FfzEmotes, _, _, _>(
+                swap::update_swap_limit::<FfzEmotes>(
                     broadcaster_id,
                     *limit,
                     pool,
@@ -38,7 +38,7 @@ pub async fn save_reward(
         }
         RewardData::SevenTvSwap(swap) => {
             if let Some(limit) = &swap.limit {
-                swap::update_swap_limit::<SevenTvEmotes, _, _, _>(
+                swap::update_swap_limit::<SevenTvEmotes>(
                     broadcaster_id,
                     *limit,
                     pool,
@@ -49,7 +49,7 @@ pub async fn save_reward(
         RewardData::BttvSlot(slot) => {
             let bttv_id = bttv::get_or_fetch_id(broadcaster_id, pool).await?;
 
-            slots::adjust_size::<BttvEmotes, _, _, _>(
+            slots::adjust_size::<BttvEmotes>(
                 broadcaster_id,
                 &bttv_id,
                 reward_id,
@@ -60,7 +60,7 @@ pub async fn save_reward(
         }
         RewardData::FfzSlot(slot) => {
             let ffz_id = ffz::requests::get_user(broadcaster_id).await?.id;
-            slots::adjust_size::<FfzEmotes, _, _, _>(
+            slots::adjust_size::<FfzEmotes>(
                 broadcaster_id,
                 &ffz_id,
                 reward_id,
@@ -74,7 +74,7 @@ pub async fn save_reward(
                 .await?
                 .emote_set
                 .id;
-            slots::adjust_size::<SevenTvEmotes, _, _, _>(
+            slots::adjust_size::<SevenTvEmotes>(
                 broadcaster_id,
                 &sid,
                 reward_id,

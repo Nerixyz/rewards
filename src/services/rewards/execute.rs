@@ -200,44 +200,38 @@ pub async fn timed_mode(
     Ok(())
 }
 
-pub async fn swap<RW, F, I, E, EI>(
-    extractor: F,
+pub async fn swap<RW>(
+    extractor: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     data: SwapRewardData,
     (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    F: FnOnce(&str) -> AnyResult<&str>,
-    I: Display,
-    EI: Display + Clone + FromStr + Default,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::PlatformId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display + Clone + FromStr + Default,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
-    let res = execute_swap::<RW, F, I, E, EI>(
-        extractor, redemption, data, &db, discord,
-    )
-    .await;
+    let res =
+        execute_swap::<RW>(extractor, redemption, data, &db, discord).await;
     reply_to_redemption(res, &irc, broadcaster, user).await
 }
 
-pub async fn slot<RW, F, I, E, EI>(
-    extractor: F,
+pub async fn slot<RW>(
+    extractor: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     slot: SlotRewardData,
     (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    F: FnOnce(&str) -> AnyResult<&str>,
-    E: Emote<EI>,
-    EI: Display,
+    RW: EmoteRW,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
-    let res = execute_slot::<RW, F, I, E, EI>(
-        extractor, redemption, slot, &db, discord,
-    )
-    .await;
+    let res =
+        execute_slot::<RW>(extractor, redemption, slot, &db, discord).await;
     reply_to_redemption(res, &irc, broadcaster, user).await
 }
 

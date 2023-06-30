@@ -15,19 +15,18 @@ use actix::Addr;
 use models::reward::{SlotRewardData, SwapRewardData};
 use std::str::FromStr;
 
-pub async fn execute_swap<RW, F, I, E, EI>(
-    extractor: F,
+pub async fn execute_swap<RW>(
+    extractor: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     reward_data: SwapRewardData,
     pool: &PgPool,
     discord: Addr<DiscordActor>,
 ) -> AnyResult<String>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    F: FnOnce(&str) -> AnyResult<&str>,
-    I: Display,
-    EI: Display + Clone + FromStr + Default,
-    E: Emote<EI>,
+    RW: EmoteRW,
+    RW::PlatformId: Display,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display + Clone + FromStr + Default,
 {
     let platform_id = extractor(&redemption.user_input)?;
 
@@ -41,7 +40,7 @@ where
     let user: String = redemption.user_login.take();
 
     Ok(
-        match swap::swap_or_add_emote::<RW, I, E, EI>(
+        match swap::swap_or_add_emote::<RW>(
             redemption.broadcaster_user_id.as_ref(),
             platform_id,
             reward_data,
@@ -89,18 +88,17 @@ where
     )
 }
 
-pub async fn execute_slot<RW, F, I, E, EI>(
-    extractor: F,
+pub async fn execute_slot<RW>(
+    extractor: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     slot_data: SlotRewardData,
     pool: &PgPool,
     discord: Addr<DiscordActor>,
 ) -> AnyResult<String>
 where
-    RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
-    F: FnOnce(&str) -> AnyResult<&str>,
-    E: Emote<EI>,
-    EI: Display,
+    RW: EmoteRW,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display,
 {
     let platform_id = extractor(&redemption.user_input)?;
 
@@ -114,7 +112,7 @@ where
         broadcaster
     );
 
-    let res = slots::add_slot_emote::<RW, I, E, EI>(
+    let res = slots::add_slot_emote::<RW>(
         redemption.broadcaster_user_id.as_ref(),
         redemption.reward.id.as_ref(),
         slot_data,
