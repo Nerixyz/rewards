@@ -92,10 +92,10 @@ impl TwitchToken for DbToken {
     async fn refresh_token<'a, C>(
         &mut self,
         _: &'a C,
-    ) -> Result<(), RefreshTokenError<<C as Client<'a>>::Error>>
+    ) -> Result<(), RefreshTokenError<<C as Client>::Error>>
     where
         Self: Sized,
-        C: Client<'a>,
+        C: Client,
     {
         Ok(())
     }
