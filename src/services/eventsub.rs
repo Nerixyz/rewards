@@ -193,7 +193,8 @@ pub async fn clear_unfulfilled_redemptions_for_id<'a>(
             GetCustomRewardRedemptionRequest::broadcaster_id(
                 token.user_id.as_str(),
             )
-            .reward_id(reward_id),
+            .reward_id(reward_id)
+            .status(CustomRewardRedemptionStatus::Unfulfilled),
             token,
         )
         .await?;

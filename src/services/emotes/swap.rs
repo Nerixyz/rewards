@@ -6,7 +6,10 @@ use crate::{
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
-use models::{banned_emote, reward::SwapRewardData, swap_emote::SwapEmote};
+use models::{
+    banned_emote, log_entry::LogEntry, reward::SwapRewardData,
+    swap_emote::SwapEmote,
+};
 use sqlx::PgPool;
 use std::{fmt::Display, str::FromStr};
 
@@ -28,6 +31,7 @@ where
     {
         return Err(AnyError::msg("This emote is banned"));
     }
+
     let data = RW::get_check_initial_data(
         broadcaster_id,
         emote_id,
@@ -35,12 +39,15 @@ where
         pool,
     )
     .await?;
-    let removed_emote = if data.current_emotes >= data.max_emotes
-        || reward_data
-            .limit
-            .map(|l| data.history_len >= l as usize)
-            .unwrap_or(false)
-    {
+
+    // remove emote if needed
+    let above_swap_limit = reward_data
+        .limit
+        .map(|l| data.history_len >= l as usize)
+        .unwrap_or(false);
+    let above_platform_limit = data.current_emotes >= data.max_emotes;
+
+    let removed_emote = if above_platform_limit || above_swap_limit {
         Some(
             remove_last_emote::<RW>(broadcaster_id, &data.platform_id, pool)
                 .await
@@ -55,13 +62,19 @@ where
         data.emote.id(),
         data.platform_id
     );
+
     if let Err(e) = RW::add_emote(&data.platform_id, data.emote.id()).await {
-        log::warn!("Could not add emote: {}", e);
-        return Err(AnyError::msg(trim_to(
-            format!("Couldn't add emote: {}", e),
-            200,
-        )));
+        log::warn!("Could not add emote: {} / Removed: {removed_emote:?}", e);
+        let msg = match removed_emote {
+            Some(ref name) => {
+                format!("Removed {name}, but couldn't add emote: {e}")
+            }
+            None => format!("Couldn't add emote: {}", e),
+        };
+
+        return Err(AnyError::msg(trim_to(msg, 200)));
     }
+
     SwapEmote::add(
         broadcaster_id,
         &data.emote.id().to_string(),
@@ -72,6 +85,20 @@ where
     )
     .await
     .map_err(|_| AnyError::msg("Could not save emote in DB"))?;
+
+    log_err!(
+        LogEntry::create(
+            broadcaster_id,
+            &format!(
+                "[swap::{:?}] Added {}; Removed {removed_emote:?}; redeemed={executing_user}",
+                RW::platform(),
+                data.emote.name(),
+            ),
+            pool
+        )
+        .await,
+        "Could not create log-entry"
+    );
 
     Ok((removed_emote, data.emote.into_name()))
 }
