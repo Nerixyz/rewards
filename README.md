@@ -33,6 +33,8 @@ For more examples go [here](https://docs.rs/humantime/2.1.0/humantime/fn.parse_d
 You can also provide the duration like this: `rand( 10m ; 10h )`.
 This would timeout the user for a random duration between `10m` and `1h`.
 
+Users can rename emotes on 7TV by specifying `as=<name>`.
+
 ### Available Rewards
 
 - Timeout user (constant or random duration - only if they're not yet timed out)
