@@ -105,6 +105,7 @@ struct GqlIdVars<'a> {
 struct GqlEmoteInSetVars<'a> {
     set_id: &'a str,
     emote_id: &'a str,
+    name: Option<&'a str>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -141,10 +142,14 @@ pub async fn get_emote(emote_id: &str) -> AnyResult<SevenEmote> {
     Ok(emote.data.emote)
 }
 
-pub async fn add_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
+pub async fn add_emote(
+    emote_set_id: &str,
+    emote_id: &str,
+    overwritten_name: Option<&str>,
+) -> AnyResult<()> {
     seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
-        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: ADD) { id } } }",
-        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id }
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: ADD, name: $name) { id } } }",
+        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id, name: overwritten_name }
     }).await?;
 
     Ok(())
@@ -152,8 +157,8 @@ pub async fn add_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
 
 pub async fn remove_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
     seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
-        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE) { id } } }",
-        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id }
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE, name: $name) { id } } }",
+        variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id, name: None }
     }).await?;
 
     Ok(())
