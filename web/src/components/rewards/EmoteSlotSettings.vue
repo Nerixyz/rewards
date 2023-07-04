@@ -14,7 +14,7 @@ import TextField from '../core/TextField.vue';
 
 export default defineComponent({
   name: 'EmoteSlotSettings',
-  components: { CSlider, TextField },
+  components: { CSlider, CSwitch, TextField },
   props: {
     modelValue: {
       type: Object as PropType<SlotRewardData>,
