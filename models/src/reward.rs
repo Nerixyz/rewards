@@ -81,6 +81,10 @@ pub struct SlotRewardData {
     pub expiration: String,
     #[serde(default = "always_true")]
     pub allow_unlisted: bool,
+    /// Only controls the "ok" case
+    /// Errors are always printed
+    #[serde(default = "always_true")]
+    pub reply: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -88,6 +92,10 @@ pub struct SwapRewardData {
     pub limit: Option<u8>,
     #[serde(default = "always_true")]
     pub allow_unlisted: bool,
+    /// Only controls the "ok" case
+    /// Errors are always printed
+    #[serde(default = "always_true")]
+    pub reply: bool,
 }
 
 impl Default for SwapRewardData {
@@ -95,6 +103,7 @@ impl Default for SwapRewardData {
         Self {
             limit: Default::default(),
             allow_unlisted: true,
+            reply: true,
         }
     }
 }

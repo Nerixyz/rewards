@@ -213,9 +213,16 @@ where
     RW::EmoteId: Display + Clone + FromStr + Default,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
+    let should_reply = data.reply;
     let res =
         execute_swap::<RW>(extractor, redemption, data, &db, discord).await;
-    reply_to_redemption(res, &irc, broadcaster, user).await
+    reply_to_redemption(
+        res.map(|r| should_reply.then_some(r)),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
 }
 
 pub async fn slot<RW>(
@@ -230,9 +237,16 @@ where
     RW::EmoteId: Display,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
+    let should_reply = slot.reply;
     let res =
         execute_slot::<RW>(extractor, redemption, slot, &db, discord).await;
-    reply_to_redemption(res, &irc, broadcaster, user).await
+    reply_to_redemption(
+        res.map(|r| should_reply.then_some(r)),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
 }
 
 pub async fn spotify_skip(
@@ -243,7 +257,7 @@ pub async fn spotify_skip(
     let res =
         spotify::skip_track(redemption.broadcaster_user_id.as_ref(), &db).await;
     reply_to_redemption(
-        format_spotify_result(res, SpotifyAction::Skip),
+        format_spotify_result(res, SpotifyAction::Skip).map(Some),
         &irc,
         broadcaster,
         user,
@@ -269,7 +283,7 @@ pub async fn spotify_play(
     })
     .await;
     reply_to_redemption(
-        format_spotify_result(res, SpotifyAction::Play),
+        format_spotify_result(res, SpotifyAction::Play).map(Some),
         &irc,
         broadcaster,
         user,
@@ -299,7 +313,7 @@ pub async fn spotify_queue(
     })
     .await;
     reply_to_redemption(
-        format_spotify_result(res, SpotifyAction::Queue),
+        format_spotify_result(res, SpotifyAction::Queue).map(Some),
         &irc,
         broadcaster,
         user,

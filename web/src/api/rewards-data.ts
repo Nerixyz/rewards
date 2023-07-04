@@ -31,19 +31,19 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
     display: 'Add/Swap Bttv Emote',
     inputRequired: true,
     validOptions: emoteSwapValid,
-    defaultOptions: { limit: null, allow_unlisted: true },
+    defaultOptions: { limit: null, allow_unlisted: true, reply: true },
   },
   FfzSwap: {
     display: 'Add/Swap Ffz Emote',
     inputRequired: true,
     validOptions: emoteSwapValid,
-    defaultOptions: { limit: null, allow_unlisted: true },
+    defaultOptions: { limit: null, allow_unlisted: true, reply: true },
   },
   SevenTvSwap: {
     display: 'Add/Swap 7TV Emote',
     inputRequired: true,
     validOptions: emoteSwapValid,
-    defaultOptions: { limit: null, allow_unlisted: true },
+    defaultOptions: { limit: null, allow_unlisted: true, reply: true },
   },
   BttvSlot: {
     display: 'Bttv Slots',
@@ -53,6 +53,7 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
       slots: 2,
       expiration: '2d',
       allow_unlisted: true,
+      reply: true,
     },
   },
   FfzSlot: {
@@ -63,6 +64,7 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
       slots: 2,
       expiration: '2d',
       allow_unlisted: true,
+      reply: true,
     },
   },
   SevenTvSlot: {
@@ -73,6 +75,7 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
       slots: 2,
       expiration: '2d',
       allow_unlisted: true,
+      reply: true,
     },
   },
   SpotifySkip: {
