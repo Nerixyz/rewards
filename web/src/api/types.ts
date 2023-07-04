@@ -108,11 +108,13 @@ export interface SlotRewardData {
   slots: number;
   expiration: string;
   allow_unlisted?: boolean;
+  reply?: boolean;
 }
 
 export interface SwapRewardData {
   limit: number | null;
   allow_unlisted?: boolean;
+  reply?: boolean;
 }
 
 export interface SpotifyPlayOptions {
