@@ -148,7 +148,7 @@ pub async fn add_emote(
     overwritten_name: Option<&str>,
 ) -> AnyResult<()> {
     seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
-        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: ADD, name: $name) { id } } }",
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!, $name: String) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: ADD, name: $name) { id } } }",
         variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id, name: overwritten_name }
     }).await?;
 
@@ -157,7 +157,7 @@ pub async fn add_emote(
 
 pub async fn remove_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
     seven_tv_post::<Option<VoidObject>>("https://7tv.io/v3/gql", &GqlRequest {
-        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE, name: $name) { id } } }",
+        query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!, $name: String) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE, name: $name) { id } } }",
         variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id, name: None }
     }).await?;
 
