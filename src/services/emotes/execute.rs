@@ -53,7 +53,7 @@ where
                 let msg = format!("☑ Added {} - 🗑 Removed {}", added, removed);
                 send_discord!(
                     discord,
-                    redemption.user_id.take(),
+                    redemption.broadcaster_user_id.take(),
                     embed_builder!(
                         "Emotes",
                         "Added an emote",
