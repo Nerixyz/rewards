@@ -69,42 +69,42 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
             )
             .boxed(),
             RewardData::BttvSwap(data) => execute::swap::<BttvEmotes>(
-                extract::bttv_id,
+                extract::bttv,
                 msg.redemption,
                 data,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::FfzSwap(data) => execute::swap::<FfzEmotes>(
-                extract::ffz_id,
+                extract::ffz,
                 msg.redemption,
                 data,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::SevenTvSwap(data) => execute::swap::<SevenTvEmotes>(
-                extract::seventv_id,
+                extract::seventv,
                 msg.redemption,
                 data,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::BttvSlot(slot) => execute::slot::<BttvEmotes>(
-                extract::bttv_id,
+                extract::bttv,
                 msg.redemption,
                 slot,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::FfzSlot(slot) => execute::slot::<FfzEmotes>(
-                extract::ffz_id,
+                extract::ffz,
                 msg.redemption,
                 slot,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),
             )
             .boxed(),
             RewardData::SevenTvSlot(slot) => execute::slot::<SevenTvEmotes>(
-                extract::seventv_id,
+                extract::seventv,
                 msg.redemption,
                 slot,
                 (self.db.clone(), self.irc.clone(), self.discord.clone()),

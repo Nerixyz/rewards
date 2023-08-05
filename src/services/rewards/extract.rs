@@ -1,7 +1,13 @@
 use crate::services::text::first_capture;
 use anyhow::{Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Regex;
+
+pub struct EmoteSpec<'a> {
+    pub id: &'a str,
+    pub override_name: Option<&'a str>,
+}
 
 pub fn username(str: &str) -> AnyResult<String> {
     lazy_static! {
@@ -22,7 +28,26 @@ pub fn username(str: &str) -> AnyResult<String> {
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
 
-pub fn bttv_id(str: &str) -> AnyResult<&str> {
+pub fn bttv<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+    bttv_id(s).map(|id| EmoteSpec {
+        id,
+        override_name: None,
+    })
+}
+pub fn ffz<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+    ffz_id(s).map(|id| EmoteSpec {
+        id,
+        override_name: None,
+    })
+}
+pub fn seventv<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+    seventv_id(s).map(|id| EmoteSpec {
+        id,
+        override_name: parse_overridden(s),
+    })
+}
+
+fn bttv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref BTTV_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:betterttv\\.com/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
@@ -33,7 +58,7 @@ pub fn bttv_id(str: &str) -> AnyResult<&str> {
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
-pub fn ffz_id(str: &str) -> AnyResult<&str> {
+fn ffz_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref FFZ_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:www\\.)?(?:frankerfacez\\.com/)?(?:emoticon/)(\\d+)(?:-[\\w_!]+)?(?:$| )"
@@ -44,7 +69,7 @@ pub fn ffz_id(str: &str) -> AnyResult<&str> {
         .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
-pub fn seventv_id(str: &str) -> AnyResult<&str> {
+fn seventv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref SEVENTV_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
@@ -91,4 +116,12 @@ pub fn duration(duration: &str) -> AnyResult<u64> {
     } else {
         Ok(humantime::parse_duration(duration)?.as_secs())
     }
+}
+
+fn parse_overridden(s: &str) -> Option<&str> {
+    static OVERRIDE_REGEX: Lazy<Regex> = Lazy::new(|| {
+        Regex::new("(?: |^)as=([-_A-Za-z(!?&)$+:0-9]{2,100})\\b")
+            .expect("must compile")
+    });
+    first_capture(s, &*OVERRIDE_REGEX)
 }

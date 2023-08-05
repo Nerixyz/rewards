@@ -16,6 +16,7 @@ use std::{fmt::Display, str::FromStr};
 pub async fn swap_or_add_emote<RW>(
     broadcaster_id: &str,
     emote_id: &str,
+    override_name: Option<&str>,
     reward_data: SwapRewardData,
     executing_user: &str,
     pool: &PgPool,
@@ -35,6 +36,7 @@ where
     let data = RW::get_check_initial_data(
         broadcaster_id,
         emote_id,
+        override_name,
         reward_data.allow_unlisted,
         pool,
     )
@@ -63,7 +65,9 @@ where
         data.platform_id
     );
 
-    if let Err(e) = RW::add_emote(&data.platform_id, data.emote.id()).await {
+    if let Err(e) =
+        RW::add_emote(&data.platform_id, data.emote.id(), override_name).await
+    {
         log::warn!("Could not add emote: {} / Removed: {removed_emote:?}", e);
         let msg = match removed_emote {
             Some(ref name) => {
@@ -75,11 +79,13 @@ where
         return Err(AnyError::msg(trim_to(msg, 200)));
     }
 
+    let emote_name = override_name.unwrap_or(data.emote.name());
+
     SwapEmote::add(
         broadcaster_id,
         &data.emote.id().to_string(),
         RW::platform(),
-        data.emote.name(),
+        emote_name,
         executing_user,
         pool,
     )
@@ -90,9 +96,9 @@ where
         LogEntry::create(
             broadcaster_id,
             &format!(
-                "[swap::{:?}] Added {}; Removed {removed_emote:?}; redeemed={executing_user}",
+                "[swap::{:?}] Added {} (alias {override_name:?}); Removed {removed_emote:?}; redeemed={executing_user}",
                 RW::platform(),
-                data.emote.name(),
+                emote_name,
             ),
             pool
         )
@@ -100,7 +106,12 @@ where
         "Could not create log-entry"
     );
 
-    Ok((removed_emote, data.emote.into_name()))
+    Ok((
+        removed_emote,
+        override_name
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| data.emote.into_name()),
+    ))
 }
 
 pub async fn remove_last_emote<RW>(

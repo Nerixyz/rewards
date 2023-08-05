@@ -2,7 +2,7 @@ use crate::services::{
     emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
     ffz::requests as ffz,
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;
 use models::{emote::SlotPlatform, swap_emote::SwapEmote};
@@ -46,9 +46,14 @@ impl EmoteRW for FfzEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote>> {
+        if overwritten_name.is_some() {
+            return Err(anyhow!("FFZ doesn't support renaming emotes"));
+        }
+
         let (ffz_user, ffz_emote, ffz_room, ffz_history) =
             futures::future::try_join4(
                 ffz::get_user(broadcaster_id).map_err(|e| {
@@ -143,7 +148,11 @@ impl EmoteRW for FfzEmotes {
         ffz::delete_emote(*platform_id, *emote_id).await
     }
 
-    async fn add_emote(platform_id: &usize, emote_id: &usize) -> AnyResult<()> {
+    async fn add_emote(
+        platform_id: &usize,
+        emote_id: &usize,
+        _overwritten_name: Option<&str>,
+    ) -> AnyResult<()> {
         ffz::add_emote(*platform_id, *emote_id).await
     }
 

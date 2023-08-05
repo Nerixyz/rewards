@@ -2,7 +2,7 @@ use crate::services::{
     bttv::{get_or_fetch_id, requests as bttv},
     emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use futures::TryFutureExt;
 use models::{emote::SlotPlatform, swap_emote::SwapEmote};
@@ -45,9 +45,14 @@ impl EmoteRW for BttvEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<String, bttv::BttvEmote>> {
+        if overwritten_name.is_some() {
+            return Err(anyhow!("BTTV doesn't support renaming emotes"));
+        }
+
         let (bttv_id, history_len) = futures::future::try_join(
             get_or_fetch_id(broadcaster_id, pool),
             SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
@@ -127,6 +132,7 @@ impl EmoteRW for BttvEmotes {
     async fn add_emote(
         platform_id: &String,
         emote_id: &String,
+        _overwritten_name: Option<&str>,
     ) -> AnyResult<()> {
         bttv::add_shared_emote(emote_id, platform_id).await?;
         Ok(())

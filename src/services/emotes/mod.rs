@@ -51,6 +51,7 @@ pub trait EmoteRW {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>>;
@@ -73,6 +74,7 @@ pub trait EmoteRW {
     async fn add_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
+        overwritten_name: Option<&str>,
     ) -> AnyResult<()>;
 
     async fn remove_emote_from_broadcaster(

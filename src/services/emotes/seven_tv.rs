@@ -39,6 +39,7 @@ impl EmoteRW for SevenTvEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>> {
@@ -52,11 +53,13 @@ impl EmoteRW for SevenTvEmotes {
         )
         .await?;
 
+        let actual_name = overwritten_name.unwrap_or(&emote.name);
+
         if stv_user
             .emote_set
             .emotes
             .iter()
-            .any(|e| e.id == emote.id || e.name == emote.name)
+            .any(|e| e.id == emote.id || e.name == actual_name)
         {
             return Err(AnyError::msg(
                 "The emote or an emote with the same name already exists.",
@@ -124,8 +127,9 @@ impl EmoteRW for SevenTvEmotes {
     async fn add_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
+        overwritten_name: Option<&str>,
     ) -> AnyResult<()> {
-        seven_tv::add_emote(platform_id, emote_id).await
+        seven_tv::add_emote(platform_id, emote_id, overwritten_name).await
     }
 
     async fn remove_emote_from_broadcaster(

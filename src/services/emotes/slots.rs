@@ -137,6 +137,7 @@ pub async fn add_slot_emote<RW>(
     reward_id: &str,
     slot_data: SlotRewardData,
     emote_id: &str,
+    override_name: Option<&str>,
     redeemed_user_login: &str,
     pool: &PgPool,
 ) -> AnyResult<(String, usize)>
@@ -165,6 +166,7 @@ where
     let emote_data = RW::get_check_initial_data(
         broadcaster_id,
         emote_id,
+        override_name,
         slot_data.allow_unlisted,
         pool,
     )
@@ -174,12 +176,16 @@ where
         return Err(AnyError::msg("There's no free slot!"));
     }
 
-    RW::add_emote(&emote_data.platform_id, emote_data.emote.id())
-        .await
-        .map_err(|e| {
-            log::warn!("Could not add: {}", e);
-            AnyError::msg(trim_to(format!("Couldn't add emote: {}", e), 200))
-        })?;
+    RW::add_emote(
+        &emote_data.platform_id,
+        emote_data.emote.id(),
+        override_name,
+    )
+    .await
+    .map_err(|e| {
+        log::warn!("Could not add: {}", e);
+        AnyError::msg(trim_to(format!("Couldn't add emote: {}", e), 200))
+    })?;
 
     let expiration = humantime::parse_duration(&slot_data.expiration)
         .map_err(|_| AnyError::msg("No expiration set!"))?;
@@ -191,7 +197,10 @@ where
             AnyError::msg("Could not add duration lole")
         })?,
     );
-    let emote_name = emote_data.emote.into_name();
+
+    let emote_name = override_name
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| emote_data.emote.into_name());
     slot.name = Some(emote_name.clone());
     slot.added_by = Some(redeemed_user_login.to_string());
     slot.added_at = Some(now);
