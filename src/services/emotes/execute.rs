@@ -8,7 +8,7 @@ use crate::{
     embed_builder, send_discord,
     services::{
         emotes::{slots, swap, Emote, EmoteRW},
-        rewards::Redemption,
+        rewards::{extract::EmoteSpec, Redemption},
     },
 };
 use actix::Addr;
@@ -16,7 +16,7 @@ use models::reward::{SlotRewardData, SwapRewardData};
 use std::str::FromStr;
 
 pub async fn execute_swap<RW>(
-    extractor: impl FnOnce(&str) -> AnyResult<&str>,
+    extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     reward_data: SwapRewardData,
     pool: &PgPool,
@@ -28,10 +28,13 @@ where
     RW::Emote: Emote<RW::EmoteId>,
     RW::EmoteId: Display + Clone + FromStr + Default,
 {
-    let platform_id = extractor(&redemption.user_input)?;
+    let EmoteSpec {
+        id: platform_id,
+        override_name,
+    } = extractor(&redemption.user_input)?;
 
     log::info!(
-        "Adding {:?} emote {} in {}",
+        "Adding {:?} emote {} as {override_name:?} in {}",
         RW::platform(),
         platform_id,
         redemption.broadcaster_user_login
@@ -43,6 +46,7 @@ where
         match swap::swap_or_add_emote::<RW>(
             redemption.broadcaster_user_id.as_ref(),
             platform_id,
+            override_name,
             reward_data,
             &user,
             pool,
@@ -89,7 +93,7 @@ where
 }
 
 pub async fn execute_slot<RW>(
-    extractor: impl FnOnce(&str) -> AnyResult<&str>,
+    extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     slot_data: SlotRewardData,
     pool: &PgPool,
@@ -100,13 +104,16 @@ where
     RW::Emote: Emote<RW::EmoteId>,
     RW::EmoteId: Display,
 {
-    let platform_id = extractor(&redemption.user_input)?;
+    let EmoteSpec {
+        id: platform_id,
+        override_name,
+    } = extractor(&redemption.user_input)?;
 
     let broadcaster: String = redemption.broadcaster_user_login.take();
     let user: String = redemption.user_login.take();
 
     log::info!(
-        "Adding {:?} emote {} in {}",
+        "Adding {:?} emote {} as {override_name:?} in {}",
         RW::platform(),
         platform_id,
         broadcaster
@@ -117,6 +124,7 @@ where
         redemption.reward.id.as_ref(),
         slot_data,
         platform_id,
+        override_name,
         &user,
         pool,
     )

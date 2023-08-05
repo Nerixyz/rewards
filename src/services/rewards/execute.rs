@@ -45,6 +45,8 @@ use models::{
 };
 use std::{fmt::Display, str::FromStr};
 
+use super::extract::EmoteSpec;
+
 pub async fn timeout(
     timeout: TimeoutRewardData,
     redemption: Redemption,
@@ -201,7 +203,7 @@ pub async fn timed_mode(
 }
 
 pub async fn swap<RW>(
-    extractor: impl FnOnce(&str) -> AnyResult<&str>,
+    extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     data: SwapRewardData,
     (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
@@ -226,7 +228,7 @@ where
 }
 
 pub async fn slot<RW>(
-    extractor: impl FnOnce(&str) -> AnyResult<&str>,
+    extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     slot: SlotRewardData,
     (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
