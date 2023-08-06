@@ -53,6 +53,7 @@ Users can rename emotes on 7TV by specifying `as=<name>`.
 - `::emote ban/unban <url/emote>` Ban/unban emotes from being added. Requires editor rights.
 - `::emote eject <name or url>` Untracks the emote from the bot's database; doesn't remove the emote from the platform.
 - `::emote inject <name or url>` Adds an emote to the bot's database (only works with swap rewards currently).
+- `::emtoe reload` Syncs swap emotes with the platform.
 - `::slots`, `::emoteslots` Display the current slots.
 - `::emotes`, `::ce`, `::currentemotes` Display the current emotes.
 - `::ping`, `::bing` Ping the bot.
@@ -60,10 +61,11 @@ Users can rename emotes on 7TV by specifying `as=<name>`.
 
 **Admin only**
 
-- `::debug channel ?name` Print debug infos about a channel.
-- `::debug platoforms` Check if the auth-tokens for the platforms are still valid.
+- `::debug channel ?name` Print debug info about a channel.
+- `::debug platforms` Check if the auth-tokens for the platforms are still valid.
 - `::debug edit <name>` Add the admin as editor.
 - `::debug rmedit <name>` Remove the admin as editor.
+- `::debug sync ?name` Sync rewards with Twitch.
 
 # Development
 

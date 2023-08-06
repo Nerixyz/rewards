@@ -1,6 +1,7 @@
 mod channel;
 mod emotes;
 mod platforms;
+mod sync;
 
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
@@ -23,6 +24,7 @@ pub enum DebugCommand {
     Platforms,
     Editor(String),
     RmEditor(String),
+    SyncRewards(Option<String>),
 }
 
 #[async_trait]
@@ -85,6 +87,27 @@ impl ChatCommand for DebugCommand {
                 .await?;
                 Ok(format!("@{}, done.", msg.sender.login))
             }
+            DebugCommand::SyncRewards(username) => {
+                let data = match username.take() {
+                    Some(username) => {
+                        let id = get_user_by_login(
+                            username,
+                            &*app_access_token.read().await,
+                        )
+                        .await
+                        .map(|user| user.id.take())
+                        .map_err(|e| {
+                            AnyError::msg(format!(
+                                "This user doesn't seem to exist: {}",
+                                e
+                            ))
+                        })?;
+                        sync::sync_rewards(&id, pool).await?
+                    }
+                    None => sync::sync_rewards(&msg.channel_id, pool).await?,
+                };
+                Ok(format!("@{}, removed {data} internal rewards not present on Twitch.", msg.sender.login))
+            }
         }
     }
 
@@ -115,6 +138,9 @@ impl ChatCommand for DebugCommand {
                         .ok_or_else(|| anyhow!("expected username"))?,
                 )))
             }
+            "sync" => Ok(Box::new(Self::SyncRewards(
+                cmd.map(|c| opt_next_space(c).0.to_string()),
+            ))),
             _ => Err(anyhow!(
                 "Expected subcommand (one of 'channel', 'platforms')"
             )),
