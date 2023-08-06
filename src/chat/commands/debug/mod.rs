@@ -6,7 +6,7 @@ mod sync;
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
     services::twitch::requests::get_user_by_login,
-    PgPool, RedisConn,
+    PgPool, RedisConn, RedisPool,
 };
 use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
@@ -33,7 +33,7 @@ impl ChatCommand for DebugCommand {
         &mut self,
         msg: PrivmsgMessage,
         pool: &PgPool,
-        _redis: &mut RedisConn,
+        _redis: RedisPool,
         app_access_token: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         match &mut self {

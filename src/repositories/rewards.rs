@@ -12,6 +12,7 @@ use crate::{
             get_rewards_for_id, update_reward,
         },
     },
+    RedisPool,
 };
 use actix_web::{delete, get, patch, put, web, HttpResponse, Result};
 use models::reward::{Reward, RewardData};
@@ -52,6 +53,7 @@ struct CustomRewardResponse {
 async fn create(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
+    redis_pool: web::Data<RedisPool>,
     body: web::Json<CreateRewardBody>,
     broadcaster_id: web::Path<String>,
 ) -> Result<HttpResponse> {
@@ -89,9 +91,14 @@ async fn create(
     );
     db_reward.create(&pool).await?;
 
-    if let Err(e) =
-        save_reward(&body.data, reward.id.as_ref(), &broadcaster_id, &pool)
-            .await
+    if let Err(e) = save_reward(
+        &body.data,
+        reward.id.as_ref(),
+        &broadcaster_id,
+        &pool,
+        &redis_pool,
+    )
+    .await
     {
         log::warn!("Could not save reward: {}", e);
 
@@ -139,6 +146,7 @@ async fn create(
 async fn update(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
+    redis_pool: web::Data<RedisPool>,
     body: web::Json<UpdateRewardBody>,
     path: web::Path<(String, String)>,
 ) -> Result<HttpResponse> {
@@ -170,7 +178,8 @@ async fn update(
 
     // check this before it's actually saved
     if let Err(e) =
-        save_reward(&body.data, &reward_id, &broadcaster_id, &pool).await
+        save_reward(&body.data, &reward_id, &broadcaster_id, &pool, &redis_pool)
+            .await
     {
         log::warn!("Could not save reward: {}", e);
 

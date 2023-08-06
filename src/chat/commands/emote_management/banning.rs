@@ -1,7 +1,7 @@
 use super::extract::extract_emote_data;
 use crate::{
     services::emotes::{format::format_emote_url, remove::remove_emote},
-    PgPool,
+    PgPool, RedisPool,
 };
 use anyhow::{anyhow, Result as AnyResult};
 use models::banned_emote;
@@ -11,6 +11,7 @@ pub async fn execute_ban(
     msg: &PrivmsgMessage,
     emote: &str,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<String> {
     let (emote_id, platform) = extract_emote_data(emote, &msg.channel_id, pool)
         .await
@@ -23,7 +24,7 @@ pub async fn execute_ban(
             anyhow!("Couldn't add ban, the emote might be banned already")
         })?;
     // .ok because it may not be added
-    remove_emote(&msg.channel_id, &emote_id, platform, pool)
+    remove_emote(&msg.channel_id, &emote_id, platform, pool, redis_pool)
         .await
         .ok();
     Ok(format!(

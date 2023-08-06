@@ -7,7 +7,7 @@ mod reload;
 
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    AppAccessToken, PgPool, RedisConn,
+    AppAccessToken, PgPool, RedisConn, RedisPool,
 };
 use anyhow::{anyhow, Result as AnyResult};
 use async_trait::async_trait;
@@ -36,18 +36,22 @@ impl ChatCommand for EmoteManagement {
         &mut self,
         msg: PrivmsgMessage,
         pool: &PgPool,
-        redis: &mut RedisConn,
+        redis: RedisPool,
         _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         match &self {
-            Self::Info(emote) => execute_info(&msg, emote, pool, redis).await,
-            Self::Ban(emote) => execute_ban(&msg, emote, pool).await,
+            Self::Info(emote) => {
+                execute_info(&msg, emote, pool, &mut redis.get().await?).await
+            }
+            Self::Ban(emote) => execute_ban(&msg, emote, pool, &redis).await,
             Self::Unban(emote) => execute_unban(&msg, emote, pool).await,
             Self::Eject(emote) => execute_eject(&msg, emote, pool).await,
             Self::Inject(emote) => {
-                execute_inject(&msg, emote, redis, pool).await
+                execute_inject(&msg, emote, &mut redis.get().await?, pool).await
             }
-            Self::Reload => execute_reload(&msg, redis, pool).await,
+            Self::Reload => {
+                execute_reload(&msg, &mut redis.get().await?, pool).await
+            }
         }
     }
 

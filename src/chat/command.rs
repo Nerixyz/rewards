@@ -1,4 +1,4 @@
-use crate::{AppAccessToken, RedisConn};
+use crate::{AppAccessToken, RedisConn, RedisPool};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -12,7 +12,7 @@ pub trait ChatCommand: Send {
         &mut self,
         msg: PrivmsgMessage,
         pool: &PgPool,
-        redis: &mut RedisConn,
+        redis: RedisPool,
         app_access_token: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String>;
     fn parse(

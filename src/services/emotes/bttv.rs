@@ -1,6 +1,9 @@
-use crate::services::{
-    bttv::{get_or_fetch_id, requests as bttv},
-    emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+use crate::{
+    services::{
+        bttv::{get_or_fetch_id, requests as bttv},
+        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+    },
+    RedisPool,
 };
 use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
@@ -124,6 +127,7 @@ impl EmoteRW for BttvEmotes {
     async fn remove_emote(
         platform_id: &String,
         emote_id: &String,
+        _: &RedisPool,
     ) -> AnyResult<()> {
         bttv::delete_shared_emote(emote_id, platform_id).await?;
         Ok(())
@@ -133,6 +137,7 @@ impl EmoteRW for BttvEmotes {
         platform_id: &String,
         emote_id: &String,
         _overwritten_name: Option<&str>,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         bttv::add_shared_emote(emote_id, platform_id).await?;
         Ok(())
@@ -142,6 +147,7 @@ impl EmoteRW for BttvEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         pool: &PgPool,
+        _: &RedisPool,
     ) -> AnyResult<String> {
         let bttv_id = match get_or_fetch_id(broadcaster_id, pool).await {
             Ok(id) => id,

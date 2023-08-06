@@ -120,7 +120,7 @@ async fn try_handle_command(
     let sender = msg.raw.sender.login.clone();
     let message = match msg
         .executor
-        .execute(msg.raw, &db, &mut conn, app_access_token)
+        .execute(msg.raw, &db, redis, app_access_token)
         .await
     {
         Ok(res) => SayMessage(broadcaster, res),

@@ -10,6 +10,7 @@ use crate::{
         emotes::{slots, swap, Emote, EmoteRW},
         rewards::{extract::EmoteSpec, Redemption},
     },
+    RedisPool,
 };
 use actix::Addr;
 use models::reward::{SlotRewardData, SwapRewardData};
@@ -20,6 +21,7 @@ pub async fn execute_swap<RW>(
     redemption: Redemption,
     reward_data: SwapRewardData,
     pool: &PgPool,
+    redis_pool: &RedisPool,
     discord: Addr<DiscordActor>,
 ) -> AnyResult<String>
 where
@@ -50,6 +52,7 @@ where
             reward_data,
             &user,
             pool,
+            redis_pool,
         )
         .await?
         {
@@ -97,6 +100,7 @@ pub async fn execute_slot<RW>(
     redemption: Redemption,
     slot_data: SlotRewardData,
     pool: &PgPool,
+    redis_pool: &RedisPool,
     discord: Addr<DiscordActor>,
 ) -> AnyResult<String>
 where
@@ -127,6 +131,7 @@ where
         override_name,
         &user,
         pool,
+        redis_pool,
     )
     .await?;
 
