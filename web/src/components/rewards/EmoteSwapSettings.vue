@@ -1,6 +1,6 @@
 <template>
   <CSwitch :model-value="sliderEnabled" label="Limit emotes" @update:model-value="updateSliderEnabled" />
-  <CSlider v-if="state.limit !== null" v-model="state.limit" class="mt-2" :min="1" :max="100" />
+  <CSlider v-if="state.limit !== null" v-model="state.limit" class="mt-2" :min="1" :max="400" />
   <!-- TODO: fix this (xd) -->
   <CSwitch v-model="state.allow_unlisted" label="Allow unlisted emotes" />
   <CSwitch v-model="state.reply" label="Reply after successful redemption" />
