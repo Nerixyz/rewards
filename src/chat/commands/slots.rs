@@ -1,4 +1,4 @@
-use crate::{chat::command::ChatCommand, AppAccessToken, RedisConn};
+use crate::{chat::command::ChatCommand, AppAccessToken, RedisPool};
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use models::slot::Slot;
@@ -15,7 +15,7 @@ impl ChatCommand for SlotsCommand {
         &mut self,
         msg: PrivmsgMessage,
         pool: &PgPool,
-        _: &mut RedisConn,
+        _: RedisPool,
         _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         let occupation = Slot::get_occupation(&msg.channel_id, pool)

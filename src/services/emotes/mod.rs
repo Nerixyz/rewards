@@ -14,6 +14,8 @@ use async_trait::async_trait;
 use models::emote::SlotPlatform;
 use sqlx::PgPool;
 
+use crate::RedisPool;
+
 pub struct EmoteInitialData<I, E> {
     pub max_emotes: usize,
     pub current_emotes: usize,
@@ -70,17 +72,20 @@ pub trait EmoteRW {
     async fn remove_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()>;
     async fn add_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
         overwritten_name: Option<&str>,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()>;
 
     async fn remove_emote_from_broadcaster(
         broadcaster_id: &str,
         emote_id: &str,
         pool: &PgPool,
+        redis_pool: &RedisPool,
     ) -> AnyResult<String>;
 
     fn format_emote_url(emote_id: &str) -> String;

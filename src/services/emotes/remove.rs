@@ -7,7 +7,7 @@ use crate::{
         },
         twitch::requests::update_reward,
     },
-    AnyError, SlotActor,
+    AnyError, RedisPool, SlotActor,
 };
 use actix::SystemService;
 use anyhow::{anyhow, Result as AnyResult};
@@ -29,6 +29,7 @@ pub async fn remove_emote(
     emote_id: &str,
     slot_platform: SlotPlatform,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<()> {
     match search_by_id(channel_id, emote_id, slot_platform, pool)
         .await?
@@ -42,19 +43,19 @@ pub async fn remove_emote(
         Either::Right(swap) => match slot_platform {
             SlotPlatform::Bttv => {
                 remove_swap_emote::<BttvEmotes, _, _, _>(
-                    channel_id, emote_id, &swap, pool,
+                    channel_id, emote_id, &swap, pool, redis_pool,
                 )
                 .await?
             }
             SlotPlatform::Ffz => {
                 remove_swap_emote::<FfzEmotes, _, _, _>(
-                    channel_id, emote_id, &swap, pool,
+                    channel_id, emote_id, &swap, pool, redis_pool,
                 )
                 .await?
             }
             SlotPlatform::SevenTv => {
                 remove_swap_emote::<SevenTvEmotes, _, _, _>(
-                    channel_id, emote_id, &swap, pool,
+                    channel_id, emote_id, &swap, pool, redis_pool,
                 )
                 .await?
             }
@@ -110,14 +111,19 @@ async fn remove_swap_emote<RW, I, E, EI>(
     emote_id: &str,
     swap: &SwapEmote,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<()>
 where
     RW: EmoteRW<PlatformId = I, Emote = E, EmoteId = EI>,
     EI: FromStr + Default,
 {
     let platform_id = RW::get_platform_id(channel_id, pool).await?;
-    RW::remove_emote(&platform_id, &EI::from_str(emote_id).unwrap_or_default())
-        .await?;
+    RW::remove_emote(
+        &platform_id,
+        &EI::from_str(emote_id).unwrap_or_default(),
+        redis_pool,
+    )
+    .await?;
     SwapEmote::remove(swap.id, pool).await?;
     Ok(())
 }

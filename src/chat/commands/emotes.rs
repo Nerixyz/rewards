@@ -1,6 +1,6 @@
 use crate::{
     chat::{command::ChatCommand, parse::opt_next_space},
-    AppAccessToken, RedisConn,
+    AppAccessToken, RedisPool,
 };
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
@@ -29,7 +29,7 @@ impl ChatCommand for Emotes {
         &mut self,
         msg: PrivmsgMessage,
         pool: &PgPool,
-        _: &mut RedisConn,
+        _: RedisPool,
         _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         let resp = match self.requested {

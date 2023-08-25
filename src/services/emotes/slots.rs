@@ -5,6 +5,7 @@ use crate::{
         text::trim_to,
         twitch::requests::update_reward,
     },
+    RedisPool,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::{Duration, Utc};
@@ -25,6 +26,7 @@ pub async fn adjust_size<RW>(
     reward_id: &str,
     n_slots: usize,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
@@ -58,6 +60,7 @@ where
                             .as_ref()
                             .ok_or_else(|| AnyError::msg("never"))?,
                     )?,
+                    redis_pool,
                 )
                 .await
                 {
@@ -140,6 +143,7 @@ pub async fn add_slot_emote<RW>(
     override_name: Option<&str>,
     redeemed_user_login: &str,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<(String, usize)>
 where
     RW: EmoteRW,
@@ -180,6 +184,7 @@ where
         &emote_data.platform_id,
         emote_data.emote.id(),
         override_name,
+        redis_pool,
     )
     .await
     .map_err(|e| {

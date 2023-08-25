@@ -1,9 +1,13 @@
-use crate::services::{
-    bttv,
-    emotes::{
-        bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots, swap,
+use crate::{
+    services::{
+        bttv,
+        emotes::{
+            bttv::BttvEmotes, ffz::FfzEmotes, seven_tv::SevenTvEmotes, slots,
+            swap,
+        },
+        ffz, seven_tv,
     },
-    ffz, seven_tv,
+    RedisPool,
 };
 use anyhow::Result as AnyResult;
 use models::reward::RewardData;
@@ -14,6 +18,7 @@ pub async fn save_reward(
     reward_id: &str,
     broadcaster_id: &str,
     pool: &PgPool,
+    redis_pool: &RedisPool,
 ) -> AnyResult<()> {
     match reward {
         RewardData::BttvSwap(swap) => {
@@ -22,6 +27,7 @@ pub async fn save_reward(
                     broadcaster_id,
                     *limit,
                     pool,
+                    redis_pool,
                 )
                 .await?;
             }
@@ -32,6 +38,7 @@ pub async fn save_reward(
                     broadcaster_id,
                     *limit,
                     pool,
+                    redis_pool,
                 )
                 .await?;
             }
@@ -42,6 +49,7 @@ pub async fn save_reward(
                     broadcaster_id,
                     *limit,
                     pool,
+                    redis_pool,
                 )
                 .await?;
             }
@@ -55,6 +63,7 @@ pub async fn save_reward(
                 reward_id,
                 slot.slots,
                 pool,
+                redis_pool,
             )
             .await?;
         }
@@ -66,6 +75,7 @@ pub async fn save_reward(
                 reward_id,
                 slot.slots,
                 pool,
+                redis_pool,
             )
             .await?;
         }
@@ -80,6 +90,7 @@ pub async fn save_reward(
                 reward_id,
                 slot.slots,
                 pool,
+                redis_pool,
             )
             .await?;
         }

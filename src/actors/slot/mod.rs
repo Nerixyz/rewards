@@ -51,6 +51,7 @@ impl SlotActor {
         broadcaster_id: &str,
         id: &str,
         pool: &PgPool,
+        redis_pool: &RedisPool,
     ) -> AnyResult<String> {
         match platform {
             SlotPlatform::Bttv => {
@@ -58,6 +59,7 @@ impl SlotActor {
                     broadcaster_id,
                     id,
                     pool,
+                    redis_pool,
                 )
                 .await
             }
@@ -66,6 +68,7 @@ impl SlotActor {
                     broadcaster_id,
                     id,
                     pool,
+                    redis_pool,
                 )
                 .await
             }
@@ -74,6 +77,7 @@ impl SlotActor {
                     broadcaster_id,
                     id,
                     pool,
+                    redis_pool,
                 )
                 .await
             }
@@ -112,7 +116,13 @@ impl SlotActor {
             let (sql_response, internal_user, emote) = futures::future::join3(
                 Slot::clear(p.id, &pool),
                 User::get_by_id(&p.user_id, &pool),
-                Self::delete_emote(&p.platform, &p.user_id, emote_id, &pool),
+                Self::delete_emote(
+                    &p.platform,
+                    &p.user_id,
+                    emote_id,
+                    &pool,
+                    &redis,
+                ),
             )
             .await;
             log_err!(

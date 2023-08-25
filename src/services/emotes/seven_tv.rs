@@ -1,9 +1,13 @@
-use crate::services::{
-    emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW},
-    seven_tv::requests as seven_tv,
+use crate::{
+    services::{
+        emotes::{Emote, EmoteEnvData, EmoteInitialData, EmoteRW},
+        seven_tv::requests as seven_tv,
+    },
+    RedisPool,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
+use deadpool_redis::redis;
 use futures::TryFutureExt;
 use models::{emote::SlotPlatform, swap_emote::SwapEmote};
 use sqlx::PgPool;
@@ -111,6 +115,7 @@ impl EmoteRW for SevenTvEmotes {
     async fn remove_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         // seventv doesn't error if the emote isn't added,
         // so we have to check if the emote is added in the first place.
@@ -118,7 +123,14 @@ impl EmoteRW for SevenTvEmotes {
         // check the channels the emote is added to or check the users emotes.
         let emote_set = seven_tv::get_emote_set(platform_id).await?;
         if !emote_set.emotes.iter().any(|emote| emote.id == *emote_id) {
-            return Err(AnyError::msg("Emote not added"));
+            match redis::cmd("DEL")
+                .arg(format!("rewards:seventv:cache:{platform_id}:{emote_id}"))
+                .query_async::<_, usize>(&mut redis_pool.get().await?)
+                .await
+            {
+                Ok(x) if x > 0 => (),
+                _ => return Err(AnyError::msg("Emote not added")),
+            }
         }
 
         seven_tv::remove_emote(platform_id, emote_id).await
@@ -128,7 +140,18 @@ impl EmoteRW for SevenTvEmotes {
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,
         overwritten_name: Option<&str>,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()> {
+        if let Ok(mut conn) = redis_pool.get().await {
+            redis::cmd("SETEX")
+                .arg(format!("rewards:seventv:cache:{platform_id}:{emote_id}"))
+                .arg(90)
+                .arg(1)
+                .query_async::<_, ()>(&mut conn)
+                .await
+                .ok();
+        }
+
         seven_tv::add_emote(platform_id, emote_id, overwritten_name).await
     }
 
@@ -136,6 +159,7 @@ impl EmoteRW for SevenTvEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         _pool: &PgPool,
+        _redis: &RedisPool,
     ) -> AnyResult<String> {
         let user = seven_tv::get_user(broadcaster_id).await?;
         let (_, emote) = futures::future::try_join(

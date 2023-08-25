@@ -1,4 +1,4 @@
-use crate::{chat::command::ChatCommand, AppAccessToken, RedisConn};
+use crate::{chat::command::ChatCommand, AppAccessToken, RedisPool};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -14,7 +14,7 @@ impl ChatCommand for About {
         &mut self,
         msg: PrivmsgMessage,
         _pool: &PgPool,
-        _: &mut RedisConn,
+        _: RedisPool,
         _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         Ok(format!("@{}, I'm a bot made for rewards.nerixyz.de by @nerixyz in Rust {rustc_info} ({build_profile}) 📝 github.com/Nerixyz/rewards",

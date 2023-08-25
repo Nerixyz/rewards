@@ -1,6 +1,9 @@
-use crate::services::{
-    emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
-    ffz::requests as ffz,
+use crate::{
+    services::{
+        emotes::{Emote, EmoteEnvData, EmoteId, EmoteInitialData, EmoteRW},
+        ffz::requests as ffz,
+    },
+    RedisPool,
 };
 use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
@@ -144,6 +147,7 @@ impl EmoteRW for FfzEmotes {
     async fn remove_emote(
         platform_id: &usize,
         emote_id: &usize,
+        _: &RedisPool,
     ) -> AnyResult<()> {
         ffz::delete_emote(*platform_id, *emote_id).await
     }
@@ -152,6 +156,7 @@ impl EmoteRW for FfzEmotes {
         platform_id: &usize,
         emote_id: &usize,
         _overwritten_name: Option<&str>,
+        redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         ffz::add_emote(*platform_id, *emote_id).await
     }
@@ -160,12 +165,14 @@ impl EmoteRW for FfzEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         _pool: &PgPool,
+        redis_pool: &RedisPool,
     ) -> AnyResult<String> {
         let room = ffz::get_room(broadcaster_id).await?;
         let (_, emote) = futures::future::try_join(
             Self::remove_emote(
                 &room.room._id,
                 &emote_id.parse::<Self::EmoteId>()?,
+                redis_pool,
             ),
             ffz::get_emote(emote_id),
         )

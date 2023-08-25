@@ -33,7 +33,7 @@ use crate::{
     },
     twitch,
     twitch::requests::{get_chat_settings, timeout_user, update_chat_settings},
-    TimeoutActor,
+    RedisPool, TimeoutActor,
 };
 use config::CONFIG;
 use models::{
@@ -206,7 +206,12 @@ pub async fn swap<RW>(
     extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     data: SwapRewardData,
-    (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
+    (db, redis_pool, irc, discord): (
+        PgPool,
+        RedisPool,
+        Addr<IrcActor>,
+        Addr<DiscordActor>,
+    ),
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
@@ -216,8 +221,15 @@ where
 {
     let (broadcaster, user) = get_reply_data(&redemption);
     let should_reply = data.reply;
-    let res =
-        execute_swap::<RW>(extractor, redemption, data, &db, discord).await;
+    let res = execute_swap::<RW>(
+        extractor,
+        redemption,
+        data,
+        &db,
+        &redis_pool,
+        discord,
+    )
+    .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
         &irc,
@@ -231,7 +243,12 @@ pub async fn slot<RW>(
     extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     slot: SlotRewardData,
-    (db, irc, discord): (PgPool, Addr<IrcActor>, Addr<DiscordActor>),
+    (db, redis, irc, discord): (
+        PgPool,
+        RedisPool,
+        Addr<IrcActor>,
+        Addr<DiscordActor>,
+    ),
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
@@ -241,7 +258,8 @@ where
     let (broadcaster, user) = get_reply_data(&redemption);
     let should_reply = slot.reply;
     let res =
-        execute_slot::<RW>(extractor, redemption, slot, &db, discord).await;
+        execute_slot::<RW>(extractor, redemption, slot, &db, &redis, discord)
+            .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
         &irc,

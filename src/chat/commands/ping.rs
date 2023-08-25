@@ -1,4 +1,4 @@
-use crate::{chat::command::ChatCommand, AppAccessToken, RedisConn};
+use crate::{chat::command::ChatCommand, AppAccessToken, RedisPool};
 use anyhow::Result as AnyResult;
 use async_trait::async_trait;
 use sqlx::PgPool;
@@ -14,7 +14,7 @@ impl ChatCommand for Ping {
         &mut self,
         msg: PrivmsgMessage,
         _pool: &PgPool,
-        _: &mut RedisConn,
+        _: RedisPool,
         _: Arc<RwLock<AppAccessToken>>,
     ) -> AnyResult<String> {
         Ok(format!("@{}, 🤖 Pong! ⏱ Uptime: {uptime} 📜 Git: {git_info} 🛠 Compiled with Rust {rustc_info} on 🖥 {build_info} 📦 {build_profile}",
