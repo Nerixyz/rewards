@@ -89,7 +89,7 @@ pub struct SlotRewardData {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SwapRewardData {
-    pub limit: Option<u8>,
+    pub limit: Option<u16>,
     #[serde(default = "always_true")]
     pub allow_unlisted: bool,
     /// Only controls the "ok" case
