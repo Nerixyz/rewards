@@ -179,7 +179,7 @@ where
 
 pub async fn update_swap_limit<RW>(
     broadcaster_id: &str,
-    limit: u8,
+    limit: u16,
     pool: &PgPool,
     redis_pool: &RedisPool,
 ) -> AnyResult<()>
