@@ -156,7 +156,7 @@ impl EmoteRW for FfzEmotes {
         platform_id: &usize,
         emote_id: &usize,
         _overwritten_name: Option<&str>,
-        redis_pool: &RedisPool,
+        _redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         ffz::add_emote(*platform_id, *emote_id).await
     }

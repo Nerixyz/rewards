@@ -137,7 +137,7 @@ impl EmoteRW for BttvEmotes {
         platform_id: &String,
         emote_id: &String,
         _overwritten_name: Option<&str>,
-        redis_pool: &RedisPool,
+        _redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         bttv::add_shared_emote(emote_id, platform_id).await?;
         Ok(())
