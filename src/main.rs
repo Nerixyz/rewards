@@ -74,9 +74,12 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Connecting to database");
 
-    let mut pool_options: PgConnectOptions =
-        (&CONFIG.db).try_into().expect("invalid db config");
-    pool_options.log_statements(LevelFilter::Debug);
+    let pool_options = CONFIG
+        .db
+        .url
+        .parse::<PgConnectOptions>()
+        .expect("invalid db config")
+        .log_statements(LevelFilter::Debug);
     let pg_pool = PgPool::connect_with(pool_options)
         .await
         .expect("Could not connect to database");

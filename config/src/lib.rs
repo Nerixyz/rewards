@@ -2,7 +2,7 @@ use anyhow::Result as AnyResult;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use sqlx::postgres::PgConnectOptions;
-use std::{collections::HashMap, convert::TryFrom, str::FromStr};
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -162,20 +162,12 @@ impl DebugOverrides {
     }
 }
 
-impl TryFrom<&DbConfig> for PgConnectOptions {
-    type Error = <Self as FromStr>::Err;
-
-    fn try_from(c: &DbConfig) -> Result<Self, Self::Error> {
-        Self::from_str(&c.url)
-    }
-}
-
 lazy_static! {
     pub static ref CONFIG: Config = read_config().unwrap();
 }
 
 /// This blocks!
 fn read_config() -> AnyResult<Config> {
-    let config = toml::from_slice(&std::fs::read("config.toml")?)?;
+    let config = toml::from_str(&std::fs::read_to_string("config.toml")?)?;
     Ok(config)
 }
