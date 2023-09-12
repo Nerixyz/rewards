@@ -24,7 +24,7 @@ impl ConfigEntry {
             self.key,
             Json(&self.value) as _
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
