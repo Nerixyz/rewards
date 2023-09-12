@@ -123,7 +123,7 @@ impl Editor {
             broadcaster_id,
             editor_name
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -145,7 +145,7 @@ impl Editor {
             broadcaster_name,
             editor_id
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;

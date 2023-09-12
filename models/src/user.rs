@@ -127,7 +127,7 @@ impl User {
             self.scopes,
             self.name
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -148,7 +148,7 @@ impl User {
             access_token,
             refresh_token
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -193,7 +193,7 @@ impl User {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!("DELETE FROM users WHERE id = $1", id)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
 
         tx.commit().await?;

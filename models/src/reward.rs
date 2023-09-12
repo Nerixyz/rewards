@@ -279,7 +279,7 @@ impl Reward {
             Json(&self.data) as _,
             self.live_delay
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -295,7 +295,7 @@ impl Reward {
             Json(self.data.clone()) as _,
             self.live_delay
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -314,7 +314,7 @@ impl Reward {
             id,
             unpause_at
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -325,7 +325,7 @@ impl Reward {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!("DELETE FROM rewards WHERE id = $1", id)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
 
         tx.commit().await?;
