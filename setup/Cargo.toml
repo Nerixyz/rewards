@@ -11,7 +11,7 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dialoguer = "0.10.2"
+dialoguer = "0.11.0"
 twitch_oauth2 = { version = "0.12.6", features = ["reqwest"] }
 tokio = { version = "1", features = ["macros", "fs"] }
 reqwest = "0.11"
