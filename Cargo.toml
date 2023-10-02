@@ -10,8 +10,8 @@ members = [".", "setup", "models", "config"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-deadpool-postgres = "0.10"
-sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio-native-tls", "macros", "json", "chrono"] }
+deadpool-postgres = "0.11"
+sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-native-tls", "macros", "json", "chrono"] }
 
 models = { path = "models" }
 config = { path = "config" }
@@ -36,7 +36,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.12"
 
-deadpool-redis = { version = "0.12", default-features = false, features = ["rt_tokio_1"] }
+deadpool-redis = { version = "0.13", default-features = false, features = ["rt_tokio_1"] }
 
 dotenv_codegen = "0.15"
 dotenv = "0.15"
