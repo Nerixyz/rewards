@@ -41,10 +41,10 @@ deadpool-redis = { version = "0.13", default-features = false, features = ["rt_t
 dotenv_codegen = "0.15"
 dotenv = "0.15"
 
-cookie = "0.17"
+cookie = "0.18"
 reqwest = { version = "0.11", features = ["cookies"] }
 
-jsonwebtoken = "8.1"
+jsonwebtoken = "9.1"
 
 humantime = "2.1"
 chrono = "0.4"
