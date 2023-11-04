@@ -16,7 +16,7 @@ use crate::{
     log_err,
     services::{
         emotes::{
-            execute::{execute_slot, execute_swap},
+            execute::{execute_remove_emote, execute_slot, execute_swap},
             Emote, EmoteRW,
         },
         ivr,
@@ -38,7 +38,8 @@ use crate::{
 use config::CONFIG;
 use models::{
     reward::{
-        SlotRewardData, SpotifyPlayOptions, SwapRewardData, TimeoutRewardData,
+        RemEmoteRewardData, SlotRewardData, SpotifyPlayOptions, SwapRewardData,
+        TimeoutRewardData,
     },
     timed_mode,
     user::User,
@@ -260,6 +261,34 @@ where
     let res =
         execute_slot::<RW>(extractor, redemption, slot, &db, &redis, discord)
             .await;
+    reply_to_redemption(
+        res.map(|r| should_reply.then_some(r)),
+        &irc,
+        broadcaster,
+        user,
+    )
+    .await
+}
+
+pub async fn rem_emote<RW>(
+    redemption: Redemption,
+    data: RemEmoteRewardData,
+    (db, redis, irc, discord): (
+        PgPool,
+        RedisPool,
+        Addr<IrcActor>,
+        Addr<DiscordActor>,
+    ),
+) -> AnyResult<()>
+where
+    RW: EmoteRW,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display,
+{
+    let (broadcaster, user) = get_reply_data(&redemption);
+    let should_reply = data.reply;
+    let res =
+        execute_remove_emote::<RW>(redemption, &db, &redis, discord).await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
         &irc,

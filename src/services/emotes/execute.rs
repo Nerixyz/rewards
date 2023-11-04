@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
-use anyhow::Result as AnyResult;
+use anyhow::{anyhow, Result as AnyResult};
 use sqlx::PgPool;
 
 use crate::{
     actors::discord::DiscordActor,
+    chat::parse::opt_next_space,
     embed_builder, send_discord,
     services::{
         emotes::{slots, swap, Emote, EmoteRW},
@@ -160,4 +161,62 @@ where
     );
 
     Ok(msg)
+}
+
+pub async fn execute_remove_emote<RW>(
+    redemption: Redemption,
+    pool: &PgPool,
+    redis_pool: &RedisPool,
+    discord: Addr<DiscordActor>,
+) -> AnyResult<String>
+where
+    RW: EmoteRW,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: Display,
+{
+    let name = opt_next_space(&redemption.user_input).0;
+    let broadcaster: String = redemption.broadcaster_user_login.take();
+    let user: String = redemption.user_login.take();
+
+    log::info!(
+        "Removing {:?} emote {} from {}",
+        RW::platform(),
+        name,
+        broadcaster
+    );
+
+    let emotes = RW::get_emotes(redemption.broadcaster_user_id.as_ref(), pool)
+        .await
+        .map_err(|e| anyhow!("Failed to list emotes in channel ({e})"))?;
+    let Some(emote) = emotes.iter().find(|e| e.name() == name) else {
+        return Err(anyhow!("This {} emote isn't added!", RW::platform()));
+    };
+    // TODO: ugh
+    let emote_id = emote.id().to_string();
+    RW::remove_emote_from_broadcaster(
+        redemption.broadcaster_user_id.as_str(),
+        &emote_id,
+        pool,
+        redis_pool,
+    )
+    .await
+    .map_err(|e| {
+        anyhow!("Failed to remove emote from {} ({e})", RW::platform())
+    })?;
+
+    send_discord!(
+        discord,
+        redemption.broadcaster_user_id.take(),
+        embed_builder!(
+            "Emotes",
+            "Removed an emote",
+            0x00c8af,
+            "User" = user.clone(),
+            "Removed" = name;
+            image = Some(RW::format_emote_url(&emote_id)),
+            url = Some(RW::format_emote_page(&emote_id)),
+        )
+    );
+
+    Ok(format!("🗑 Removed {}", name))
 }

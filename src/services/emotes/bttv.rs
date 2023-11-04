@@ -120,6 +120,18 @@ impl EmoteRW for BttvEmotes {
         })
     }
 
+    async fn get_emotes(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Vec<Self::Emote>> {
+        let bttv_id = get_or_fetch_id(broadcaster_id, pool).await?;
+
+        let bttv_user = bttv::get_user(&bttv_id)
+            .map_err(|_| AnyError::msg("No such user."))
+            .await?;
+        Ok(bttv_user.shared_emotes)
+    }
+
     async fn get_emote_by_id(emote_id: &String) -> AnyResult<bttv::BttvEmote> {
         bttv::get_emote(emote_id).await
     }

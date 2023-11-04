@@ -26,7 +26,8 @@
     <SESettings v-if="['SubOnly', 'EmoteOnly'].includes(actionType)" v-model="actionData" @update:warn="updateWarn" />
     <EmoteSlotSettings v-else-if="['BttvSlot', 'FfzSlot', 'SevenTvSlot'].includes(actionType)" v-model="actionData" />
     <EmoteSwapSettings v-else-if="['BttvSwap', 'FfzSwap', 'SevenTvSwap'].includes(actionType)" v-model="actionData" />
-    <SpotifyPlayOptions v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(action)" v-model="actionData" />
+    <SpotifyPlayOptions v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(actionType)" v-model="actionData" />
+    <RemEmoteSettings v-else-if="actionType === 'RemEmote'" v-model="actionData" />
   </div>
 
   <ActionDialog v-model:action="actionType" v-model:open="dialogOpen" />
@@ -40,6 +41,7 @@ import TimeoutSettings from './rewards/TimeoutSettings.vue';
 import EmoteSlotSettings from './rewards/EmoteSlotSettings.vue';
 import EmoteSwapSettings from './rewards/EmoteSwapSettings.vue';
 import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
+import RemEmoteSettings from './rewards/RemEmoteSettings.vue';
 import ActionDialog from './ActionDialog.vue';
 import { StaticRewardData } from '../api/rewards-data';
 import { RewardDataMap } from '../api/types';
@@ -55,6 +57,7 @@ export default defineComponent({
     EmoteSlotSettings,
     EmoteSwapSettings,
     SpotifyPlayOptions,
+    RemEmoteSettings,
   },
   props: {
     action: {

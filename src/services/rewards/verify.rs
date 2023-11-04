@@ -74,6 +74,22 @@ pub async fn verify_reward(
         | RewardData::SpotifyPlay(_) => {
             spotify::get_spotify_token(broadcaster_id, pool).await?;
         }
+        RewardData::RemEmote(d) => match d.platform {
+            models::emote::SlotPlatform::Bttv => {
+                bttv::verify_user(broadcaster_id, pool).await?;
+            }
+            models::emote::SlotPlatform::Ffz => {
+                let user = get_user(broadcaster_id.to_string(), token).await?;
+                if !is_editor_in(user.login.as_ref()).await {
+                    return Err(AnyError::msg(
+                        "RewardMore isn't an editor for the user",
+                    ));
+                }
+            }
+            models::emote::SlotPlatform::SevenTv => {
+                seven_tv::verify_user(broadcaster_id).await?;
+            }
+        },
     };
     Ok(())
 }

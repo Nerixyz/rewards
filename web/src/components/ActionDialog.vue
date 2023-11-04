@@ -22,6 +22,12 @@
         <ActionType v-model="rewardAction" action="FfzSlot" action-name="FFZ" description="Emote slots on FFZ" />
         <ActionType v-model="rewardAction" action="SevenTvSlot" action-name="7TV" description="Emote slots on 7TV" />
       </ActionCategory>
+      <ActionType
+        v-model="rewardAction"
+        action="RemEmote"
+        action-name="Remove Emote"
+        description="Remove a 7TV/BTTV/FFZ emote from your channel."
+      />
       <ActionCategory
         name="Spotify"
         description="These rewards require Spotify Premium since they control the Spotify player."

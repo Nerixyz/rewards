@@ -1,5 +1,12 @@
 import { VRewardModel } from './model-conversion';
-import { SlotRewardData, RewardDataMap, SpotifyPlayOptions, SwapRewardData, TimeoutRewardData } from './types';
+import {
+  SlotRewardData,
+  RewardDataMap,
+  SpotifyPlayOptions,
+  SwapRewardData,
+  TimeoutRewardData,
+  RemEmoteRewardData,
+} from './types';
 
 interface StaticData<K extends keyof RewardDataMap> {
   display: string;
@@ -100,6 +107,15 @@ export const StaticRewardData: { [K in keyof RewardDataMap]: StaticData<K> } = {
       allow_explicit: false,
     },
   },
+  RemEmote: {
+    display: 'Remote Emote',
+    inputRequired: true,
+    validOptions: remEmoteValid,
+    defaultOptions: {
+      platform: 'SevenTv',
+      reply: true,
+    },
+  },
 };
 
 function timeoutValid(opts: unknown): boolean {
@@ -127,6 +143,14 @@ function emoteSwapValid(opts: unknown): boolean {
 function spotifyPlayValid(opts: unknown): boolean {
   if (typeof opts !== 'object' || opts === null) return false;
   return typeof (opts as SpotifyPlayOptions).allow_explicit === 'boolean';
+}
+
+function remEmoteValid(opts: unknown): boolean {
+  if (typeof opts !== 'object' || opts === null) return false;
+  return (
+    typeof (opts as RemEmoteRewardData).platform == 'string' ||
+    ['SevenTv', 'Bttv', 'Ffz'].includes((opts as RemEmoteRewardData).platform)
+  );
 }
 
 export const RewardTypes = Object.entries(StaticRewardData).map(([key, { display }]) => ({ value: key, display }));

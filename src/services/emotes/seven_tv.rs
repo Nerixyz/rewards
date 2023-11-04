@@ -106,6 +106,17 @@ impl EmoteRW for SevenTvEmotes {
         Ok(user.emote_set.id)
     }
 
+    async fn get_emotes(
+        broadcaster_id: &str,
+        _pool: &PgPool,
+    ) -> AnyResult<Vec<Self::Emote>> {
+        let user = seven_tv::get_user(broadcaster_id)
+            .map_err(|_| AnyError::msg("No such user?!"))
+            .await?;
+
+        Ok(user.emote_set.emotes)
+    }
+
     async fn get_emote_by_id(
         emote_id: &Self::EmoteId,
     ) -> AnyResult<Self::Emote> {
