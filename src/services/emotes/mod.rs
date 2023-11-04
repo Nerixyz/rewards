@@ -66,6 +66,10 @@ pub trait EmoteRW {
         pool: &PgPool,
     ) -> AnyResult<Self::PlatformId>;
 
+    async fn get_emotes(
+        broadcaster_id: &str,
+        pool: &PgPool,
+    ) -> AnyResult<Vec<Self::Emote>>;
     async fn get_emote_by_id(
         emote_id: &Self::EmoteId,
     ) -> AnyResult<Self::Emote>;

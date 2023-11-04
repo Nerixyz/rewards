@@ -130,6 +130,24 @@ impl EmoteRW for FfzEmotes {
         })
     }
 
+    async fn get_emotes(
+        broadcaster_id: &str,
+        _pool: &PgPool,
+    ) -> AnyResult<Vec<Self::Emote>> {
+        let room = ffz::get_room(broadcaster_id)
+            .map_err(|e| {
+                log::warn!("err: {}", e);
+                AnyError::msg("No such ffz-room")
+            })
+            .await?;
+
+        Ok(room
+            .sets
+            .into_iter()
+            .flat_map(|(_, set)| set.emoticons)
+            .collect())
+    }
+
     async fn get_platform_id(
         broadcaster_id: &str,
         _pool: &PgPool,

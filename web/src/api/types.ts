@@ -97,6 +97,7 @@ export interface RewardDataMap {
   SpotifySkip: null;
   SpotifyPlay: SpotifyPlayOptions;
   SpotifyQueue: SpotifyPlayOptions;
+  RemEmote: RemEmoteRewardData;
 }
 
 export interface TimeoutRewardData {
@@ -127,6 +128,11 @@ export interface InternalCustomReward {
   data: RewardData;
   live_delay?: string;
   auto_accept: boolean;
+}
+
+export interface RemEmoteRewardData {
+  platform: 'Bttv' | 'Ffz' | 'SevenTv';
+  reply?: boolean;
 }
 
 export interface Reward {

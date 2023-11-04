@@ -157,6 +157,40 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                 (self.db.clone(), self.irc.clone()),
             )
             .boxed(),
+            RewardData::RemEmote(opts) => {
+                let args = (
+                    self.db.clone(),
+                    self.redis.clone(),
+                    self.irc.clone(),
+                    self.discord.clone(),
+                );
+                match opts.platform {
+                    models::emote::SlotPlatform::Bttv => {
+                        execute::rem_emote::<BttvEmotes>(
+                            msg.redemption,
+                            opts,
+                            args,
+                        )
+                        .boxed()
+                    }
+                    models::emote::SlotPlatform::Ffz => {
+                        execute::rem_emote::<FfzEmotes>(
+                            msg.redemption,
+                            opts,
+                            args,
+                        )
+                        .boxed()
+                    }
+                    models::emote::SlotPlatform::SevenTv => {
+                        execute::rem_emote::<SevenTvEmotes>(
+                            msg.redemption,
+                            opts,
+                            args,
+                        )
+                        .boxed()
+                    }
+                }
+            }
         }
     }
 }

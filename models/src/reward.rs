@@ -66,6 +66,8 @@ pub enum RewardData {
     SpotifyQueue(SpotifyPlayOptions),
     #[display(fmt = "spotify::play")]
     SpotifyPlay(SpotifyPlayOptions),
+    #[display(fmt = "rem-emote")]
+    RemEmote(RemEmoteRewardData),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,6 +94,15 @@ pub struct SwapRewardData {
     pub limit: Option<u16>,
     #[serde(default = "always_true")]
     pub allow_unlisted: bool,
+    /// Only controls the "ok" case
+    /// Errors are always printed
+    #[serde(default = "always_true")]
+    pub reply: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RemEmoteRewardData {
+    pub platform: SlotPlatform,
     /// Only controls the "ok" case
     /// Errors are always printed
     #[serde(default = "always_true")]
