@@ -146,10 +146,9 @@ function spotifyPlayValid(opts: unknown): boolean {
 }
 
 function remEmoteValid(opts: unknown): boolean {
-  if (typeof opts !== 'object') return false;
+  if (typeof opts !== 'object' || opts === null) return false;
   return (
-    opts === null ||
-    typeof (opts as RemEmoteRewardData).platform !== 'string' ||
+    typeof (opts as RemEmoteRewardData).platform == 'string' ||
     ['SevenTv', 'Bttv', 'Ffz'].includes((opts as RemEmoteRewardData).platform)
   );
 }

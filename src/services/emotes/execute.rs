@@ -201,7 +201,7 @@ where
     )
     .await
     .map_err(|e| {
-        anyhow!("Failed to remote emote from {} ({e})", RW::platform())
+        anyhow!("Failed to remove emote from {} ({e})", RW::platform())
     })?;
 
     send_discord!(

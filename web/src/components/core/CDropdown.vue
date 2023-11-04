@@ -12,14 +12,14 @@
 
       <transition
         enter-active-class="transition duration-100 ease-out"
-        enter-from-class="opacity-0 scale-90"
+        enter-from-class="opacity-80 scale-90"
         enter-to-class="opacity-100 scale-100"
         leave-active-class="transition duration-100 ease-in"
         leave-from-class="opacity-100 scale-100"
         leave-to-class="opacity-0 scale-75"
       >
         <ListboxOptions
-          class="transform transition-transform absolute origin-top w-full mt-1 text-base bg-gray-500 bg-opacity-20 backdrop-filter backdrop-blur-md border border-gray-900 border-opacity-20 rounded-md shadow-lg"
+          class="transform transition-transform absolute origin-top z-10 w-full mt-1 text-base bg-gray-500 bg-opacity-20 backdrop-filter backdrop-blur-md border border-gray-900 border-opacity-20 rounded-md shadow-lg"
         >
           <ListboxOption
             v-for="option of options"
