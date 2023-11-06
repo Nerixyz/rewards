@@ -2418,18 +2418,18 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.190"
+version = "1.0.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91d3c334ca1ee894a2c6f6ad698fe8c435b76d504b13d436f0685d648d6d96f7"
+checksum = "a834c4821019838224821468552240d4d95d14e751986442c816572d39a080c9"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.190"
+version = "1.0.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c5609f394e5c2bd7fc51efda478004ea80ef42fee983d5c67a65e34f32c0e3"
+checksum = "46fa52d5646bce91b680189fe5b1c049d2ea38dabb4e2e7c8d00ca12cfbfbcfd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2449,10 +2449,11 @@ dependencies = [
 
 [[package]]
 name = "serde_path_to_error"
-version = "0.1.11"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7f05c1d5476066defcdfacce1f52fc3cae3af1d3089727100c02ae92e5abbe0"
+checksum = "4beec8bce849d58d06238cb50db2e1c417cfeafa4c63f692b15c82b7c80f8335"
 dependencies = [
+ "itoa",
  "serde",
 ]
 
@@ -2501,7 +2502,7 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "toml",
- "twitch_oauth2 0.12.7",
+ "twitch_oauth2 0.12.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3248,7 +3249,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.7"
-source = "git+https://github.com/twitch-rs/twitch_api.git#963073e959d4db2c32ab3c3e91198ca962b2afc2"
+source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3259,35 +3260,16 @@ dependencies = [
  "once_cell",
  "reqwest",
  "serde",
+ "serde_derive",
  "serde_json",
  "serde_path_to_error",
  "thiserror",
  "tower",
- "twitch_oauth2 0.12.4",
- "twitch_types 0.4.2",
+ "twitch_oauth2 0.12.7 (git+https://github.com/twitch-rs/twitch_api.git)",
+ "twitch_types",
  "typed-builder",
  "url",
  "version_check",
-]
-
-[[package]]
-name = "twitch_oauth2"
-version = "0.12.4"
-source = "git+https://github.com/twitch-rs/twitch_api.git#963073e959d4db2c32ab3c3e91198ca962b2afc2"
-dependencies = [
- "aliri_braid",
- "async-trait",
- "base64 0.21.5",
- "displaydoc",
- "http",
- "once_cell",
- "rand",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "twitch_types 0.4.2",
- "url",
 ]
 
 [[package]]
@@ -3308,23 +3290,35 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror",
- "twitch_types 0.4.3",
+ "twitch_types",
+ "url",
+]
+
+[[package]]
+name = "twitch_oauth2"
+version = "0.12.7"
+source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
+dependencies = [
+ "aliri_braid",
+ "async-trait",
+ "base64 0.21.5",
+ "displaydoc",
+ "http",
+ "once_cell",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
+ "twitch_types",
  "url",
 ]
 
 [[package]]
 name = "twitch_types"
-version = "0.4.2"
-source = "git+https://github.com/twitch-rs/twitch_api.git#963073e959d4db2c32ab3c3e91198ca962b2afc2"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "twitch_types"
 version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b01231381de8dc81c90357912c3883e94f5ed420278b460117e170a2d620f2b"
+source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
 dependencies = [
  "serde",
  "serde_derive",
@@ -3332,13 +3326,22 @@ dependencies = [
 
 [[package]]
 name = "typed-builder"
-version = "0.14.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64cba322cb9b7bc6ca048de49e83918223f35e7a86311267013afff257004870"
+checksum = "e47c0496149861b7c95198088cbf36645016b1a0734cf350c50e2a38e070f38a"
+dependencies = [
+ "typed-builder-macro",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "982ee4197351b5c9782847ef5ec1fdcaf50503fb19d68f9771adae314e72b492"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.32",
 ]
 
 [[package]]
