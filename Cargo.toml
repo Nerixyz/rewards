@@ -11,7 +11,7 @@ members = [".", "setup", "models", "config"]
 
 [dependencies]
 deadpool-postgres = "0.11"
-sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-native-tls", "macros", "json", "chrono"] }
+sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-native-tls", "macros", "json", "chrono"] }
 
 models = { path = "models" }
 config = { path = "config" }
