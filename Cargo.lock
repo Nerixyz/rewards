@@ -61,9 +61,9 @@ dependencies = [
 
 [[package]]
 name = "actix-files"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc517050e349356239da19a5e100cd61c21658b3ae183b02c1c6799c581bddf3"
+checksum = "bf0bdd6ff79de7c9a021f5d9ea79ce23e108d8bfc9b49b5b4a2cf6fad5a35212"
 dependencies = [
  "actix-http",
  "actix-service",
@@ -93,7 +93,7 @@ dependencies = [
  "actix-service",
  "actix-utils",
  "ahash",
- "base64 0.21.6",
+ "base64 0.21.7",
  "bitflags 2.4.0",
  "brotli",
  "bytes",
@@ -465,9 +465,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.21.6"
+version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c79fed4cdb43e993fcdadc7e58a09fd0e3e649c4436fa11da71c9f1f3ee7feb9"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
 name = "base64ct"
@@ -1543,7 +1543,7 @@ version = "9.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c7ea04a7c5c055c175f189b6dc6ba036fd62306b58c66c9f6389036c503a3f4"
 dependencies = [
- "base64 0.21.6",
+ "base64 0.21.7",
  "js-sys",
  "pem",
  "ring",
@@ -1930,7 +1930,7 @@ version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3163d2912b7c3b52d651a055f2c7eec9ba5cd22d26ef75b8dd3a59980b185923"
 dependencies = [
- "base64 0.21.6",
+ "base64 0.21.7",
  "serde",
 ]
 
@@ -2032,7 +2032,7 @@ version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49b6c5ef183cd3ab4ba005f1ca64c21e8bd97ce4699cfea9e8d9a2c4958ca520"
 dependencies = [
- "base64 0.21.6",
+ "base64 0.21.7",
  "byteorder",
  "bytes",
  "fallible-iterator",
@@ -2223,7 +2223,7 @@ version = "0.11.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b1ae8d9ac08420c66222fb9096fc5de435c3c48542bc5336c51892cffafb41"
 dependencies = [
- "base64 0.21.6",
+ "base64 0.21.7",
  "bytes",
  "cookie 0.16.2",
  "cookie_store",
@@ -2270,7 +2270,7 @@ dependencies = [
  "anyhow",
  "async-stream",
  "async-trait",
- "base64 0.21.6",
+ "base64 0.21.7",
  "chrono",
  "config",
  "cookie 0.18.0",
@@ -2532,7 +2532,7 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "toml",
- "twitch_oauth2 0.12.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "twitch_oauth2 0.12.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2784,7 +2784,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e37195395df71fd068f6e2082247891bc11e3289624bbc776a0cdfa1ca7f1ea4"
 dependencies = [
  "atoi",
- "base64 0.21.6",
+ "base64 0.21.7",
  "bitflags 2.4.0",
  "byteorder",
  "bytes",
@@ -2827,7 +2827,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6ac0ac3b7ccd10cc96c7ab29791a7dd236bd94021f31eec7ba3d46a74aa1c24"
 dependencies = [
  "atoi",
- "base64 0.21.6",
+ "base64 0.21.7",
  "bitflags 2.4.0",
  "byteorder",
  "chrono",
@@ -3281,7 +3281,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.7"
-source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
+source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3297,7 +3297,7 @@ dependencies = [
  "serde_path_to_error",
  "thiserror",
  "tower",
- "twitch_oauth2 0.12.7 (git+https://github.com/twitch-rs/twitch_api.git)",
+ "twitch_oauth2 0.12.8 (git+https://github.com/twitch-rs/twitch_api.git)",
  "twitch_types",
  "typed-builder",
  "url",
@@ -3306,13 +3306,13 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.12.7"
+version = "0.12.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "385eb5ddeda9a75ebd736d9cfd3cc303cde6f2238efa8d34d95b8d18a06a8b1f"
+checksum = "233a22d1cb2882ff1a97eb93e61f9010342fa743ba3864f0c46bea8851e28f91"
 dependencies = [
  "aliri_braid",
  "async-trait",
- "base64 0.21.6",
+ "base64 0.21.7",
  "displaydoc",
  "http",
  "once_cell",
@@ -3328,12 +3328,12 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.12.7"
-source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
+version = "0.12.8"
+source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
 dependencies = [
  "aliri_braid",
  "async-trait",
- "base64 0.21.6",
+ "base64 0.21.7",
  "displaydoc",
  "http",
  "once_cell",
@@ -3349,8 +3349,8 @@ dependencies = [
 
 [[package]]
 name = "twitch_types"
-version = "0.4.3"
-source = "git+https://github.com/twitch-rs/twitch_api.git#f7168f41b24b3f6501c0e8a6e1806f06e001fa02"
+version = "0.4.4"
+source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
 dependencies = [
  "serde",
  "serde_derive",
