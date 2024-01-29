@@ -613,9 +613,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.31"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
+checksum = "9f13690e35a5e4ace198e7beea2895d29f3a9cc55015fcebe6336bd2010af9eb"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -623,7 +623,7 @@ dependencies = [
  "num-traits",
  "serde",
  "wasm-bindgen",
- "windows-targets 0.48.1",
+ "windows-targets 0.52.0",
 ]
 
 [[package]]
@@ -1003,9 +1003,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9eeb342678d785662fd2514be38c459bb925f02b68dd2a3e0f21d7ef82d979dd"
+checksum = "05e7cf40684ae96ade6232ed84582f40ce0a66efcd43a5117aef610534f8e0b8"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1559,9 +1559,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -2016,18 +2016,18 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fda4ed1c6c173e3fc7a83629421152e01d7b1f9b7f65fb301e490e8cfc656422"
+checksum = "0302c4a0442c456bd56f841aee5c3bfd17967563f6fadc9ceb9f9c23cf3807e0"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4359fd9c9171ec6e8c62926d6faaf553a8dc3f64e1507e76da7911b4f6a04405"
+checksum = "266c042b60c9c76b8d53061e52b2e0d1116abc57cefc8c5cd671619a56ac3690"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2335,7 +2335,7 @@ dependencies = [
  "hex",
  "hmac",
  "humantime",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "jsonwebtoken",
  "lazy_static",
  "log",
@@ -2482,18 +2482,18 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.195"
+version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63261df402c67811e9ac6def069e4786148c4563f4b50fd4bf30aa370d626b02"
+checksum = "870026e60fa08c69f064aa766c10f10b1d62db9ccd4d0abb206472bee0ce3b32"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.195"
+version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46fe8f8603d81ba86327b23a2e9cdf49e1255fb94a4c5f297f6ee0547178ea2c"
+checksum = "33c85360c95e7d137454dc81d9a4ed2b8efd8fbe19cee57357b32b9771fccb67"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2502,9 +2502,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.111"
+version = "1.0.113"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
+checksum = "69801b70b1c3dac963ecb03a364ba0ceda9cf60c71cfe475e99864759c8b8a79"
 dependencies = [
  "itoa",
  "ryu",
@@ -2566,7 +2566,7 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "toml",
- "twitch_oauth2 0.12.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "twitch_oauth2 0.12.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3306,7 +3306,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.7"
-source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
+source = "git+https://github.com/twitch-rs/twitch_api.git#043daefebb787c410c341e21cba4e1fbb01d5ebb"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3322,7 +3322,7 @@ dependencies = [
  "serde_path_to_error",
  "thiserror",
  "tower",
- "twitch_oauth2 0.12.8 (git+https://github.com/twitch-rs/twitch_api.git)",
+ "twitch_oauth2 0.12.9 (git+https://github.com/twitch-rs/twitch_api.git)",
  "twitch_types",
  "typed-builder",
  "url",
@@ -3331,9 +3331,9 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.12.8"
+version = "0.12.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "233a22d1cb2882ff1a97eb93e61f9010342fa743ba3864f0c46bea8851e28f91"
+checksum = "473ca0517fa9510cdf1bfb0d6eba53a7cdd30cfa0ebf870e7cea403387512ada"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3353,8 +3353,8 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.12.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
+version = "0.12.9"
+source = "git+https://github.com/twitch-rs/twitch_api.git#043daefebb787c410c341e21cba4e1fbb01d5ebb"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3375,7 +3375,7 @@ dependencies = [
 [[package]]
 name = "twitch_types"
 version = "0.4.4"
-source = "git+https://github.com/twitch-rs/twitch_api.git#e2bf35f9e34747eb6ff2c11551308f415d833d29"
+source = "git+https://github.com/twitch-rs/twitch_api.git#043daefebb787c410c341e21cba4e1fbb01d5ebb"
 dependencies = [
  "serde",
  "serde_derive",
