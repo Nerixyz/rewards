@@ -16,8 +16,8 @@ sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-native-tls", 
 models = { path = "models" }
 config = { path = "config" }
 
-actix = "0.13.1"
-actix-web = "4.4.1"
+actix = "0.13.2"
+actix-web = "4.5.1"
 actix-files = "0.6.5"
 actix-cors = "0.7.0"
 actix-utils = "3.0.0"
