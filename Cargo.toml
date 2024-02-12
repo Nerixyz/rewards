@@ -16,12 +16,12 @@ sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-native-tls", 
 models = { path = "models" }
 config = { path = "config" }
 
-actix = "0.13.2"
+actix = "0.13.3"
 actix-web = "4.5.1"
 actix-files = "0.6.5"
 actix-cors = "0.7.0"
 actix-utils = "3.0.0"
-actix-web-prom = "0.7.0"
+actix-web-prom = "0.8.0"
 
 twitch-irc = { version = "5.0.1", features = ["refreshing-token-native-tls", "transport-tcp-native-tls", "metrics-collection"] }
 twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", features = ["eventsub", "helix", "twitch_oauth2", "reqwest", "client", "unsupported", "typed-builder"], default-features = false }
@@ -66,7 +66,7 @@ hex = "0.4"
 rand = "0.8"
 regex = "1.10"
 percent-encoding = "2.3"
-either = "1.9"
+either = "1.10"
 url = "2.5"
 
 lazy_static = "1.4"
