@@ -135,15 +135,28 @@ where
     Ok(())
 }
 
+pub struct AddEmoteSlot<'a> {
+    pub broadcaster_id: &'a str,
+    pub reward_id: &'a str,
+    pub slot_data: SlotRewardData,
+    pub emote_id: &'a str,
+    pub override_name: Option<&'a str>,
+    pub redeemed_user_login: &'a str,
+    pub pool: &'a PgPool,
+    pub redis_pool: &'a RedisPool,
+}
+
 pub async fn add_slot_emote<RW>(
-    broadcaster_id: &str,
-    reward_id: &str,
-    slot_data: SlotRewardData,
-    emote_id: &str,
-    override_name: Option<&str>,
-    redeemed_user_login: &str,
-    pool: &PgPool,
-    redis_pool: &RedisPool,
+    AddEmoteSlot {
+        broadcaster_id,
+        reward_id,
+        slot_data,
+        emote_id,
+        override_name,
+        redeemed_user_login,
+        pool,
+        redis_pool,
+    }: AddEmoteSlot<'_>,
 ) -> AnyResult<(String, usize)>
 where
     RW: EmoteRW,

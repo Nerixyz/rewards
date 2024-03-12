@@ -124,16 +124,16 @@ where
         broadcaster
     );
 
-    let res = slots::add_slot_emote::<RW>(
-        redemption.broadcaster_user_id.as_ref(),
-        redemption.reward.id.as_ref(),
+    let res = slots::add_slot_emote::<RW>(slots::AddEmoteSlot {
+        broadcaster_id: redemption.broadcaster_user_id.as_ref(),
+        reward_id: redemption.reward.id.as_ref(),
         slot_data,
-        platform_id,
+        emote_id: platform_id,
         override_name,
-        &user,
+        redeemed_user_login: &user,
         pool,
         redis_pool,
-    )
+    })
     .await?;
 
     let msg = match &res {

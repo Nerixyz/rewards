@@ -46,7 +46,6 @@ use crate::{
 use actix_web_prom::PrometheusMetricsBuilder;
 use config::CONFIG;
 use models::user::User;
-use std::convert::TryInto;
 
 pub type RedisPool = deadpool_redis::Pool;
 pub type RedisConn = deadpool_redis::Connection;

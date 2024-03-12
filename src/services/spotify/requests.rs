@@ -6,6 +6,7 @@ use crate::services::spotify::{
     },
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
+use base64::Engine;
 use config::CONFIG;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
@@ -64,7 +65,7 @@ pub async fn get_token(code: &str) -> AnyResult<AccessTokenResponse> {
             "Authorization",
             format!(
                 "Basic {}",
-                base64::encode(format!(
+                base64::prelude::BASE64_STANDARD.encode(format!(
                     "{}:{}",
                     CONFIG.spotify.client_id, CONFIG.spotify.client_secret
                 ))
@@ -87,7 +88,7 @@ pub async fn refresh_token(
             "Authorization",
             format!(
                 "Basic {}",
-                base64::encode(format!(
+                base64::prelude::BASE64_STANDARD.encode(format!(
                     "{}:{}",
                     CONFIG.spotify.client_id, CONFIG.spotify.client_secret
                 ))

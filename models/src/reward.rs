@@ -214,8 +214,8 @@ impl Reward {
                 RewardData::SevenTvSwap(d) => Some(d),
                 _ => None,
             })
-            .fold(Some(0), |acc, swap| match (acc, &swap.limit) {
-                (Some(acc), Some(lim)) => Some(acc + *lim as usize),
+            .try_fold(0, |acc, swap| match (acc, &swap.limit) {
+                (acc, Some(lim)) => Some(acc + *lim as usize),
                 _ => None,
             });
         Ok(data)

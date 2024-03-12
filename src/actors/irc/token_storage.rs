@@ -33,8 +33,8 @@ impl TokenStorage for PgTokenStorage {
             .send(SaveToken(UserAccessToken {
                 refresh_token: token.refresh_token.clone(),
                 access_token: token.access_token.clone(),
-                created_at: token.created_at.clone(),
-                expires_at: token.expires_at.clone(),
+                created_at: token.created_at,
+                expires_at: token.expires_at,
             }))
             .await?
             .map_err(AnyError::new)

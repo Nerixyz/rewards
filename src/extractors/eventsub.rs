@@ -89,7 +89,7 @@ fn init_read_signature(req: &HttpRequest) -> Option<HmacSha256> {
         .ok()?
         .parse::<DateTime<Utc>>()
         .ok()?;
-    if Utc::now() - timestamp > Duration::minutes(10) {
+    if Utc::now() - timestamp > Duration::try_minutes(10).unwrap_or_default() {
         return None;
     }
     let mut mac =
@@ -135,7 +135,7 @@ async fn read_verify_payload(
     }
 
     Ok(match_event! {
-        channel::ChannelUpdateV1;
+        channel::ChannelUpdateV2;
         channel::ChannelFollowV2;
         channel::ChannelSubscribeV1;
         channel::ChannelCheerV1;
