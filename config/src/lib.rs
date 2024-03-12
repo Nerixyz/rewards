@@ -1,7 +1,6 @@
 use anyhow::Result as AnyResult;
 use lazy_static::lazy_static;
 use serde::Deserialize;
-use sqlx::postgres::PgConnectOptions;
 use std::collections::HashMap;
 
 #[derive(Deserialize)]

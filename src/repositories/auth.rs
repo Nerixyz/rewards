@@ -150,7 +150,7 @@ fn redirect_to_twitch_auth() -> future::Ready<HttpResponse> {
             CONFIG.server.url
         ),
         response_type: "code".to_string(),
-        scope: vec![
+        scope: [
             Scope::ChannelManageRedemptions,
             Scope::ChannelReadRedemptions,
         ]

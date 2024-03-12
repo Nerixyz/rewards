@@ -46,10 +46,10 @@ struct SimpleDbConfig {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
-    let maybe_config = tokio::fs::read("config.toml")
+    let maybe_config = tokio::fs::read_to_string("config.toml")
         .await
         .ok()
-        .and_then(|bytes| toml::from_slice::<SimpleMainConfig>(&bytes).ok());
+        .and_then(|bytes| toml::from_str::<SimpleMainConfig>(&bytes).ok());
 
     println!("Let's get some configuration upfront. If you run this in the main directory with a config.toml file this will be automatic.");
 
@@ -113,7 +113,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Scope::ModerationRead,
         Scope::UserManageBlockedUsers,
         Scope::UserReadBlockedUsers,
-        Scope::UserEditFollows,
         Scope::UserReadFollows,
         Scope::ChannelReadRedemptions,
         Scope::ChannelManageRedemptions,

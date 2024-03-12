@@ -28,19 +28,19 @@ pub fn username(str: &str) -> AnyResult<String> {
         .ok_or_else(|| AnyError::msg("No user submitted"))
 }
 
-pub fn bttv<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+pub fn bttv(s: &str) -> AnyResult<EmoteSpec<'_>> {
     bttv_id(s).map(|id| EmoteSpec {
         id,
         override_name: None,
     })
 }
-pub fn ffz<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+pub fn ffz(s: &str) -> AnyResult<EmoteSpec<'_>> {
     ffz_id(s).map(|id| EmoteSpec {
         id,
         override_name: None,
     })
 }
-pub fn seventv<'a>(s: &'a str) -> AnyResult<EmoteSpec<'a>> {
+pub fn seventv(s: &str) -> AnyResult<EmoteSpec<'_>> {
     seventv_id(s).map(|id| EmoteSpec {
         id,
         override_name: parse_overridden(s),
@@ -123,5 +123,5 @@ fn parse_overridden(s: &str) -> Option<&str> {
         Regex::new("(?: |^)as=([-_A-Za-z(!?&)$+:0-9]{2,100})\\b")
             .expect("must compile")
     });
-    first_capture(s, &*OVERRIDE_REGEX)
+    first_capture(s, &OVERRIDE_REGEX)
 }

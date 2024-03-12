@@ -132,7 +132,7 @@ pub async fn timeout(
         Ok(())
     }
     .await;
-    if matches!(result, Err(_)) {
+    if result.is_err() {
         reply_to_redemption(
             result.map(|_| unreachable!("only errors are printed")),
             &reply_irc_addr,

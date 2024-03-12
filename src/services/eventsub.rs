@@ -12,7 +12,7 @@ use futures::TryStreamExt;
 use models::{reward::RewardToUpdate, user::User};
 use regex::Regex;
 use sqlx::PgPool;
-use std::{convert::TryInto, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use twitch_api::{
     eventsub::{Status, TransportResponse},
@@ -166,15 +166,12 @@ pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
     let client = RHelixClient::default();
 
     while let Some(reward_with_user) = stream.try_next().await? {
-        if let Ok((reward_id, token)) = reward_with_user.try_into() {
-            log_err!(
-                clear_unfulfilled_redemptions_for_id(
-                    reward_id, &token, &client
-                )
+        let (reward_id, token) = reward_with_user.into();
+        log_err!(
+            clear_unfulfilled_redemptions_for_id(reward_id, &token, &client)
                 .await,
-                "Could not clear redemptions for id"
-            );
-        }
+            "Could not clear redemptions for id"
+        );
     }
 
     Ok(())
