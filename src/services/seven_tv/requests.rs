@@ -71,7 +71,7 @@ pub struct SevenEmote {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenUserResponse {
-    pub emote_set: SevenEmoteSet,
+    pub emote_set: Option<SevenEmoteSet>,
     pub user: SevenUser,
 }
 

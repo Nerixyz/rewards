@@ -5,7 +5,7 @@ use crate::{
     },
     RedisPool,
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, bail, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
 use deadpool_redis::redis;
 use futures::TryFutureExt;
@@ -59,8 +59,11 @@ impl EmoteRW for SevenTvEmotes {
 
         let actual_name = overwritten_name.unwrap_or(&emote.name);
 
-        if stv_user
-            .emote_set
+        let Some(stv_set) = stv_user.emote_set else {
+            bail!("No 7TV emote set selected");
+        };
+
+        if stv_set
             .emotes
             .iter()
             .any(|e| e.id == emote.id || e.name == actual_name)
@@ -77,12 +80,12 @@ impl EmoteRW for SevenTvEmotes {
         }
 
         Ok(EmoteInitialData {
-            max_emotes: stv_user.emote_set.capacity,
-            current_emotes: stv_user.emote_set.emotes.len(),
+            max_emotes: stv_set.capacity,
+            current_emotes: stv_set.emotes.len(),
             history_len: history_len as usize,
-            platform_id: stv_user.emote_set.id,
+            platform_id: stv_set.id,
             emote,
-            emotes: stv_user.emote_set.emotes,
+            emotes: stv_set.emotes,
         })
     }
 
@@ -90,11 +93,14 @@ impl EmoteRW for SevenTvEmotes {
         broadcaster_id: &str,
         _platform_id: &Self::PlatformId,
     ) -> AnyResult<EmoteEnvData> {
-        let user = seven_tv::get_user(broadcaster_id).await?;
+        let Some(set) = seven_tv::get_user(broadcaster_id).await?.emote_set
+        else {
+            bail!("No 7TV emote set selected");
+        };
 
         Ok(EmoteEnvData {
-            max_emotes: user.emote_set.capacity,
-            current_emotes: user.emote_set.emotes.len(),
+            max_emotes: set.capacity,
+            current_emotes: set.emotes.len(),
         })
     }
 
@@ -102,19 +108,25 @@ impl EmoteRW for SevenTvEmotes {
         broadcaster_id: &str,
         _pool: &PgPool,
     ) -> AnyResult<Self::PlatformId> {
-        let user = seven_tv::get_user(broadcaster_id).await?;
-        Ok(user.emote_set.id)
+        // XXX: this technically returns the emote set id
+        seven_tv::get_user(broadcaster_id)
+            .map_err(|_| AnyError::msg("No 7TV user found"))
+            .await?
+            .emote_set
+            .ok_or_else(|| anyhow!("No 7TV emote set selected"))
+            .map(|s: seven_tv::SevenEmoteSet| s.id)
     }
 
     async fn get_emotes(
         broadcaster_id: &str,
         _pool: &PgPool,
     ) -> AnyResult<Vec<Self::Emote>> {
-        let user = seven_tv::get_user(broadcaster_id)
+        seven_tv::get_user(broadcaster_id)
             .map_err(|_| AnyError::msg("No such user?!"))
-            .await?;
-
-        Ok(user.emote_set.emotes)
+            .await?
+            .emote_set
+            .ok_or_else(|| anyhow!("No 7TV emote set selected"))
+            .map(|s| s.emotes)
     }
 
     async fn get_emote_by_id(
@@ -173,8 +185,12 @@ impl EmoteRW for SevenTvEmotes {
         _redis: &RedisPool,
     ) -> AnyResult<String> {
         let user = seven_tv::get_user(broadcaster_id).await?;
+        let Some(ref emote_set) = user.emote_set else {
+            bail!("No 7TV emote set is selected");
+        };
+
         let (_, emote) = futures::future::try_join(
-            seven_tv::remove_emote(&user.emote_set.id, emote_id),
+            seven_tv::remove_emote(&emote_set.id, emote_id),
             seven_tv::get_emote(emote_id),
         )
         .await?;
