@@ -56,8 +56,10 @@ impl EmoteCache {
 
         Self {
             seventv: seventv
-                .map(|s| s.emote_set.emotes)
-                .unwrap_or_else(|_| Vec::with_capacity(0)),
+                .ok()
+                .and_then(|s| s.emote_set)
+                .map(|s| s.emotes)
+                .unwrap_or_else(|| Vec::with_capacity(0)),
             bttv: bttv
                 .map(|s| s.shared_emotes)
                 .unwrap_or_else(|_| Vec::with_capacity(0)),

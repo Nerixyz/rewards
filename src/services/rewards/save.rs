@@ -9,7 +9,7 @@ use crate::{
     },
     RedisPool,
 };
-use anyhow::Result as AnyResult;
+use anyhow::{bail, Result as AnyResult};
 use models::reward::RewardData;
 use sqlx::PgPool;
 
@@ -80,13 +80,15 @@ pub async fn save_reward(
             .await?;
         }
         RewardData::SevenTvSlot(slot) => {
-            let sid = seven_tv::requests::get_user(broadcaster_id)
+            let Some(set) = seven_tv::requests::get_user(broadcaster_id)
                 .await?
                 .emote_set
-                .id;
+            else {
+                bail!("No 7TV emote set selected");
+            };
             slots::adjust_size::<SevenTvEmotes>(
                 broadcaster_id,
-                &sid,
+                &set.id,
                 reward_id,
                 slot.slots,
                 pool,

@@ -77,23 +77,20 @@ async fn extract_seventv(
         return Ok(None);
     }
 
-    let (slots, swaps, user) = future::try_join3(
+    let Some(ref set) = stv_user.emote_set else {
+        return Ok(None);
+    };
+
+    let (slots, swaps) = future::try_join(
         get_open_slots(channel_id, SlotPlatform::SevenTv, pool),
         get_swap_data(channel_id, SlotPlatform::SevenTv, pool),
-        seven_tv::requests::get_user(channel_id),
     )
     .await?;
 
     Ok(Some(EmotePlatformData {
-        remaining_emotes: user
-            .emote_set
-            .capacity
-            .saturating_sub(user.emote_set.emotes.len()),
+        remaining_emotes: set.capacity.saturating_sub(set.emotes.len()),
         open_slots: slots,
-        swap_capacity: swaps
-            .1
-            .unwrap_or(user.emote_set.capacity)
-            .saturating_sub(swaps.0),
+        swap_capacity: swaps.1.unwrap_or(set.capacity).saturating_sub(swaps.0),
     }))
 }
 
