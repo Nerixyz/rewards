@@ -167,6 +167,7 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                 match opts.platform {
                     models::emote::SlotPlatform::Bttv => {
                         execute::rem_emote::<BttvEmotes>(
+                            extract::bttv_id,
                             msg.redemption,
                             opts,
                             args,
@@ -175,6 +176,7 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                     }
                     models::emote::SlotPlatform::Ffz => {
                         execute::rem_emote::<FfzEmotes>(
+                            extract::ffz_id,
                             msg.redemption,
                             opts,
                             args,
@@ -183,6 +185,7 @@ impl Handler<ExecuteRewardMessage> for RewardsActor {
                     }
                     models::emote::SlotPlatform::SevenTv => {
                         execute::rem_emote::<SevenTvEmotes>(
+                            extract::seventv_id,
                             msg.redemption,
                             opts,
                             args,

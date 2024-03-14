@@ -47,7 +47,7 @@ pub fn seventv(s: &str) -> AnyResult<EmoteSpec<'_>> {
     })
 }
 
-fn bttv_id(str: &str) -> AnyResult<&str> {
+pub fn bttv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref BTTV_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:betterttv\\.com/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
@@ -58,7 +58,7 @@ fn bttv_id(str: &str) -> AnyResult<&str> {
         .ok_or_else(|| AnyError::msg("Could not find an emote code there!"))
 }
 
-fn ffz_id(str: &str) -> AnyResult<&str> {
+pub fn ffz_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref FFZ_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:www\\.)?(?:frankerfacez\\.com/)?(?:emoticon/)(\\d+)(?:-[\\w_!]+)?(?:$| )"
@@ -69,7 +69,7 @@ fn ffz_id(str: &str) -> AnyResult<&str> {
         .ok_or_else(|| AnyError::msg("Could not find an emote there!"))
 }
 
-fn seventv_id(str: &str) -> AnyResult<&str> {
+pub fn seventv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref SEVENTV_REGEX: Regex = Regex::new(
             "(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"

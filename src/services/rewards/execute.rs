@@ -271,6 +271,7 @@ where
 }
 
 pub async fn rem_emote<RW>(
+    extract_id: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     data: RemEmoteRewardData,
     (db, redis, irc, discord): (
@@ -283,12 +284,14 @@ pub async fn rem_emote<RW>(
 where
     RW: EmoteRW,
     RW::Emote: Emote<RW::EmoteId>,
-    RW::EmoteId: Display,
+    RW::EmoteId: Display + FromStr + PartialEq,
 {
     let (broadcaster, user) = get_reply_data(&redemption);
     let should_reply = data.reply;
-    let res =
-        execute_remove_emote::<RW>(redemption, &db, &redis, discord).await;
+    let res = execute_remove_emote::<RW>(
+        extract_id, redemption, &db, &redis, discord,
+    )
+    .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
         &irc,

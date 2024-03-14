@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use anyhow::{anyhow, Result as AnyResult};
+use anyhow::{anyhow, bail, Result as AnyResult};
 use sqlx::PgPool;
 
 use crate::{
@@ -163,7 +163,30 @@ where
     Ok(msg)
 }
 
+enum IdOrName<'a> {
+    Id(&'a str),
+    Name(&'a str),
+}
+
+impl<'a> IdOrName<'a> {
+    fn parse(s: &'a str, ex: impl FnOnce(&str) -> AnyResult<&str>) -> Self {
+        ex(s)
+            .map(IdOrName::Id)
+            .unwrap_or_else(|_| IdOrName::Name(opt_next_space(s).0))
+    }
+}
+
+impl Display for IdOrName<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IdOrName::Id(i) => write!(f, "id:{i}"),
+            IdOrName::Name(n) => write!(f, "name:{n}"),
+        }
+    }
+}
+
 pub async fn execute_remove_emote<RW>(
+    extract_id: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     pool: &PgPool,
     redis_pool: &RedisPool,
@@ -172,23 +195,33 @@ pub async fn execute_remove_emote<RW>(
 where
     RW: EmoteRW,
     RW::Emote: Emote<RW::EmoteId>,
-    RW::EmoteId: Display,
+    RW::EmoteId: Display + FromStr + PartialEq,
 {
-    let name = opt_next_space(&redemption.user_input).0;
+    let spec = IdOrName::parse(&redemption.user_input, extract_id);
     let broadcaster: String = redemption.broadcaster_user_login.take();
     let user: String = redemption.user_login.take();
 
     log::info!(
         "Removing {:?} emote {} from {}",
         RW::platform(),
-        name,
+        spec,
         broadcaster
     );
 
     let emotes = RW::get_emotes(redemption.broadcaster_user_id.as_ref(), pool)
         .await
         .map_err(|e| anyhow!("Failed to list emotes in channel ({e})"))?;
-    let Some(emote) = emotes.iter().find(|e| e.name() == name) else {
+    let emote = match spec {
+        IdOrName::Id(id) => {
+            // ugh, this should be &str or usize for FFZ
+            let Ok(id) = RW::EmoteId::from_str(id) else {
+                bail!("Invalid emote ID");
+            };
+            emotes.iter().find(|e| e.id() == &id)
+        }
+        IdOrName::Name(name) => emotes.iter().find(|e| e.name() == name),
+    };
+    let Some(emote) = emote else {
         return Err(anyhow!("This {} emote isn't added!", RW::platform()));
     };
     // TODO: ugh
@@ -212,11 +245,11 @@ where
             "Removed an emote",
             0x00c8af,
             "User" = user.clone(),
-            "Removed" = name;
+            "Removed" = emote.name().to_owned();
             image = Some(RW::format_emote_url(&emote_id)),
             url = Some(RW::format_emote_page(&emote_id)),
         )
     );
 
-    Ok(format!("🗑 Removed {}", name))
+    Ok(format!("🗑 Removed {}", emote.name()))
 }
