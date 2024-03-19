@@ -2,7 +2,7 @@ use actix::Message;
 use std::time::Duration;
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct ChannelTimeoutMessage {
     pub channel_id: String,
     pub user_id: String,
@@ -11,7 +11,7 @@ pub struct ChannelTimeoutMessage {
 }
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct RemoveTimeoutMessage {
     pub channel_id: String,
     pub user_id: String,

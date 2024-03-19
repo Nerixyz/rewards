@@ -11,7 +11,13 @@ members = [".", "setup", "models", "config"]
 
 [dependencies]
 deadpool-postgres = "0.12"
-sqlx = { version = "0.7.4", features = ["postgres", "runtime-tokio-native-tls", "macros", "json", "chrono"] }
+sqlx = { version = "0.7.4", features = [
+    "postgres",
+    "runtime-tokio-native-tls",
+    "macros",
+    "json",
+    "chrono",
+] }
 
 models = { path = "models" }
 config = { path = "config" }
@@ -23,9 +29,23 @@ actix-cors = "0.7.0"
 actix-utils = "3.0.0"
 actix-web-prom = "0.8.0"
 
-twitch-irc = { version = "5.0.1", features = ["refreshing-token-native-tls", "transport-tcp-native-tls", "metrics-collection"] }
-twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", features = ["eventsub", "helix", "twitch_oauth2", "reqwest", "client", "unsupported", "typed-builder"], default-features = false }
-twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", features = ["native-tls", "unsupported"], default-features = false }
+twitch-irc = { version = "5.0.1", features = [
+    "refreshing-token-native-tls",
+    "transport-tcp-native-tls",
+    "metrics-collection",
+] }
+twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", features = [
+    "eventsub",
+    "helix",
+    "twitch_oauth2",
+    "reqwest",
+    "client",
+    "unsupported",
+    "typed-builder",
+], default-features = false }
+twitch-pubsub = { git = "https://github.com/Nerixyz/twitch-pubsub-rs", features = [
+    "unsupported",
+], default-features = false }
 
 tokio = { version = "1", features = ["rt", "time", "sync"] }
 tokio-stream = "0.1"
@@ -36,7 +56,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_qs = "0.12"
 
-deadpool-redis = { version = "0.14", default-features = false, features = ["rt_tokio_1"] }
+deadpool-redis = { version = "0.14", default-features = false, features = [
+    "rt_tokio_1",
+] }
 
 dotenv_codegen = "0.15"
 dotenv = "0.15"

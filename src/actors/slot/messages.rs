@@ -1,5 +1,5 @@
 use actix::Message;
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct Recheck;
