@@ -10,7 +10,6 @@ use twitch_api2::twitch_oauth2::AppAccessToken;
 use crate::{
     actors::{
         discord::DiscordActor,
-        irc::IrcActor,
         timeout::{ChannelTimeoutMessage, CheckValidTimeoutMessage},
     },
     log_err,
@@ -52,14 +51,12 @@ pub async fn timeout(
     timeout: TimeoutRewardData,
     redemption: Redemption,
     broadcaster: User,
-    (irc, app_token, timeout_handler): (
-        Addr<IrcActor>,
+    (app_token, timeout_handler): (
         Arc<RwLock<AppAccessToken>>,
         Addr<TimeoutActor>,
     ),
 ) -> AnyResult<()> {
     let reply_data = get_reply_data(&redemption);
-    let reply_irc_addr = irc.clone();
     let result = async move {
         // check timeout
         let username =
@@ -135,9 +132,8 @@ pub async fn timeout(
     if result.is_err() {
         reply_to_redemption(
             result.map(|_| unreachable!("only errors are printed")),
-            &reply_irc_addr,
-            reply_data.0,
-            reply_data.1,
+            &reply_data.0,
+            &reply_data.1,
         )
         .await?;
     }
@@ -149,7 +145,6 @@ pub async fn timed_mode(
     duration: String,
     broadcaster: User,
     redemption: Redemption,
-    irc: Addr<IrcActor>,
 ) -> AnyResult<()> {
     let reply_data = get_reply_data(&redemption);
     let duration =
@@ -198,7 +193,7 @@ pub async fn timed_mode(
     .await;
 
     if let Err(e) = res {
-        reply_to_redemption(Err(e), &irc, reply_data.0, reply_data.1).await?;
+        reply_to_redemption(Err(e), &reply_data.0, &reply_data.1).await?;
     }
     Ok(())
 }
@@ -207,12 +202,7 @@ pub async fn swap<RW>(
     extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     data: SwapRewardData,
-    (db, redis_pool, irc, discord): (
-        PgPool,
-        RedisPool,
-        Addr<IrcActor>,
-        Addr<DiscordActor>,
-    ),
+    (db, redis_pool, discord): (PgPool, RedisPool, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
@@ -220,7 +210,7 @@ where
     RW::Emote: Emote<RW::EmoteId>,
     RW::EmoteId: Display + Clone + FromStr + Default,
 {
-    let (broadcaster, user) = get_reply_data(&redemption);
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let should_reply = data.reply;
     let res = execute_swap::<RW>(
         extractor,
@@ -233,9 +223,8 @@ where
     .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
@@ -244,28 +233,22 @@ pub async fn slot<RW>(
     extractor: impl FnOnce(&str) -> AnyResult<EmoteSpec>,
     redemption: Redemption,
     slot: SlotRewardData,
-    (db, redis, irc, discord): (
-        PgPool,
-        RedisPool,
-        Addr<IrcActor>,
-        Addr<DiscordActor>,
-    ),
+    (db, redis, discord): (PgPool, RedisPool, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
     RW::Emote: Emote<RW::EmoteId>,
     RW::EmoteId: Display,
 {
-    let (broadcaster, user) = get_reply_data(&redemption);
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let should_reply = slot.reply;
     let res =
         execute_slot::<RW>(extractor, redemption, slot, &db, &redis, discord)
             .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
@@ -274,19 +257,14 @@ pub async fn rem_emote<RW>(
     extract_id: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
     data: RemEmoteRewardData,
-    (db, redis, irc, discord): (
-        PgPool,
-        RedisPool,
-        Addr<IrcActor>,
-        Addr<DiscordActor>,
-    ),
+    (db, redis, discord): (PgPool, RedisPool, Addr<DiscordActor>),
 ) -> AnyResult<()>
 where
     RW: EmoteRW,
     RW::Emote: Emote<RW::EmoteId>,
     RW::EmoteId: Display + FromStr + PartialEq,
 {
-    let (broadcaster, user) = get_reply_data(&redemption);
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let should_reply = data.reply;
     let res = execute_remove_emote::<RW>(
         extract_id, redemption, &db, &redis, discord,
@@ -294,25 +272,20 @@ where
     .await;
     reply_to_redemption(
         res.map(|r| should_reply.then_some(r)),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
 
-pub async fn spotify_skip(
-    redemption: Redemption,
-    (db, irc): (PgPool, Addr<IrcActor>),
-) -> AnyResult<()> {
-    let (broadcaster, user) = get_reply_data(&redemption);
+pub async fn spotify_skip(redemption: Redemption, db: PgPool) -> AnyResult<()> {
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let res =
         spotify::skip_track(redemption.broadcaster_user_id.as_ref(), &db).await;
     reply_to_redemption(
         format_spotify_result(res, SpotifyAction::Skip).map(Some),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
@@ -320,9 +293,9 @@ pub async fn spotify_skip(
 pub async fn spotify_play(
     opts: SpotifyPlayOptions,
     redemption: Redemption,
-    (db, irc): (PgPool, Addr<IrcActor>),
+    db: PgPool,
 ) -> AnyResult<()> {
-    let (broadcaster, user) = get_reply_data(&redemption);
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
         &redemption.user_input,
         redemption.broadcaster_user_id.as_ref(),
@@ -336,9 +309,8 @@ pub async fn spotify_play(
     .await;
     reply_to_redemption(
         format_spotify_result(res, SpotifyAction::Play).map(Some),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
@@ -346,9 +318,9 @@ pub async fn spotify_play(
 pub async fn spotify_queue(
     opts: SpotifyPlayOptions,
     redemption: Redemption,
-    (db, irc): (PgPool, Addr<IrcActor>),
+    db: PgPool,
 ) -> AnyResult<()> {
-    let (broadcaster, user) = get_reply_data(&redemption);
+    let (broadcaster_id, user) = get_reply_data(&redemption);
     let res = spotify::get_track_uri_from_input(
         &redemption.user_input,
         redemption.broadcaster_user_id.as_ref(),
@@ -366,9 +338,8 @@ pub async fn spotify_queue(
     .await;
     reply_to_redemption(
         format_spotify_result(res, SpotifyAction::Queue).map(Some),
-        &irc,
-        broadcaster,
-        user,
+        &broadcaster_id,
+        &user,
     )
     .await
 }
