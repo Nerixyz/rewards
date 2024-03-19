@@ -1,5 +1,5 @@
 use actix::{
-    Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
+    Actor, ActorFutureExt, AsyncContext, Context, ContextFutureSpawner,
     Handler, WrapFuture,
 };
 use anyhow::{Error as AnyError, Result as AnyResult};
@@ -11,10 +11,12 @@ use twitch_api2::{
 };
 
 use crate::{
-    actors::irc::{IrcActor, SayMessage},
     log_discord, log_err,
-    services::twitch::requests::{
-        get_reward_for_broadcaster_by_id, update_reward,
+    services::twitch::{
+        self,
+        requests::{
+            get_reward_for_broadcaster_by_id, send_chat_message, update_reward,
+        },
     },
 };
 use models::{reward::Reward, user::User};
@@ -30,21 +32,16 @@ struct UnpauseInfo {
 
 pub struct LiveActor {
     pool: PgPool,
-    irc_addr: Addr<IrcActor>,
 }
 
 impl LiveActor {
-    pub fn new(pool: PgPool, irc: Addr<IrcActor>) -> Self {
-        Self {
-            pool,
-            irc_addr: irc,
-        }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
     }
 
     async fn on_live(
         user_id: &str,
         pool: &PgPool,
-        irc: &Addr<IrcActor>,
     ) -> AnyResult<Vec<UnpauseInfo>> {
         let user_token: UserToken =
             User::get_by_id(user_id, pool).await?.into();
@@ -80,13 +77,14 @@ impl LiveActor {
 
         log::info!("Pausing {} rewards", pending.len());
         log_err!(
-            irc.send(SayMessage(
-                user_token.login.clone().take(),
-                format!(
+            send_chat_message(
+                user_token.user_id.as_str(),
+                &format!(
                     "🔴 Live, pausing {} reward(s) at the start.",
                     pending.len()
-                )
-            ))
+                ),
+                &twitch::get_token()
+            )
             .await,
             "Could not send chat"
         );
@@ -205,8 +203,7 @@ impl Handler<LiveMessage> for LiveActor {
         ctx: &mut Self::Context,
     ) -> Self::Result {
         let pool = self.pool.clone();
-        let addr = self.irc_addr.clone();
-        async move { Self::on_live(&msg.0, &pool, &addr).await }
+        async move { Self::on_live(&msg.0, &pool).await }
             .into_actor(self)
             .map(|res, _this, ctx| match res {
                 Ok(to_queue) => {

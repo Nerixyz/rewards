@@ -108,6 +108,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .set_scopes(vec![
         Scope::ChatEdit,
         Scope::ChatRead,
+        Scope::UserReadChat,
+        Scope::UserWriteChat,
+        Scope::UserBot,
         Scope::ChannelModerate,
         Scope::ModeratorManageAutoMod,
         Scope::ModerationRead,
