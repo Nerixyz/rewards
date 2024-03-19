@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use errors::{json_error::JsonError, sql::SqlReason};
 use sqlx::PgPool;
 use twitch_pubsub::{TokenProvider, Topic};
@@ -18,7 +17,6 @@ impl PubsubTokenProvider {
     }
 }
 
-#[async_trait]
 impl TokenProvider for PubsubTokenProvider {
     type Error = JsonError<SqlReason>;
 

@@ -13,9 +13,9 @@ use twitch_pubsub::{
         ModerationActionCommand,
     },
     video_playback::{VideoPlaybackById, VideoPlaybackReply},
-    ClientConfig, ConnectionClosed, ListenError, ParseError, PubsubClient,
-    ServerMessage, Topic, TopicData, TopicDef,
+    PubSubEvent, Topic, TopicData, TopicDef,
 };
+use url::Url;
 
 use crate::{
     actors::{
@@ -34,7 +34,7 @@ pub struct PubSubActor {
     live_addr: Addr<LiveActor>,
     timeout_handler: Addr<TimeoutActor>,
 
-    client: PubsubClient<PubsubTokenProvider>,
+    client: twitch_pubsub::Sender,
 }
 
 impl PubSubActor {
@@ -43,8 +43,10 @@ impl PubSubActor {
         live_addr: Addr<LiveActor>,
         timeout_handler: Addr<TimeoutActor>,
     ) -> Addr<Self> {
-        let config = ClientConfig::new(PubsubTokenProvider(pool));
-        let (incoming, client) = PubsubClient::new(config);
+        let (client, incoming) = twitch_pubsub::create_manager(
+            PubsubTokenProvider(pool),
+            Url::parse("wss://pubsub-edge.twitch.tv").unwrap(),
+        );
 
         Self::create(|ctx| {
             ctx.add_stream(UnboundedReceiverStream::new(incoming));
@@ -73,14 +75,14 @@ impl Actor for PubSubActor {
     type Context = Context<Self>;
 }
 
-impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
+impl StreamHandler<PubSubEvent<PubsubTokenProvider>> for PubSubActor {
     fn handle(
         &mut self,
-        item: ServerMessage<PubsubTokenProvider>,
+        item: PubSubEvent<PubsubTokenProvider>,
         ctx: &mut Self::Context,
     ) {
         match item {
-            ServerMessage::Data(TopicData::ChatModeratorActions {
+            PubSubEvent::Message(TopicData::ChatModeratorActions {
                 topic,
                 reply,
             }) => {
@@ -105,7 +107,7 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                         .spawn(ctx);
                 }
             }
-            ServerMessage::Data(TopicData::VideoPlaybackById {
+            PubSubEvent::Message(TopicData::VideoPlaybackById {
                 topic,
                 reply,
             }) => match *reply {
@@ -143,7 +145,7 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                 }
                 _ => (),
             },
-            ServerMessage::ListenError(ListenError { error, topics }) => {
+            PubSubEvent::SubError { error, topics } => {
                 log::warn!(
                     "Couldn't listen on some topics error={} topics={:?}",
                     error,
@@ -157,25 +159,12 @@ impl StreamHandler<ServerMessage<PubsubTokenProvider>> for PubSubActor {
                     "topics" = format!("`{:?}`", topics)
                 );
             }
-            ServerMessage::ParseError(ParseError { raw, error }) => {
+            PubSubEvent::ProvideError(e) => {
                 log_discord!(
                     "Pubsub",
-                    "Couldn't parse message",
+                    "Couldn't provide token",
                     0xffce49,
-                    "Raw" = format!("`{}`", raw),
-                    "Error" = error.to_string()
-                );
-            }
-            ServerMessage::ConnectionClosed(ConnectionClosed {
-                connection_id,
-                cause,
-            }) => {
-                log_discord!(
-                    "Pubsub",
-                    "Connection closed",
-                    0xfdd0ae,
-                    "Connection Id" = connection_id.to_string(),
-                    "Cause" = cause.to_string()
+                    "Error" = e.to_string()
                 );
             }
             _ => (),
@@ -189,21 +178,13 @@ impl Handler<SubMessage> for PubSubActor {
     fn handle(
         &mut self,
         msg: SubMessage,
-        ctx: &mut Self::Context,
+        _ctx: &mut Self::Context,
     ) -> Self::Result {
         let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let target_id = msg.0.parse::<u32>().unwrap_or(0);
-        let client = self.client.clone();
-        async move {
-            log_err!(
-                client
-                    .listen_many(Self::make_topics(target_id, my_id))
-                    .await,
-                "Could not listen"
-            );
+        if !self.client.listen(Self::make_topics(target_id, my_id)) {
+            log::warn!("Failed to listen to topics");
         }
-        .into_actor(self)
-        .spawn(ctx);
     }
 }
 
@@ -213,7 +194,7 @@ impl Handler<SubAllMessage> for PubSubActor {
     fn handle(
         &mut self,
         msg: SubAllMessage,
-        ctx: &mut Self::Context,
+        _ctx: &mut Self::Context,
     ) -> Self::Result {
         let my_id = CONFIG.twitch.user_id.parse::<u32>().unwrap_or(0);
         let topics = msg
@@ -224,11 +205,8 @@ impl Handler<SubAllMessage> for PubSubActor {
             })
             .collect();
 
-        let client = self.client.clone();
-        async move {
-            log_err!(client.listen_many(topics).await, "Could not listen");
+        if !self.client.listen(topics) {
+            log::warn!("Failed to listen to topics");
         }
-        .into_actor(self)
-        .spawn(ctx);
     }
 }
