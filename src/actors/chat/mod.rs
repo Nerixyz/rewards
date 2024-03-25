@@ -1,5 +1,7 @@
 use crate::{
-    actors::irc::SayMessage, log_err, AppAccessToken, RedisConn, RedisPool,
+    log_err,
+    services::twitch::{self, requests::send_chat_message},
+    AppAccessToken, RedisConn, RedisPool,
 };
 use actix::{Actor, Context, ContextFutureSpawner, Handler, WrapFuture};
 use deadpool_redis::{redis, redis::AsyncCommands};
@@ -104,29 +106,35 @@ async fn try_handle_command(
         .check_permission(&msg.raw, &db, &mut conn)
         .await
     {
-        msg.addr
-            .send(SayMessage(
-                msg.raw.channel_login,
-                format!(
-                    "@{}, ⛔ You don't have permission to run this command!",
-                    msg.raw.sender.login
-                ),
-            ))
-            .await??;
+        send_chat_message(
+            &msg.raw.channel_id,
+            &format!(
+                "@{}, ⛔ You don't have permission to run this command!",
+                msg.raw.sender.login
+            ),
+            &twitch::get_token(),
+        )
+        .await?;
         return Ok(());
     }
 
-    let broadcaster = msg.raw.channel_login.clone();
+    let channel_id = msg.raw.channel_id.clone();
     let sender = msg.raw.sender.login.clone();
-    let message = match msg
+    match msg
         .executor
         .execute(msg.raw, &db, redis, app_access_token)
         .await
     {
-        Ok(res) => SayMessage(broadcaster, res),
-        Err(e) => SayMessage(broadcaster, format!("@{}, ⚠ {}", sender, e)),
-    };
-
-    msg.addr.send(message).await??;
-    Ok(())
+        Ok(res) => {
+            send_chat_message(&channel_id, &res, &twitch::get_token()).await
+        }
+        Err(e) => {
+            send_chat_message(
+                &channel_id,
+                &format!("@{}, ⚠ {}", sender, e),
+                &twitch::get_token(),
+            )
+            .await
+        }
+    }
 }

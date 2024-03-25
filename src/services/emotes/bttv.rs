@@ -51,6 +51,7 @@ impl EmoteRW for BttvEmotes {
         overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
+        _redis_pool: &RedisPool,
     ) -> AnyResult<EmoteInitialData<String, bttv::BttvEmote>> {
         if overwritten_name.is_some() {
             return Err(anyhow!("BTTV doesn't support renaming emotes"));

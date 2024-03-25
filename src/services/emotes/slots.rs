@@ -186,6 +186,7 @@ where
         override_name,
         slot_data.allow_unlisted,
         pool,
+        redis_pool,
     )
     .await?;
 

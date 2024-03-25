@@ -1,6 +1,6 @@
 extern crate twitch_api as twitch_api2;
 
-use actix::{Actor, Addr, SystemRegistry};
+use actix::{Actor, SystemRegistry};
 use actix_cors::Cors;
 use actix_files::NamedFile;
 use actix_web::{
@@ -21,16 +21,9 @@ use actors::{irc::JoinAllMessage, pubsub::SubAllMessage};
 
 use crate::{
     actors::{
-        chat::ChatActor,
-        db::DbActor,
-        discord::DiscordActor,
-        irc::{IrcActor, JoinMessage, SayMessage},
-        live::LiveActor,
-        pubsub::PubSubActor,
-        rewards::RewardsActor,
-        slot::SlotActor,
-        supinic::SupinicActor,
-        timeout::TimeoutActor,
+        chat::ChatActor, db::DbActor, discord::DiscordActor, irc::IrcActor,
+        live::LiveActor, pubsub::PubSubActor, rewards::RewardsActor,
+        slot::SlotActor, supinic::SupinicActor, timeout::TimeoutActor,
         token_refresher::TokenRefresher,
     },
     middleware::useragent::UserAgentGuard,
@@ -40,7 +33,7 @@ use crate::{
             clear_invalid_rewards, clear_unfulfilled_redemptions,
             register_eventsub_for_all_unregistered,
         },
-        twitch,
+        twitch::{self, requests::send_chat_message},
     },
 };
 use actix_web_prom::PrometheusMetricsBuilder;
@@ -139,7 +132,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Announcing on twitch and discord");
 
-    announce_start(irc_actor.clone());
+    announce_start();
 
     log::info!("Joining all channels");
 
@@ -149,7 +142,7 @@ async fn main() -> std::io::Result<()> {
     irc_actor.do_send(JoinAllMessage(names));
 
     TokenRefresher::new(pg_pool.clone(), db_actor).start();
-    let live_actor = LiveActor::new(pg_pool.clone(), irc_actor.clone()).start();
+    let live_actor = LiveActor::new(pg_pool.clone()).start();
     let pubsub =
         PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
     let initial_listens = make_initial_pubsub_listens(&pg_pool)
@@ -159,7 +152,6 @@ async fn main() -> std::io::Result<()> {
 
     let rewards_actor = RewardsActor {
         db: pg_pool.clone(),
-        irc: irc_actor.clone(),
         app_access_token: app_access_token.clone().into_inner(),
         timeout: timeout_actor.clone(),
         redis: redis_pool.clone(),
@@ -255,7 +247,7 @@ async fn make_initial_pubsub_listens(
     Ok(users.into_iter().map(|user| user.id).collect())
 }
 
-fn announce_start(addr: Addr<IrcActor>) {
+fn announce_start() {
     let announce = match CONFIG.log.announce {
         Some(ref a) => a,
         _ => return,
@@ -272,21 +264,22 @@ fn announce_start(addr: Addr<IrcActor>) {
         log_discord!(format!("Running. {}", instance_str));
     }
     if let Some(ref twitch) = announce.twitch {
-        let channel = twitch.channel.to_string();
-        let prefix = twitch
-            .prefix
-            .to_owned()
-            .unwrap_or_else(|| "Running.".to_string());
+        let prefix = twitch.prefix.as_deref().unwrap_or("Running.");
         tokio::spawn(async move {
+            let token = twitch::get_token();
+            let Ok(user) =
+                twitch::requests::get_user_by_login(&twitch.channel, &token)
+                    .await
+            else {
+                log::warn!("Failed to get initial channel");
+                return;
+            };
             log_err!(
-                addr.send(JoinMessage(channel.clone())).await,
-                "Could not join announce channel"
-            );
-            log_err!(
-                addr.send(SayMessage(
-                    channel,
-                    format!("{} {}", prefix, instance_str)
-                ))
+                send_chat_message(
+                    user.id.as_str(),
+                    &format!("{} {}", prefix, instance_str),
+                    &twitch::get_token()
+                )
                 .await,
                 "Could not announce in channel"
             );

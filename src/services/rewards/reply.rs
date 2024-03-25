@@ -1,9 +1,11 @@
-use actix::{Addr, MailboxError};
 use anyhow::Result as AnyResult;
 
 use crate::{
-    actors::irc::{IrcActor, SayMessage},
-    services::rewards::Redemption,
+    log_err,
+    services::{
+        rewards::Redemption,
+        twitch::{self, requests::send_chat_message},
+    },
 };
 
 pub enum SpotifyAction {
@@ -31,41 +33,38 @@ pub fn format_spotify_result(
 
 pub fn get_reply_data(redemption: &Redemption) -> (String, String) {
     (
-        redemption.broadcaster_user_login.clone().take(),
+        redemption.broadcaster_user_id.clone().take(),
         redemption.user_login.clone().take(),
     )
 }
 
 pub async fn reply_to_redemption(
     res: AnyResult<Option<String>>,
-    irc: &Addr<IrcActor>,
-    broadcaster: String,
-    user: String,
+    broadcaster_id: &str,
+    user: &str,
 ) -> AnyResult<()> {
     match res {
         Ok(Some(msg)) => {
-            log_irc_error(
-                irc.send(SayMessage(broadcaster, format!("@{} {}", user, msg)))
+            log_err!(
+                send_chat_message(broadcaster_id, &msg, &twitch::get_token())
                     .await,
+                "Failed to send chat"
             );
             // don't return Err() since it will turn the redemption into Cancelled even though it was fulfilled
             Ok(())
         }
         Ok(None) => Ok(()),
         Err(e) => {
-            log_irc_error(
-                irc.send(SayMessage(broadcaster, format!("@{} ⚠ {}", user, e)))
-                    .await,
+            log_err!(
+                send_chat_message(
+                    broadcaster_id,
+                    &format!("@{} ⚠ {}", user, e),
+                    &twitch::get_token(),
+                )
+                .await,
+                "Failed to send chat"
             );
             Err(e)
         }
-    }
-}
-
-fn log_irc_error(res: Result<AnyResult<()>, MailboxError>) {
-    match res {
-        Err(e) => log::error!("could not send: irc mailbox full - {}", e),
-        Ok(Err(e)) => log::error!("could not send: {}", e),
-        _ => (),
     }
 }

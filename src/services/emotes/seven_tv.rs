@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::{anyhow, bail, Error as AnyError, Result as AnyResult};
 use async_trait::async_trait;
-use deadpool_redis::redis;
+use deadpool_redis::redis::{self, AsyncCommands as _};
 use futures::TryFutureExt;
 use models::{emote::SlotPlatform, swap_emote::SwapEmote};
 use sqlx::PgPool;
@@ -30,6 +30,51 @@ impl Emote<String> for seven_tv::SevenEmote {
     }
 }
 
+async fn was_emote_removed(
+    platform_id: &str,
+    emote_id: &str,
+    redis_pool: &RedisPool,
+) -> bool {
+    let Ok(mut conn) = redis_pool.get().await else {
+        return false;
+    };
+
+    conn.get::<_, u8>(&format!(
+        "rewards:seventv:rem-cache:{platform_id}:{emote_id}"
+    ))
+    .await
+    .is_ok()
+}
+
+async fn mark_emote_removed(
+    platform_id: &str,
+    emote_id: &str,
+    redis_pool: &RedisPool,
+) {
+    if let Ok(mut conn) = redis_pool.get().await {
+        conn.set_ex::<_, _, ()>(
+            format!("rewards:seventv:rem-cache:{platform_id}:{emote_id}"),
+            1,
+            600,
+        )
+        .await
+        .ok();
+    }
+}
+
+async fn clear_removed_emote(
+    platform_id: &str,
+    emote_id: &str,
+    redis: &mut deadpool_redis::Connection,
+) {
+    redis
+        .del::<_, ()>(format!(
+            "rewards:seventv:rem-cache:{platform_id}:{emote_id}"
+        ))
+        .await
+        .ok();
+}
+
 #[async_trait]
 impl EmoteRW for SevenTvEmotes {
     type PlatformId = String;
@@ -46,6 +91,7 @@ impl EmoteRW for SevenTvEmotes {
         overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,
+        redis_pool: &RedisPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>> {
         let (history_len, emote, stv_user) = futures::future::try_join3(
             SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
@@ -63,10 +109,13 @@ impl EmoteRW for SevenTvEmotes {
             bail!("No 7TV emote set selected");
         };
 
+        // On 7TV we also check if an emote was marked as recently removed in the cache,
+        // since 7TV caches the emote-set for quite some time.
         if stv_set
             .emotes
             .iter()
             .any(|e| e.id == emote.id || e.name == actual_name)
+            && !was_emote_removed(&stv_set.id, emote_id, redis_pool).await
         {
             return Err(AnyError::msg(
                 "The emote or an emote with the same name already exists.",
@@ -156,7 +205,10 @@ impl EmoteRW for SevenTvEmotes {
             }
         }
 
-        seven_tv::remove_emote(platform_id, emote_id).await
+        seven_tv::remove_emote(platform_id, emote_id).await?;
+        mark_emote_removed(platform_id, emote_id, redis_pool).await;
+
+        Ok(())
     }
 
     async fn add_emote(
@@ -166,13 +218,14 @@ impl EmoteRW for SevenTvEmotes {
         redis_pool: &RedisPool,
     ) -> AnyResult<()> {
         if let Ok(mut conn) = redis_pool.get().await {
-            redis::cmd("SETEX")
-                .arg(format!("rewards:seventv:cache:{platform_id}:{emote_id}"))
-                .arg(90)
-                .arg(1)
-                .query_async::<_, ()>(&mut conn)
-                .await
-                .ok();
+            conn.set_ex::<_, _, ()>(
+                format!("rewards:seventv:cache:{platform_id}:{emote_id}"),
+                1,
+                600,
+            )
+            .await
+            .ok();
+            clear_removed_emote(platform_id, emote_id, &mut conn).await;
         }
 
         seven_tv::add_emote(platform_id, emote_id, overwritten_name).await
@@ -182,7 +235,7 @@ impl EmoteRW for SevenTvEmotes {
         broadcaster_id: &str,
         emote_id: &str,
         _pool: &PgPool,
-        _redis: &RedisPool,
+        redis: &RedisPool,
     ) -> AnyResult<String> {
         let user = seven_tv::get_user(broadcaster_id).await?;
         let Some(ref emote_set) = user.emote_set else {
@@ -194,6 +247,8 @@ impl EmoteRW for SevenTvEmotes {
             seven_tv::get_emote(emote_id),
         )
         .await?;
+
+        mark_emote_removed(&emote_set.id, emote_id, redis).await;
 
         Ok(emote.name)
     }

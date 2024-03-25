@@ -2,9 +2,8 @@ use std::{collections::HashMap, time::Duration};
 
 use actix::{
     Actor, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
-    Handler, Recipient, ResponseFuture, WrapFuture,
+    Handler, Recipient, WrapFuture,
 };
-use anyhow::Error as AnyError;
 use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::{
     login::RefreshingLoginCredentials,
@@ -18,6 +17,7 @@ use crate::{
     actors::{db::DbActor, timeout::TimeoutActor},
     chat::{parse::opt_next_space, try_parse_command},
     log_err,
+    services::twitch::{self, requests::send_chat_message},
 };
 use config::CONFIG;
 
@@ -160,30 +160,6 @@ impl Handler<JoinAllMessage> for IrcActor {
     }
 }
 
-impl Handler<SayMessage> for IrcActor {
-    type Result = ResponseFuture<Result<(), AnyError>>;
-
-    fn handle(
-        &mut self,
-        mut msg: SayMessage,
-        _ctx: &mut Self::Context,
-    ) -> Self::Result {
-        let client = self.client.clone();
-
-        if let Some(last) = self.last_messages.get_mut(&msg.0) {
-            if *last == msg.1 {
-                msg.1.push('\u{180d}');
-            }
-            *last = msg.1.clone();
-        } else {
-            self.last_messages.insert(msg.0.clone(), msg.1.clone());
-        }
-
-        log::info!("Send message login={}; message={}", msg.0, msg.1);
-        Box::pin(async move { Ok(client.say(msg.0, msg.1).await?) })
-    }
-}
-
 impl Handler<ChatMessage> for IrcActor {
     type Result = ();
 
@@ -206,7 +182,6 @@ impl Handler<ChatMessage> for IrcActor {
                     .send(ExecuteCommandMessage {
                         executor: ex,
                         raw: msg.0,
-                        addr: ctx.address().recipient(),
                     })
                     .into_actor(self)
                     .map(|res, _, _| {
@@ -215,10 +190,20 @@ impl Handler<ChatMessage> for IrcActor {
                     .spawn(ctx);
             }
             Some(Err(e)) => {
-                ctx.notify(SayMessage(
-                    msg.0.channel_login,
-                    format!("@{}, ⚠ {}", msg.0.sender.login, e),
-                ));
+                ctx.spawn(
+                    async move {
+                        log_err!(
+                            send_chat_message(
+                                &msg.0.channel_id,
+                                &format!("@{}, ⚠ {}", msg.0.sender.login, e),
+                                &twitch::get_token(),
+                            )
+                            .await,
+                            "Failed to send chat"
+                        );
+                    }
+                    .into_actor(self),
+                );
             }
             None => (),
         }

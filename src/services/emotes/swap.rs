@@ -41,6 +41,7 @@ where
         override_name,
         reward_data.allow_unlisted,
         pool,
+        redis_pool,
     )
     .await?;
 

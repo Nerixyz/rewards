@@ -5,6 +5,7 @@ use anyhow::anyhow;
 use config::CONFIG;
 use models::timed_mode;
 use reqwest::StatusCode;
+use twitch_api::helix::chat::{SendChatMessageBody, SendChatMessageRequest};
 use twitch_api2::{
     helix::{
         chat::{
@@ -297,4 +298,32 @@ pub async fn update_chat_settings<'a>(
         )
         .await?;
     Ok(())
+}
+
+pub async fn send_chat_message(
+    broadcaster_id: &str,
+    message: &str,
+    token: &impl TwitchToken,
+) -> anyhow::Result<()> {
+    let res = HELIX_CLIENT
+        .req_post(
+            SendChatMessageRequest::new(),
+            SendChatMessageBody::new(
+                broadcaster_id,
+                &CONFIG.twitch.user_id,
+                message,
+            ),
+            token,
+        )
+        .await?;
+    if res.data.is_sent {
+        Ok(())
+    } else {
+        Err(anyhow::Error::msg(
+            res.data
+                .drop_reason
+                .map(|d| d.message)
+                .unwrap_or("No drop reason given".to_string()),
+        ))
+    }
 }
