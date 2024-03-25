@@ -14,7 +14,10 @@ use crate::{
     RedisPool,
 };
 use actix::Addr;
-use models::reward::{SlotRewardData, SwapRewardData};
+use models::{
+    reward::{SlotRewardData, SwapRewardData},
+    swap_emote::SwapEmote,
+};
 use std::str::FromStr;
 
 pub async fn execute_swap<RW>(
@@ -185,6 +188,46 @@ impl Display for IdOrName<'_> {
     }
 }
 
+async fn try_find_emote<RW>(
+    spec: IdOrName<'_>,
+    user_id: &str,
+    pool: &PgPool,
+) -> AnyResult<Option<(String, String)>>
+where
+    RW: EmoteRW,
+    RW::Emote: Emote<RW::EmoteId>,
+    RW::EmoteId: FromStr + PartialEq + Display,
+{
+    // Try to find on platform
+    let emotes = RW::get_emotes(user_id, pool)
+        .await
+        .map_err(|e| anyhow!("Failed to list emotes in channel ({e})"))?;
+    let emote = match spec {
+        IdOrName::Id(id) => {
+            // ugh, this should be &str or usize for FFZ
+            let Ok(id) = RW::EmoteId::from_str(id) else {
+                bail!("Invalid emote ID");
+            };
+            emotes.into_iter().find(|e| e.id() == &id)
+        }
+        IdOrName::Name(name) => emotes.into_iter().find(|e| e.name() == name),
+    };
+    if let Some(emote) = emote {
+        let id = emote.id().to_string();
+        return Ok(Some((emote.into_name(), id)));
+    }
+
+    // Try to find a swap emote
+    let emote = match spec {
+        IdOrName::Id(id) => {
+            SwapEmote::by_id(user_id, id, RW::platform(), pool).await?
+        }
+        IdOrName::Name(name) => SwapEmote::by_name(user_id, name, pool).await?,
+    };
+
+    Ok(emote.map(|e| (e.name, e.emote_id)))
+}
+
 pub async fn execute_remove_emote<RW>(
     extract_id: impl FnOnce(&str) -> AnyResult<&str>,
     redemption: Redemption,
@@ -208,24 +251,16 @@ where
         broadcaster
     );
 
-    let emotes = RW::get_emotes(redemption.broadcaster_user_id.as_ref(), pool)
-        .await
-        .map_err(|e| anyhow!("Failed to list emotes in channel ({e})"))?;
-    let emote = match spec {
-        IdOrName::Id(id) => {
-            // ugh, this should be &str or usize for FFZ
-            let Ok(id) = RW::EmoteId::from_str(id) else {
-                bail!("Invalid emote ID");
-            };
-            emotes.iter().find(|e| e.id() == &id)
-        }
-        IdOrName::Name(name) => emotes.iter().find(|e| e.name() == name),
-    };
-    let Some(emote) = emote else {
+    let emote = try_find_emote::<RW>(
+        spec,
+        redemption.broadcaster_user_id.as_ref(),
+        pool,
+    )
+    .await?;
+    let Some((emote_name, emote_id)) = emote else {
         return Err(anyhow!("This {} emote isn't added!", RW::platform()));
     };
-    // TODO: ugh
-    let emote_id = emote.id().to_string();
+
     RW::remove_emote_from_broadcaster(
         redemption.broadcaster_user_id.as_str(),
         &emote_id,
@@ -245,11 +280,11 @@ where
             "Removed an emote",
             0x00c8af,
             "User" = user.clone(),
-            "Removed" = emote.name().to_owned();
+            "Removed" = emote_name.clone();
             image = Some(RW::format_emote_url(&emote_id)),
             url = Some(RW::format_emote_page(&emote_id)),
         )
     );
 
-    Ok(format!("🗑 Removed {}", emote.name()))
+    Ok(format!("🗑 Removed {}", emote_name))
 }
