@@ -56,6 +56,7 @@ pub trait EmoteRW {
         overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,
+        redis_pool: &RedisPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>>;
     async fn get_emote_env_data(
         broadcaster_id: &str,
