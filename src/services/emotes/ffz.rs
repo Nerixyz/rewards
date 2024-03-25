@@ -52,6 +52,7 @@ impl EmoteRW for FfzEmotes {
         overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
+        _redis_pool: &RedisPool,
     ) -> AnyResult<EmoteInitialData<usize, ffz::FfzEmote>> {
         if overwritten_name.is_some() {
             return Err(anyhow!("FFZ doesn't support renaming emotes"));
