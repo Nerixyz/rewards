@@ -14,9 +14,9 @@ path = "src/main.rs"
 dialoguer = "0.11.0"
 twitch_oauth2 = { version = "0.12.9", features = ["reqwest"] }
 tokio = { version = "1", features = ["macros", "fs"] }
-reqwest = "0.11"
+reqwest = "0.12"
 dotenv = "0.15.0"
-chrono = { version = "0.4.35", features = ["serde"] }
+chrono = { version = "0.4.37", features = ["serde"] }
 regex = "1.10.3"
 tokio-postgres = { version = "0.7.10", features = ["with-serde_json-1"] }
 serde = { version = "1.0", features = ["derive"] }
