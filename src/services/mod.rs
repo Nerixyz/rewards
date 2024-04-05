@@ -5,6 +5,7 @@ pub mod errors;
 pub mod eventsub;
 pub mod ffz;
 pub mod formatting;
+pub mod h2h;
 pub mod ivr;
 pub mod jwt;
 pub mod metrics;
