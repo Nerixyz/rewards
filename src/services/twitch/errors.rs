@@ -1,3 +1,4 @@
+use crate::services::h2h::H2hExt as _;
 use actix_web::{error, http::StatusCode, HttpResponse};
 use derive_more::Display;
 use errors::json_error::JsonError;
@@ -62,7 +63,7 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
             ClientRequestError::HelixRequestGetError(e) => match e {
                 HelixRequestGetError::Error {
                     status, message, ..
-                } => Self::Response(status, message),
+                } => Self::Response(status.convert(), message),
                 HelixRequestGetError::Utf8Error(_, _, _) => Self::Utf8,
                 HelixRequestGetError::DeserializeError(_, _, _, _) => {
                     Self::Serde
@@ -71,13 +72,13 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     status,
                     reason,
                     ..
-                } => Self::Response(status, reason.to_string()),
+                } => Self::Response(status.convert(), reason.to_string()),
                 _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPutError(e) => match e {
                 HelixRequestPutError::Error {
                     status, message, ..
-                } => Self::Response(status, message),
+                } => Self::Response(status.convert(), message),
                 HelixRequestPutError::Utf8Error(_, _, _) => Self::Utf8,
                 HelixRequestPutError::DeserializeError(_, _, _, _) => {
                     Self::Serde
@@ -86,13 +87,13 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     status,
                     reason,
                     ..
-                } => Self::Response(status, reason.to_string()),
+                } => Self::Response(status.convert(), reason.to_string()),
                 _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPostError(e) => match e {
                 HelixRequestPostError::Error {
                     status, message, ..
-                } => Self::Response(status, message),
+                } => Self::Response(status.convert(), message),
                 HelixRequestPostError::Utf8Error(_, _, _) => Self::Utf8,
                 HelixRequestPostError::DeserializeError(_, _, _, _) => {
                     Self::Serde
@@ -101,13 +102,13 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     status,
                     reason,
                     ..
-                } => Self::Response(status, reason.to_string()),
+                } => Self::Response(status.convert(), reason.to_string()),
                 _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestPatchError(e) => match e {
                 HelixRequestPatchError::Error {
                     status, message, ..
-                } => Self::Response(status, message),
+                } => Self::Response(status.convert(), message),
                 HelixRequestPatchError::Utf8Error(_, _, _) => Self::Utf8,
                 HelixRequestPatchError::DeserializeError(_, _, _, _) => {
                     Self::Serde
@@ -116,19 +117,19 @@ impl From<ClientRequestError<reqwest::Error>> for TwitchApiError {
                     status,
                     reason,
                     ..
-                } => Self::Response(status, reason.to_string()),
+                } => Self::Response(status.convert(), reason.to_string()),
                 _ => Self::Unknown,
             },
             ClientRequestError::HelixRequestDeleteError(e) => match e {
                 HelixRequestDeleteError::Error {
                     status, message, ..
-                } => Self::Response(status, message),
+                } => Self::Response(status.convert(), message),
                 HelixRequestDeleteError::Utf8Error(_, _, _) => Self::Utf8,
                 HelixRequestDeleteError::InvalidResponse {
                     status,
                     reason,
                     ..
-                } => Self::Response(status, reason.to_string()),
+                } => Self::Response(status.convert(), reason.to_string()),
                 _ => Self::Unknown,
             },
             ClientRequestError::Custom(_) => Self::Custom,
