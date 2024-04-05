@@ -80,8 +80,9 @@ impl LiveActor {
             send_chat_message(
                 user_token.user_id.as_str(),
                 &format!(
-                    "🔴 Live, pausing {} reward(s) at the start.",
-                    pending.len()
+                    "🔴 Live, pausing {} reward{} at the start.",
+                    pending.len(),
+                    if pending.len() != 1 { "s" } else { "" }
                 ),
                 &twitch::get_token()
             )
