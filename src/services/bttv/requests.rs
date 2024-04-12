@@ -92,8 +92,7 @@ pub async fn add_shared_emote(
     user_id: &str,
 ) -> AnyResult<String> {
     bttv_put(format!(
-        "https://api.betterttv.net/3/emotes/{}/shared/{}",
-        emote_id, user_id
+        "https://api.betterttv.net/3/emotes/{emote_id}/shared/{user_id}/{user_id}",
     ))
     .await
 }
@@ -103,8 +102,7 @@ pub async fn delete_shared_emote(
     user_id: &str,
 ) -> AnyResult<String> {
     bttv_delete(format!(
-        "https://api.betterttv.net/3/emotes/{}/shared/{}",
-        emote_id, user_id
+        "https://api.betterttv.net/3/emotes/{emote_id}/shared/{user_id}/{user_id}",
     ))
     .await
 }
