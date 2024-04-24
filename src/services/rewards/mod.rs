@@ -1,4 +1,4 @@
-use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload;
+use twitch_api::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload;
 
 pub mod execute;
 pub mod extract;

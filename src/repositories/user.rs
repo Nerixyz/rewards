@@ -9,7 +9,7 @@ use crate::{
 use actix_web::{get, web, HttpResponse, Result};
 use deadpool_redis::redis::AsyncCommands;
 use sqlx::PgPool;
-use twitch_api2::twitch_oauth2::UserToken;
+use twitch_api::twitch_oauth2::UserToken;
 
 #[get("/me")]
 async fn me(

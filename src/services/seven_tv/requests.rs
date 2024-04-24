@@ -78,7 +78,6 @@ pub struct SevenUserResponse {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenUser {
-    pub id: String,
     pub editors: Vec<SevenEditor>,
 }
 

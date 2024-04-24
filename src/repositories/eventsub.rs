@@ -5,7 +5,7 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use twitch_api2::eventsub::{
+use twitch_api::eventsub::{
     user::UserAuthorizationRevokeV1Payload, Event, Message, Payload,
 };
 
@@ -58,7 +58,6 @@ async fn reward_redemption(
                 executor: executor.into_inner(),
                 user,
                 notification,
-                subscription,
             };
             actix_web::rt::spawn(async move {
                 match redemption::receive(ctx).await {

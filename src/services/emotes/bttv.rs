@@ -101,7 +101,6 @@ impl EmoteRW for BttvEmotes {
             history_len: history_len as usize,
             platform_id: bttv_id,
             emote: emote_data,
-            emotes: bttv_user.shared_emotes,
         })
     }
 
@@ -131,10 +130,6 @@ impl EmoteRW for BttvEmotes {
             .map_err(|_| AnyError::msg("No such user."))
             .await?;
         Ok(bttv_user.shared_emotes)
-    }
-
-    async fn get_emote_by_id(emote_id: &String) -> AnyResult<bttv::BttvEmote> {
-        bttv::get_emote(emote_id).await
     }
 
     async fn remove_emote(

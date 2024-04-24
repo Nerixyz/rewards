@@ -16,7 +16,7 @@ use models::editor;
 use platforms::Platforms;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use twitch_api2::twitch_oauth2::AppAccessToken;
+use twitch_api::twitch_oauth2::AppAccessToken;
 use twitch_irc::message::PrivmsgMessage;
 
 pub enum DebugCommand {

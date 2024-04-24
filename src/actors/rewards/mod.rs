@@ -15,7 +15,7 @@ use models::{reward::RewardData, timed_mode};
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use twitch_api2::twitch_oauth2::AppAccessToken;
+use twitch_api::twitch_oauth2::AppAccessToken;
 
 pub struct RewardsActor {
     pub db: PgPool,

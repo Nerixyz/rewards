@@ -23,7 +23,7 @@ use models::{
 };
 use sqlx::PgPool;
 use std::time::Duration;
-use twitch_api2::{
+use twitch_api::{
     helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
 };
 

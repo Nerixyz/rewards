@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use models::{reward::SpotifyPlayOptions, spotify::SpotifyData, user::User};
 use regex::Regex;
 use sqlx::PgPool;
-use twitch_api2::twitch_oauth2::UserToken;
+use twitch_api::twitch_oauth2::UserToken;
 
 pub async fn get_spotify_token(
     user_id: &str,

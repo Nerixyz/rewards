@@ -9,7 +9,7 @@ use std::{
     future::{ready, Future, Ready},
     pin::Pin,
 };
-use twitch_api2::eventsub::{Event, EventType};
+use twitch_api::eventsub::{Event, EventType};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -126,8 +126,8 @@ async fn read_verify_payload(
 
             #[deny(unreachable_patterns)]
             match (headers.version.as_str(), headers.event_type) {
-                $(  (<twitch_api2::eventsub::$module::$event as twitch_api2::eventsub::EventSubscription>::VERSION, <twitch_api2::eventsub::$module::$event as twitch_api2::eventsub::EventSubscription>::EVENT_TYPE) => {
-                    EventsubPayload(twitch_api2::eventsub::Event::$event(twitch_api2::eventsub::Payload::parse_request((&headers.message_type).into(), body.as_ref().into()).map_err(|_| errors::ErrorBadRequest("cannot parse payload"))?))
+                $(  (<twitch_api::eventsub::$module::$event as twitch_api::eventsub::EventSubscription>::VERSION, <twitch_api::eventsub::$module::$event as twitch_api::eventsub::EventSubscription>::EVENT_TYPE) => {
+                    EventsubPayload(twitch_api::eventsub::Event::$event(twitch_api::eventsub::Payload::parse_request((&headers.message_type).into(), body.as_ref().into()).map_err(|_| errors::ErrorBadRequest("cannot parse payload"))?))
                 }  )*
                 (..) => return Err(errors::ErrorBadRequest("not implemented"))
             }

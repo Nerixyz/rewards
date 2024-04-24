@@ -6,7 +6,7 @@ use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
 use std::{pin::Pin, time::Duration};
-use twitch_api2::{
+use twitch_api::{
     helix::points::CreateCustomRewardResponse,
     twitch_oauth2::{
         AccessToken, ClientId, ClientSecret, RefreshToken, UserToken,
@@ -284,11 +284,12 @@ impl Reward {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            "INSERT INTO rewards (id, user_id, data, live_delay) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO rewards (id, user_id, data, live_delay, auto_accept) VALUES ($1, $2, $3, $4, $5)",
             self.id,
             self.user_id,
             Json(&self.data) as _,
-            self.live_delay
+            self.live_delay,
+            self.auto_accept,
         )
         .execute(&mut *tx)
         .await?;
@@ -301,10 +302,11 @@ impl Reward {
         let mut tx = pool.begin().await?;
         // language=PostgreSQL
         let _ = sqlx::query!(
-            "UPDATE rewards SET data=$2, live_delay = $3 WHERE id=$1",
+            "UPDATE rewards SET data=$2, live_delay = $3, auto_accept = $4 WHERE id=$1",
             self.id,
             Json(self.data.clone()) as _,
-            self.live_delay
+            self.live_delay,
+            self.auto_accept,
         )
         .execute(&mut *tx)
         .await?;

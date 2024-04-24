@@ -22,7 +22,6 @@ pub struct EmoteInitialData<I, E> {
     pub platform_id: I,
     pub history_len: usize,
     pub emote: E,
-    pub emotes: Vec<E>,
 }
 
 pub struct EmoteEnvData {
@@ -71,9 +70,6 @@ pub trait EmoteRW {
         broadcaster_id: &str,
         pool: &PgPool,
     ) -> AnyResult<Vec<Self::Emote>>;
-    async fn get_emote_by_id(
-        emote_id: &Self::EmoteId,
-    ) -> AnyResult<Self::Emote>;
     async fn remove_emote(
         platform_id: &Self::PlatformId,
         emote_id: &Self::EmoteId,

@@ -5,7 +5,7 @@ use crate::{
 };
 use deadpool_redis::redis;
 use itertools::{Either, Itertools};
-use twitch_api2::{
+use twitch_api::{
     helix::users::User as HelixUser, twitch_oauth2::UserToken,
     types::UserIdRef, HelixClient,
 };

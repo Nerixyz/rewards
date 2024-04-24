@@ -1,5 +1,3 @@
-extern crate twitch_api as twitch_api2;
-
 use actix::{Actor, SystemRegistry};
 use actix_cors::Cors;
 use actix_files::NamedFile;
@@ -12,7 +10,7 @@ use anyhow::Error as AnyError;
 use log::LevelFilter;
 use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use tokio::sync::RwLock;
-use twitch_api2::{
+use twitch_api::{
     helix::Scope,
     twitch_oauth2::{AppAccessToken, ClientId, ClientSecret},
 };

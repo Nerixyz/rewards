@@ -5,7 +5,7 @@ use anyhow::{anyhow, bail, Error as AnyError, Result as AnyResult};
 use futures::TryFutureExt;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
-use twitch_api2::twitch_oauth2::AppAccessToken;
+use twitch_api::twitch_oauth2::AppAccessToken;
 
 use crate::{
     actors::{
