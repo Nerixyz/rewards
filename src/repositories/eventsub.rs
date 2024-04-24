@@ -58,7 +58,6 @@ async fn reward_redemption(
                 executor: executor.into_inner(),
                 user,
                 notification,
-                subscription,
             };
             actix_web::rt::spawn(async move {
                 match redemption::receive(ctx).await {

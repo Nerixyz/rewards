@@ -35,8 +35,6 @@ lazy_static! {
 #[non_exhaustive]
 pub struct BttvEditor {
     pub id: String,
-    pub name: String,
-    pub provider_id: String,
     pub limits: BttvLimits,
 }
 

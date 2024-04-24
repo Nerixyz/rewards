@@ -1,18 +1,10 @@
 use actix::Message;
 use models::{reward::Reward, user::User};
-use twitch_api2::eventsub::{
-    channel::{
-        ChannelPointsCustomRewardRedemptionAddV1,
-        ChannelPointsCustomRewardRedemptionAddV1Payload,
-    },
-    EventSubscriptionInformation,
-};
+use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload;
 
 pub struct ExecuteRewardMessage {
     pub reward: Reward,
     pub redemption: ChannelPointsCustomRewardRedemptionAddV1Payload,
-    pub subscription:
-        EventSubscriptionInformation<ChannelPointsCustomRewardRedemptionAddV1>,
     pub broadcaster: User,
 }
 

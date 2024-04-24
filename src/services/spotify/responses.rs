@@ -5,9 +5,6 @@ use serde::Deserialize;
 #[non_exhaustive]
 pub struct AccessTokenResponse {
     pub access_token: String,
-    pub token_type: String,
-    pub scope: String,
-    pub expires_in: usize,
     pub refresh_token: String,
 }
 
@@ -15,9 +12,6 @@ pub struct AccessTokenResponse {
 #[non_exhaustive]
 pub struct RefreshTokenResponse {
     pub access_token: String,
-    pub token_type: String,
-    pub scope: String,
-    pub expires_in: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -35,13 +29,13 @@ pub enum PlayingItem {
     Track(TrackObject),
 }
 
-impl ToString for PlayingItem {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for PlayingItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PlayingItem::Episode(ep) => {
-                format!("{} from {}", ep.name, ep.show.name)
+                write!(f, "{} from {}", ep.name, ep.show.name)
             }
-            PlayingItem::Track(track) => track.to_string(),
+            PlayingItem::Track(track) => write!(f, "{}", track),
         }
     }
 }
@@ -55,9 +49,10 @@ pub struct TrackObject {
     pub explicit: bool,
 }
 
-impl ToString for TrackObject {
-    fn to_string(&self) -> String {
-        format!(
+impl std::fmt::Display for TrackObject {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "\"{}\" by {}",
             self.name,
             self.artists.iter().map(|i| &i.name).join(", ")

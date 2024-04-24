@@ -134,7 +134,6 @@ impl EmoteRW for SevenTvEmotes {
             history_len: history_len as usize,
             platform_id: stv_set.id,
             emote,
-            emotes: stv_set.emotes,
         })
     }
 
@@ -176,12 +175,6 @@ impl EmoteRW for SevenTvEmotes {
             .emote_set
             .ok_or_else(|| anyhow!("No 7TV emote set selected"))
             .map(|s| s.emotes)
-    }
-
-    async fn get_emote_by_id(
-        emote_id: &Self::EmoteId,
-    ) -> AnyResult<Self::Emote> {
-        seven_tv::get_emote(emote_id).await
     }
 
     async fn remove_emote(

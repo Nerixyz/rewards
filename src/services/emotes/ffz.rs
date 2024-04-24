@@ -99,7 +99,6 @@ impl EmoteRW for FfzEmotes {
             history_len: ffz_history as usize,
             platform_id: ffz_room.room._id,
             emote: ffz_emote,
-            emotes: room_emotes,
         })
     }
 
@@ -157,10 +156,6 @@ impl EmoteRW for FfzEmotes {
         ffz::get_room(broadcaster_id)
             .await
             .map(|room| room.room._id)
-    }
-
-    async fn get_emote_by_id(emote_id: &usize) -> AnyResult<ffz::FfzEmote> {
-        ffz::get_emote(emote_id).await
     }
 
     async fn remove_emote(

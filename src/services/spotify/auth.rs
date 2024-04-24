@@ -10,7 +10,7 @@ pub const SPOTIFY_SCOPES: &str =
 #[serde(untagged)]
 pub enum SpotifyAuthResponse {
     Success { code: String, state: String },
-    Error { error: String, state: String },
+    Error { error: String },
 }
 
 #[derive(Serialize)]

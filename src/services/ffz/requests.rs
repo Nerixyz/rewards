@@ -64,7 +64,6 @@ struct FfzEmoteReply {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct FfzEmoteSet {
-    pub id: usize,
     pub emoticons: Vec<FfzEmote>,
 }
 
@@ -86,7 +85,6 @@ pub struct FfzRoom {
 pub struct FfzUser {
     pub max_emoticons: usize,
     pub id: usize,
-    pub name: String,
 }
 
 #[derive(Deserialize, Debug)]

@@ -11,13 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use thiserror::Error;
-use twitch_api2::{
-    eventsub::{
-        channel::ChannelPointsCustomRewardRedemptionAddV1,
-        EventSubscriptionInformation,
-    },
-    helix::points::CustomRewardRedemptionStatus,
-};
+use twitch_api2::helix::points::CustomRewardRedemptionStatus;
 
 #[derive(Error, Debug)]
 pub enum ReceiveRedemptionError {
@@ -29,8 +23,6 @@ pub struct ReceiveRedemptionCtx {
     pub pool: Arc<PgPool>,
     pub executor: Arc<Addr<RewardsActor>>,
     pub notification: Redemption,
-    pub subscription:
-        EventSubscriptionInformation<ChannelPointsCustomRewardRedemptionAddV1>,
     pub user: User,
 }
 
@@ -155,7 +147,6 @@ pub async fn receive(
         executor,
         notification,
         user,
-        subscription,
     } = ctx;
     let redemption_received = Instant::now();
 
@@ -170,7 +161,6 @@ pub async fn receive(
     let status = match executor
         .send(ExecuteRewardMessage {
             redemption: notification,
-            subscription,
             broadcaster: user.clone(),
             reward,
         })

@@ -136,11 +136,6 @@ struct TwitchOAuthParams {
     scope: String,
 }
 
-#[derive(Serialize)]
-struct TwitchAuthUrlResponse {
-    url: String,
-}
-
 #[get("/twitch-auth")]
 fn redirect_to_twitch_auth() -> future::Ready<HttpResponse> {
     let params = TwitchOAuthParams {
