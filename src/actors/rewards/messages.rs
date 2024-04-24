@@ -1,6 +1,6 @@
 use actix::Message;
 use models::{reward::Reward, user::User};
-use twitch_api2::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload;
+use twitch_api::eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload;
 
 pub struct ExecuteRewardMessage {
     pub reward: Reward,

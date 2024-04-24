@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use thiserror::Error;
-use twitch_api2::helix::points::CustomRewardRedemptionStatus;
+use twitch_api::helix::points::CustomRewardRedemptionStatus;
 
 #[derive(Error, Debug)]
 pub enum ReceiveRedemptionError {

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use std::future;
 use time::{Duration, OffsetDateTime};
 use tokio::sync::RwLock;
-use twitch_api2::twitch_oauth2::{
+use twitch_api::twitch_oauth2::{
     tokens::UserTokenBuilder, AppAccessToken, ClientId, ClientSecret,
     CsrfToken, Scope, TwitchToken, UserToken,
 };

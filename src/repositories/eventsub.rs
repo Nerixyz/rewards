@@ -5,7 +5,7 @@ use actix_web::{
     HttpResponse, Result,
 };
 use sqlx::PgPool;
-use twitch_api2::eventsub::{
+use twitch_api::eventsub::{
     user::UserAuthorizationRevokeV1Payload, Event, Message, Payload,
 };
 

@@ -6,7 +6,7 @@ use futures::Stream;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgPool};
 use std::{pin::Pin, time::Duration};
-use twitch_api2::{
+use twitch_api::{
     helix::points::CreateCustomRewardResponse,
     twitch_oauth2::{
         AccessToken, ClientId, ClientSecret, RefreshToken, UserToken,

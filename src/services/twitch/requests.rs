@@ -5,11 +5,11 @@ use anyhow::anyhow;
 use config::CONFIG;
 use models::timed_mode;
 use reqwest::StatusCode;
-use twitch_api::helix::chat::{SendChatMessageBody, SendChatMessageRequest};
-use twitch_api2::{
+use twitch_api::{
     helix::{
         chat::{
-            ChatSettings, GetChatSettingsRequest, UpdateChatSettingsBody,
+            ChatSettings, GetChatSettingsRequest, SendChatMessageBody,
+            SendChatMessageRequest, UpdateChatSettingsBody,
             UpdateChatSettingsRequest,
         },
         moderation::{BanUserBody, BanUserRequest, GetBannedUsersRequest},

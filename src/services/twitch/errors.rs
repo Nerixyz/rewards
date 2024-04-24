@@ -2,7 +2,7 @@ use crate::services::h2h::H2hExt as _;
 use actix_web::{error, http::StatusCode, HttpResponse};
 use derive_more::Display;
 use errors::json_error::JsonError;
-use twitch_api2::helix::{
+use twitch_api::helix::{
     ClientRequestError, CreateRequestError, HelixRequestDeleteError,
     HelixRequestGetError, HelixRequestPatchError, HelixRequestPostError,
     HelixRequestPutError,

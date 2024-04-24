@@ -1,6 +1,6 @@
 use anyhow::{Error as AnyError, Result as AnyResult};
 use sqlx::PgPool;
-use twitch_api2::twitch_oauth2::UserToken;
+use twitch_api::twitch_oauth2::UserToken;
 
 use crate::services::{
     bttv, ffz::is_editor_in, rewards::extract, seven_tv,

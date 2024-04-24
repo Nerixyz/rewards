@@ -6,7 +6,7 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use sqlx::PgPool;
-use twitch_api2::{
+use twitch_api::{
     helix::points::UpdateCustomRewardBody, twitch_oauth2::UserToken,
 };
 

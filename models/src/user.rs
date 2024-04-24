@@ -2,7 +2,7 @@ use config::CONFIG;
 use errors::sql::SqlResult;
 use sqlx::{FromRow, PgPool};
 use std::time::Duration;
-use twitch_api2::{
+use twitch_api::{
     twitch_oauth2::{
         AccessToken, ClientId, ClientSecret, RefreshToken, UserToken,
     },

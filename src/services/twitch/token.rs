@@ -2,7 +2,7 @@ use crate::{ClientId, Scope};
 use config::CONFIG;
 use once_cell::sync::OnceCell;
 use std::{sync::Arc, time::Duration};
-use twitch_api2::{
+use twitch_api::{
     twitch_oauth2::{
         client::Client,
         tokens::{errors::RefreshTokenError, BearerTokenType},
