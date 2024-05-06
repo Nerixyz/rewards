@@ -72,7 +72,7 @@ humantime = "2.1"
 chrono = "0.4"
 time = "0.3"
 
-prometheus = "0.13.2"
+prometheus = "0.13.4"
 uptimer = { git = "https://github.com/Nerixyz/uptimer.git" }
 
 anyhow = "1.0"
