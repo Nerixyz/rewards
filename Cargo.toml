@@ -88,7 +88,7 @@ hex = "0.4"
 rand = "0.8"
 regex = "1.10"
 percent-encoding = "2.3"
-either = "1.12"
+either = "1.13"
 url = "2.5"
 
 lazy_static = "1.5"
