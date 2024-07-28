@@ -24,7 +24,7 @@ impl EmoteCache {
         pg: &PgPool,
     ) -> AnyResult<Self> {
         let cached: Option<String> = redis
-            .get(&format!("rewards:emote-cache:{}", user_id))
+            .get(format!("rewards:emote-cache:{}", user_id))
             .await?;
         match cached {
             Some(c) => serde_json::from_str(&c).map_err(anyhow::Error::from),

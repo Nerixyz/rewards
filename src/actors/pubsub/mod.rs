@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use std::time::Duration;
 
 use actix::{

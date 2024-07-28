@@ -111,12 +111,8 @@ async fn main() -> std::io::Result<()> {
     let timeout_actor = TimeoutActor::new(redis_pool.clone()).start();
 
     let db_actor = DbActor::new(pg_pool.clone()).start();
-    let irc_actor = IrcActor::new(
-        db_actor.clone(),
-        chat_actor.recipient(),
-        timeout_actor.clone(),
-    )
-    .start();
+    let irc_actor =
+        IrcActor::new(chat_actor.recipient(), timeout_actor.clone()).start();
     let discord_user_actor = DiscordActor::new(pg_pool.clone()).start();
 
     SystemRegistry::set(
