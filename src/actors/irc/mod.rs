@@ -6,15 +6,13 @@ use actix::{
 };
 use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::{
-    login::RefreshingLoginCredentials,
+    login::StaticLoginCredentials,
     message::{ClearChatAction, ClearChatMessage, ServerMessage},
     ClientConfig, MetricsConfig, SecureTCPTransport, TwitchIRCClient,
 };
 
-use token_storage::PgTokenStorage;
-
 use crate::{
-    actors::{db::DbActor, timeout::TimeoutActor},
+    actors::timeout::TimeoutActor,
     chat::{parse::opt_next_space, try_parse_command},
     log_err,
     services::twitch::{self, requests::send_chat_message},
@@ -22,14 +20,12 @@ use crate::{
 use config::CONFIG;
 
 mod messages;
-mod token_storage;
 use crate::actors::{
     chat::ExecuteCommandMessage, timeout::ChannelTimeoutMessage,
 };
 pub use messages::*;
 
-type IrcCredentials = RefreshingLoginCredentials<PgTokenStorage>;
-type IrcClient = TwitchIRCClient<SecureTCPTransport, IrcCredentials>;
+type IrcClient = TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>;
 
 pub struct IrcActor {
     client: IrcClient,
@@ -45,7 +41,6 @@ pub struct IrcActor {
 
 impl IrcActor {
     pub fn new(
-        db: Addr<DbActor>,
         executor: Recipient<ExecuteCommandMessage>,
         timeout_handler: Addr<TimeoutActor>,
     ) -> Self {
@@ -56,12 +51,7 @@ impl IrcActor {
             new_connection_every: Duration::from_secs(12),
             max_channels_per_connection: 20,
 
-            ..ClientConfig::new_simple(IrcCredentials::init_with_username(
-                Some(CONFIG.twitch.login.to_string()),
-                CONFIG.twitch.client_id.to_string(),
-                CONFIG.twitch.client_secret.to_string(),
-                PgTokenStorage(db),
-            ))
+            ..ClientConfig::new_simple(StaticLoginCredentials::anonymous())
         };
 
         let (incoming, client) = IrcClient::new(config);
