@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import { ref, watch } from 'vue';
 import CDialog from './core/CDialog.vue';
 import { RewardDataMap } from '../api/types';
 import ActionType from './ActionType.vue';
@@ -73,9 +73,13 @@ const [openModel] = defineModel<boolean>('open', { required: true });
 const [actionModel] = defineModel<keyof RewardDataMap>('action', { required: true });
 
 const rewardAction = ref<keyof RewardDataMap>('Timeout');
-watchEffect(() => {
-  rewardAction.value = props.action;
-});
+watch(
+  () => props.action,
+  action => {
+    rewardAction.value = action;
+  },
+  { immediate: true },
+);
 
 const closeDialog = () => {
   openModel.value = false;

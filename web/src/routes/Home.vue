@@ -2,7 +2,7 @@
   <div class="flex flex-col justify-center items-center w-full h-full gap-4">
     <Heading>Rewards</Heading>
     <SubHeading>Enhance your stream with custom rewards</SubHeading>
-    <CButton v-if="!api.isAuthenticated" href="/api/v1/auth/twitch-auth"> <TwitchIcon />Login with twitch </CButton>
+    <CButton v-if="!isAuthenticated" href="/api/v1/auth/twitch-auth"> <TwitchIcon />Login with twitch </CButton>
     <div v-else class="inline">
       Make sure to mod <b class="border-red border-b">RewardMore</b> in chat to be able to use rewards that require
       mod-access!
@@ -27,4 +27,5 @@ import { useApi } from '../api/plugin';
 import GithubIcon from '../components/icons/GithubIcon.vue';
 
 const api = useApi();
+const isAuthenticated = api.isAuthenticated;
 </script>
