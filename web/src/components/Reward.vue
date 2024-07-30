@@ -51,7 +51,7 @@ const actionDescription = computed(() => {
   let description = '';
   switch (type) {
     case 'Timeout':
-      description = `duration = ${data.duration}s, vip = ${data.vip}`;
+      description = `duration = ${data.duration}, vip = ${data.vip}`;
       break;
     case 'SubOnly':
     case 'EmoteOnly':
