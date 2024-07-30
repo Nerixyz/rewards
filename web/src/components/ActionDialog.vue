@@ -75,9 +75,10 @@ const [actionModel] = defineModel<keyof RewardDataMap>('action', { required: tru
 const rewardAction = ref<keyof RewardDataMap>('Timeout');
 watch(
   () => props.action,
-  () => {
-    rewardAction.value = props.action;
+  action => {
+    rewardAction.value = action;
   },
+  { immediate: true },
 );
 
 const closeDialog = () => {

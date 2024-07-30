@@ -16,8 +16,8 @@
             {{ reward.twitch.prompt }}
           </h4>
           <h4 class="font-serif text-sm mt-2 text-gray-700">Action</h4>
-          <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis">
-            {{ reward.data.type }} <span class="ml-2 text-gray-700">{{ actionDescription }}</span>
+          <h4 class="font-serif italic text-sm whitespace-nowrap overflow-hidden overflow-ellipsis text-gray-700">
+            <span class="text-white">{{ reward.data.type }}</span> <span class="ml-1">{{ actionDescription }}</span>
           </h4>
         </div>
       </div>

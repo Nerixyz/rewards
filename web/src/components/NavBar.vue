@@ -1,5 +1,5 @@
 <template>
-  <nav v-if="api.isAuthenticated" class="w-full h-14 bg-gray-dark border-b border-opacity-10 border-white">
+  <nav v-if="isAuthenticated" class="w-full h-14 bg-gray-dark border-b border-opacity-10 border-white">
     <div class="mx-auto w-full max-w-7xl flex justify-between items-center h-full">
       <div class="flex flex-wrap divide-opacity-20 divide-white divide-solid divide-x">
         <div v-for="route of routes" :key="route.path" class="flex">
@@ -114,6 +114,7 @@ const routes = router.getRoutes().filter(r => !!r.name && !r.meta['ignoreNav']);
 const userImage = computed(() => store.user.value?.profile_image_url);
 const userLoading = computed(() => !store.user.value);
 const userName = computed(() => store.user.value?.login);
+const isAuthenticated = api.isAuthenticated;
 </script>
 
 <style scoped>

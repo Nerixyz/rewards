@@ -2,7 +2,7 @@
   <div class="flex flex-col p-1 gap-4 max-w-2xl w-full self-center mt-5">
     <h2 class="font-bold font-mono text-xl text-gray-700">Action</h2>
     <div class="flex gap-4 items-center">
-      <h1 class="font-mono font-bold text-3xl">{{ reward.type }}</h1>
+      <h1 class="font-mono font-bold text-3xl">{{ StaticRewardData[reward.type].display ?? reward.type }}</h1>
       <button
         :class="[
           `
@@ -43,7 +43,7 @@
     <RemEmoteSettings v-else-if="reward.type === 'RemEmote'" v-model="reward.data" />
   </div>
 
-  <ActionDialog v-model:action="reward.type" v-model:open="dialogOpen" />
+  <ActionDialog v-model:open="dialogOpen" :action="reward.type" @update:action="updateAction" />
 </template>
 
 <script setup lang="ts">
@@ -57,7 +57,7 @@ import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
 import RemEmoteSettings from './rewards/RemEmoteSettings.vue';
 import ActionDialog from './ActionDialog.vue';
 import { StaticRewardData } from '../api/rewards-data';
-import { RewardData } from '../api/types';
+import { RewardData, RewardDataMap } from '../api/types';
 import { simpleClone } from '../api/model-conversion';
 
 const [reward] = defineModel<RewardData>({
@@ -77,10 +77,15 @@ watch(
   v => {
     if (!StaticRewardData[v.type].validOptions(v.data)) {
       v.data = simpleClone(StaticRewardData[v.type].defaultOptions);
-      console.log('default');
     }
   },
 );
+const updateAction = (ty: keyof RewardDataMap) => {
+  reward.value.type = ty;
+  if (!StaticRewardData[ty].validOptions(reward.value.data)) {
+    reward.value.data = simpleClone(StaticRewardData[ty].defaultOptions);
+  }
+};
 
 const dialogOpen = ref(false);
 const hasOpened = ref(false);
