@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import EditIcon from './icons/EditIcon.vue';
 import SESettings from './rewards/SESettings.vue';
 import TimeoutSettings from './rewards/TimeoutSettings.vue';
@@ -62,12 +62,6 @@ import { simpleClone } from '../api/model-conversion';
 
 const [reward] = defineModel<RewardData>({
   required: true,
-  set(v) {
-    if (!StaticRewardData[v.type].validOptions(v.data)) {
-      v.data = simpleClone(StaticRewardData[v.type].defaultOptions);
-    }
-    return v;
-  },
 });
 defineProps<{ isNew?: boolean }>();
 const emit = defineEmits<{
@@ -77,6 +71,16 @@ const emit = defineEmits<{
 const updateWarn = (warn: boolean) => {
   emit('update:warn', warn);
 };
+
+watch(
+  () => reward.value,
+  v => {
+    if (!StaticRewardData[v.type].validOptions(v.data)) {
+      v.data = simpleClone(StaticRewardData[v.type].defaultOptions);
+      console.log('default');
+    }
+  },
+);
 
 const dialogOpen = ref(false);
 const hasOpened = ref(false);
