@@ -4,7 +4,7 @@
     :class="[
       `
       flex flex-col
-      border-2 border-transparent
+      border-2
       select-none
       cursor-pointer
       rounded-md
@@ -15,7 +15,7 @@
       focus:bg-opacity-5
       hover:bg-opacity-10
       `,
-      selected ? 'border-red' : '',
+      selected ? 'border-red' : 'border-transparent',
     ]"
     @click="setCurrent"
     @keydown.enter="setCurrent"

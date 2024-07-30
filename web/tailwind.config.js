@@ -4,9 +4,6 @@ import colors from 'tailwindcss/colors';
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   media: false, // or 'media' or 'class'
-  safelist: [
-    'border-red', // ActionType
-  ],
   theme: {
     colors: {
       transparent: 'transparent',
