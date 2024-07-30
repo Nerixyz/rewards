@@ -1,5 +1,5 @@
 <template>
-  <CDialog :open="dialogOpen" title="Choose an Action">
+  <CDialog :open="openModel" title="Choose an Action">
     <ul class="overflow-y-auto max-w-3xl max-h-75vh flex flex-col gap-3 p-2">
       <ActionType v-model="rewardAction" action="Timeout" description="Timeout someone" />
       <ActionCategory name="Timed Modes">
@@ -59,8 +59,8 @@
   </CDialog>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType, ref, watchEffect } from 'vue';
+<script setup lang="ts">
+import { ref, watchEffect } from 'vue';
 import CDialog from './core/CDialog.vue';
 import { RewardDataMap } from '../api/types';
 import ActionType from './ActionType.vue';
@@ -68,41 +68,20 @@ import ActionCategory from './ActionCategory.vue';
 import CButton from './core/CButton.vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 
-export default defineComponent({
-  name: 'ActionDialog',
-  components: { OutlinedButton, CButton, ActionCategory, ActionType, CDialog },
-  props: {
-    open: {
-      type: Boolean,
-      required: true,
-    },
-    action: {
-      type: String as PropType<keyof RewardDataMap>,
-      required: true,
-    },
-  },
-  emits: ['update:open', 'update:action'],
-  setup(props, { emit }) {
-    const dialogOpen = computed({ get: () => props.open, set: v => emit('update:open', v) });
+const props = defineProps<{ open: boolean; action: keyof RewardDataMap }>();
+const [openModel] = defineModel<boolean>('open', { required: true });
+const [actionModel] = defineModel<keyof RewardDataMap>('action', { required: true });
 
-    const rewardAction = ref<keyof RewardDataMap>('Timeout');
-    watchEffect(() => {
-      rewardAction.value = props.action;
-    });
-
-    const setAction = (action: keyof RewardDataMap) => {
-      rewardAction.value = action;
-    };
-
-    const closeDialog = () => {
-      dialogOpen.value = false;
-    };
-    const done = () => {
-      emit('update:action', rewardAction.value);
-      closeDialog();
-    };
-
-    return { rewardAction, dialogOpen, setAction, closeDialog, done };
-  },
+const rewardAction = ref<keyof RewardDataMap>('Timeout');
+watchEffect(() => {
+  rewardAction.value = props.action;
 });
+
+const closeDialog = () => {
+  openModel.value = false;
+};
+const done = () => {
+  actionModel.value = rewardAction.value;
+  closeDialog();
+};
 </script>

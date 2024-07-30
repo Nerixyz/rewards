@@ -23,8 +23,8 @@
   </CDialog>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, toRefs } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CDialog from './core/CDialog.vue';
 import { asyncDialog, tryAsync } from '../async-state';
@@ -35,50 +35,35 @@ import TickIcon from './icons/TickIcon.vue';
 import { useApi } from '../api/plugin';
 import DiscordIcon from './icons/DiscordIcon.vue';
 
-export default defineComponent({
-  name: 'DiscordSettings',
-  components: { DiscordIcon, TickIcon, CLoader, CButton, TextField, CDialog, OutlinedButton },
-  props: {
-    broadcasterId: {
-      type: String,
-      required: true,
-    },
-  },
-  setup(props) {
-    const { broadcasterId } = toRefs(props);
-    const api = useApi();
+const props = defineProps<{ broadcasterId: string }>();
+const api = useApi();
+const { state, reset } = asyncDialog(ref(false));
 
-    const { state, reset } = asyncDialog(ref(false));
+const url = ref('');
 
-    const url = ref('');
-
-    const open = () => {
-      reset();
-      state.value = true;
-      tryAsync(async () => {
-        state.success = false;
-        url.value = await api.getDiscordUrl(broadcasterId.value);
-      }, state);
-    };
-    const close = () => {
-      state.value = false;
-    };
-    const setUrl = () => {
-      tryAsync(async () => {
-        await api.setDiscordUrl(broadcasterId.value, url.value);
-        state.value = false;
-        state.success = true;
-      }, state);
-    };
-    const deleteUrl = () => {
-      tryAsync(async () => {
-        await api.deleteDiscordUrl(broadcasterId.value);
-        state.value = false;
-        state.success = true;
-      }, state);
-    };
-
-    return { state, reset, url, open, close, setUrl, deleteUrl };
-  },
-});
+const open = () => {
+  reset();
+  state.value = true;
+  tryAsync(async () => {
+    state.success = false;
+    url.value = await api.getDiscordUrl(props.broadcasterId);
+  }, state);
+};
+const close = () => {
+  state.value = false;
+};
+const setUrl = () => {
+  tryAsync(async () => {
+    await api.setDiscordUrl(props.broadcasterId, url.value);
+    state.value = false;
+    state.success = true;
+  }, state);
+};
+const deleteUrl = () => {
+  tryAsync(async () => {
+    await api.deleteDiscordUrl(props.broadcasterId);
+    state.value = false;
+    state.success = true;
+  }, state);
+};
 </script>

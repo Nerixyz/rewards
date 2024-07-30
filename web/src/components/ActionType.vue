@@ -25,39 +25,15 @@
   </li>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType, toRefs } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { RewardDataMap } from '../api/types';
 
-export default defineComponent({
-  name: 'ActionType',
-  props: {
-    action: {
-      type: String as PropType<keyof RewardDataMap>,
-      required: true,
-    },
-    actionName: {
-      type: String,
-      required: false,
-    },
-    modelValue: {
-      type: String as PropType<keyof RewardDataMap>,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-  },
-  emits: ['update:model-value'],
-  setup(props, { emit }) {
-    const { action } = toRefs(props);
+const props = defineProps<{ action: keyof RewardDataMap; actionName?: string; description: string }>();
+const [modelValue] = defineModel<keyof RewardDataMap>({ required: true });
 
-    const setCurrent = () => {
-      emit('update:model-value', action.value);
-    };
-    const selected = computed(() => props.modelValue === props.action);
-    return { setCurrent, selected };
-  },
-});
+const setCurrent = () => {
+  modelValue.value = props.action;
+};
+const selected = computed(() => modelValue.value === props.action);
 </script>

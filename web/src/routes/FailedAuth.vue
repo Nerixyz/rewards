@@ -10,22 +10,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import Heading from '../components/core/Heading.vue';
 import SubHeading from '../components/core/SubHeading.vue';
 import CButton from '../components/core/CButton.vue';
 
-export default defineComponent({
-  name: 'FailedAuth',
-  components: { CButton, SubHeading, Heading },
-  setup() {
-    const message = ref('<no data>');
-    onMounted(() => {
-      message.value = decodeURIComponent(location.hash.substring(1)) || message.value;
-    });
-
-    return { message };
-  },
+const message = ref('<no data>');
+onMounted(() => {
+  message.value = decodeURIComponent(location.hash.substring(1)) || message.value;
 });
 </script>

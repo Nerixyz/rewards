@@ -49,8 +49,7 @@
   </TransitionRoot>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import {
   TransitionRoot,
   Dialog,
@@ -60,29 +59,13 @@ import {
   DialogTitle,
 } from '@headlessui/vue';
 
-export default defineComponent({
-  name: 'CDialog',
-  components: { TransitionRoot, Dialog, TransitionChild, DialogDescription, DialogOverlay, DialogTitle },
-  props: {
-    open: {
-      type: Boolean,
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    subtitle: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-  },
-  emits: ['update:open', 'dialogClosed'],
-  methods: {
-    onDialogClose() {
-      this.$emit('dialogClosed', true);
-    },
-  },
-});
+defineProps<{ open: boolean; title: string; subtitle?: string }>();
+const emit = defineEmits<{
+  'update:open': [open: boolean];
+  dialogClosed: [unk: boolean];
+}>();
+
+const onDialogClose = () => {
+  emit('dialogClosed', true);
+};
 </script>

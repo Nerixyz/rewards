@@ -5,13 +5,7 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import Heading from '../components/core/Heading.vue';
 import CButton from '../components/core/CButton.vue';
-
-export default defineComponent({
-  name: 'NotFound',
-  components: { CButton, Heading },
-});
 </script>

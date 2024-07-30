@@ -71,7 +71,7 @@ const router = createRouter({
 });
 
 router.beforeEach(to => {
-  if (to.meta.open) {
+  if (to.meta['open']) {
     return true;
   }
   if (!ApiClient.isAuthenticated.value) return '/';

@@ -6,9 +6,9 @@
     <!-- Error handler -->
     <div v-else-if="rewards.error">
       Something went wrong.
-      <span v-if="broadcasterId !== thisUserId"
-        >Make sure the broadcaster has added you as an editor and they have the feature available.</span
-      >
+      <span v-if="broadcasterId !== thisUserId">
+        Make sure the broadcaster has added you as an editor and they have the feature available.
+      </span>
       <span v-else>It seems like you don't have the rewards feature available.</span>
       <br />
       <br />
@@ -31,7 +31,7 @@
       </div>
       <div class="w-full flex flex-col">
         <div v-if="rewards.value.length" class="flex flex-wrap justify-center gap-6">
-          <Reward
+          <RewardComponent
             v-for="reward of rewards.value"
             :key="reward.twitch.id"
             :reward="reward"
@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <CDialog title="Delete Reward" :open="deleteDialog.value" @dialogClosed="clearDeleteDialog">
+      <CDialog title="Delete Reward" :open="deleteDialog.value" @dialog-closed="clearDeleteDialog">
         <div v-if="deleteDialog.loading"><CLoader /></div>
         <div v-else-if="deleteDialog.error">
           Could not delete :/
@@ -66,8 +66,8 @@
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { useApi } from '../api/plugin';
 import { Reward } from '../api/types';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
@@ -86,73 +86,43 @@ import { useDataStore } from '../store';
 import { useRewards } from '../hooks/use-rewards';
 import DiscordSettings from '../components/DiscordSettings.vue';
 
-export default defineComponent({
-  name: 'RewardsDashboard',
-  components: {
-    DiscordSettings,
-    Reward: RewardComponent,
-    MainLayout,
-    LogIcon,
-    TickIcon,
-    CLoader,
-    DialogButtons,
-    CDialog,
-    CButton,
-    PlusIcon,
-    OutlinedButton,
-  },
-  setup() {
-    const api = useApi();
-    const store = useDataStore();
+const api = useApi();
+const store = useDataStore();
 
-    // core stuff to ensure we have a user id
+// core stuff to ensure we have a user id
 
-    const { thisUserId, broadcasterId } = useBroadcaster({ store });
-    const { rewards, updateRewards } = useRewards({ broadcasterId, store, api });
+const { thisUserId, broadcasterId } = useBroadcaster({ store });
+const { rewards, updateRewards } = useRewards({ broadcasterId, store, api });
 
-    const coreExports = { rewards, broadcasterId, thisUserId };
+// Delete actions
+const { state: deleteDialog, reset: resetDeleteDialog } = asyncDialog(ref(false));
 
-    // Delete actions
-    const { state: deleteDialog, reset: resetDeleteDialog } = asyncDialog(ref(false));
+const currentRewardToDelete = ref<null | Reward>(null);
+const openDeleteDialogForReward = (reward: Reward) => {
+  currentRewardToDelete.value = reward;
+  deleteDialog.value = true;
+};
 
-    const currentRewardToDelete = ref<null | Reward>(null);
-    const openDeleteDialogForReward = (reward: Reward) => {
-      currentRewardToDelete.value = reward;
-      deleteDialog.value = true;
-    };
+const deleteReward = (reward: Reward) => {
+  tryAsyncDialog(async () => {
+    await api.deleteReward(broadcasterId.value ?? '', reward);
+    updateRewards(rewards.value.filter(r => r.twitch.id !== reward.twitch.id));
 
-    const deleteReward = (reward: Reward) => {
-      tryAsyncDialog(async () => {
-        await api.deleteReward(broadcasterId.value ?? '', reward);
-        updateRewards(rewards.value.filter(r => r.twitch.id !== reward.twitch.id));
-
-        closeDeleteDialog();
-      }, deleteDialog);
-    };
-    const deleteCurrentReward = () => {
-      if (!currentRewardToDelete.value) {
-        closeDeleteDialog();
-        return;
-      }
-      deleteReward(currentRewardToDelete.value);
-    };
-    const clearDeleteDialog = () => {
-      resetDeleteDialog();
-      currentRewardToDelete.value = null;
-    };
-    const closeDeleteDialog = () => {
-      deleteDialog.value = false;
-    };
-
-    const deleteExports = {
-      deleteDialog,
-      closeDeleteDialog,
-      deleteCurrentReward,
-      openDeleteDialogForReward,
-      clearDeleteDialog,
-    };
-
-    return { ...coreExports, ...deleteExports };
-  },
-});
+    closeDeleteDialog();
+  }, deleteDialog);
+};
+const deleteCurrentReward = () => {
+  if (!currentRewardToDelete.value) {
+    closeDeleteDialog();
+    return;
+  }
+  deleteReward(currentRewardToDelete.value);
+};
+const clearDeleteDialog = () => {
+  resetDeleteDialog();
+  currentRewardToDelete.value = null;
+};
+const closeDeleteDialog = () => {
+  deleteDialog.value = false;
+};
 </script>

@@ -24,7 +24,7 @@ export class BaseClient {
   protected put<T>(data: AnyObject | undefined, ...segments: string[]): Promise<T> {
     return this.baseRequest(segments.join('/'), {
       method: 'PUT',
-      body: data && JSON.stringify(data),
+      body: (data && JSON.stringify(data)) ?? null,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -68,7 +68,7 @@ export class BaseClient {
 }
 
 function makeApiUrl(path: string) {
-  return `${import.meta.env.MODE === 'development' ? import.meta.env.VITE_API_BASE_URL ?? '' : ''}/api/v1/${path}`;
+  return `${import.meta.env.MODE === 'development' ? import.meta.env['VITE_API_BASE_URL'] ?? '' : ''}/api/v1/${path}`;
 }
 
 function isOk(status: number) {

@@ -11,36 +11,21 @@
   <CSwitch v-model="state.reply" label="Reply after successful redemption" />
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, reactive, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { reactive, watch } from 'vue';
 import CDropdown from '../core/CDropdown.vue';
 import CSwitch from '../core/CSwitch.vue';
 import { RemEmoteRewardData } from '../../api/types';
 
-export default defineComponent({
-  name: 'RemEmoteSettings',
-  components: { CSwitch, CDropdown },
-  props: {
-    modelValue: {
-      type: Object as PropType<RemEmoteRewardData>,
-      required: true,
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const { modelValue } = toRefs(props);
+const [modelValue] = defineModel<RemEmoteRewardData>({ required: true });
 
-    const state = reactive(modelValue.value);
+const state = reactive({ reply: true, ...modelValue.value });
 
-    watch(modelValue, newValue => {
-      state.platform = newValue.platform ?? 'SevenTv';
-      state.reply = newValue.reply ?? true;
-    });
-    watch(state, value => {
-      emit('update:modelValue', value);
-    });
-
-    return { state };
-  },
+watch(modelValue, newValue => {
+  state.platform = newValue.platform ?? 'SevenTv';
+  state.reply = newValue.reply ?? true;
+});
+watch(state, value => {
+  modelValue.value = value;
 });
 </script>

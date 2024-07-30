@@ -24,7 +24,7 @@
       <div class="">
         <button
           class="py-2 px-3 uppercase font-bold flex items-center w-full justify-center transition transition-colors border-t border-red hover:bg-red-dark hover:text-black hover:border-transparent"
-          @click.prevent="$emit('deleteReward', reward)"
+          @click.prevent="emit('deleteReward', reward)"
         >
           <TrashIcon /> Delete
         </button>
@@ -33,68 +33,50 @@
   </router-link>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType, toRefs } from 'vue';
-import { Reward, RewardDataMap } from '../api/types';
+<script setup lang="ts">
+import { computed } from 'vue';
+import { Reward } from '../api/types';
 import TrashIcon from './icons/TrashIcon.vue';
 
-export default defineComponent({
-  name: 'Reward',
-  components: { TrashIcon },
-  props: {
-    reward: {
-      type: Object as PropType<Reward>,
-      required: true,
-    },
-  },
-  emits: {
-    deleteReward: (reward: Reward) => reward,
-  },
-  setup(props) {
-    const { reward } = toRefs(props);
+const props = defineProps<{ reward: Reward }>();
+const emit = defineEmits<{ deleteReward: [reward: Reward] }>();
 
-    const imageUrl = computed(() => {
-      const twitch = reward.value.twitch;
-      return twitch.image?.url_4x ?? twitch.default_image?.url_4x ?? null;
-    });
+const imageUrl = computed(() => {
+  const twitch = props.reward.twitch;
+  return twitch.image?.url_4x ?? twitch.default_image?.url_4x ?? null;
+});
 
-    const actionDescription = computed(() => {
-      const data = reward.value.data.data;
-      let description = '';
-      switch (reward.value.data.type) {
-        case 'Timeout':
-          description = data as RewardDataMap['Timeout'];
-          break;
-        case 'SubOnly':
-        case 'EmoteOnly':
-          description = data as RewardDataMap['SubOnly' | 'EmoteOnly'];
-          break;
-        case 'BttvSwap':
-        case 'FfzSwap':
-        case 'SevenTvSwap':
-          const limit = (data as RewardDataMap['BttvSwap' | 'FfzSwap' | 'SevenTvSwap'])?.limit ?? null;
-          if (limit !== null) {
-            description = `limit = ${limit}`;
-          }
-          break;
-        case 'BttvSlot':
-        case 'FfzSlot':
-        case 'SevenTvSlot':
-          const sData = data as RewardDataMap['BttvSlot' | 'FfzSlot' | 'SevenTvSlot'];
-          description = `slots = ${sData.slots}, expiration = ${sData.expiration}`;
-          break;
-        case 'SpotifySkip':
-          break;
-        case 'SpotifyPlay':
-        case 'SpotifyQueue':
-          const explicit = (data as RewardDataMap['SpotifyPlay' | 'SpotifyQueue']).allow_explicit;
-          description = `explicit = ${explicit}`;
-          break;
+const actionDescription = computed(() => {
+  const { data, type } = props.reward.data;
+  let description = '';
+  switch (type) {
+    case 'Timeout':
+      description = `duration = ${data.duration}s, vip = ${data.vip}`;
+      break;
+    case 'SubOnly':
+    case 'EmoteOnly':
+      description = data;
+      break;
+    case 'BttvSwap':
+    case 'FfzSwap':
+    case 'SevenTvSwap':
+      const limit = data?.limit ?? null;
+      if (limit !== null) {
+        description = `limit = ${limit}`;
       }
-      return description;
-    });
-
-    return { imageUrl, actionDescription };
-  },
+      break;
+    case 'BttvSlot':
+    case 'FfzSlot':
+    case 'SevenTvSlot':
+      description = `slots = ${data.slots}, expiration = ${data.expiration}`;
+      break;
+    case 'SpotifySkip':
+      break;
+    case 'SpotifyPlay':
+    case 'SpotifyQueue':
+      description = `explicit = ${data.allow_explicit}`;
+      break;
+  }
+  return description;
 });
 </script>

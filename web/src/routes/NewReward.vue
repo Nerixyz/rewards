@@ -19,14 +19,20 @@
         <h1 class="font-bold font-mono text-5xl">New Reward</h1>
       </div>
       <div class="flex flex-col">
-        <RewardEditor :can-update="false" :is-new="true" main-action="Create" @done="saveReward" />
+        <RewardEditor
+          :can-update="false"
+          :is-new="true"
+          main-action="Create"
+          :reward-model="undefined"
+          @done="saveReward"
+        />
       </div>
     </div>
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, onBeforeMount } from 'vue';
+<script setup lang="ts">
+import { onBeforeMount } from 'vue';
 import MainLayout from '../components/MainLayout.vue';
 import { useDataStore } from '../store';
 import { useApi } from '../api/plugin';
@@ -40,30 +46,22 @@ import { asyncState, tryAsync } from '../async-state';
 import CButton from '../components/core/CButton.vue';
 import BackIcon from '../components/icons/BackIcon.vue';
 
-export default defineComponent({
-  name: 'NewReward',
-  components: { CButton, RewardEditor, CLoader, MainLayout, BackIcon },
-  setup() {
-    const store = useDataStore();
-    const api = useApi();
-    const route = useRoute();
-    const router = useRouter();
-    const { broadcasterId } = useBroadcaster({ store, route });
-    const { updateRewards, rewards } = useRewards({ store, api, broadcasterId });
+const store = useDataStore();
+const api = useApi();
+const route = useRoute();
+const router = useRouter();
+const { broadcasterId } = useBroadcaster({ store, route });
+const { updateRewards, rewards } = useRewards({ store, api, broadcasterId });
 
-    const { state: saveState, reset: resetState } = asyncState(0, false);
+const { state: saveState, reset: resetState } = asyncState(0, false);
 
-    onBeforeMount(() => resetState());
+onBeforeMount(() => resetState());
 
-    const saveReward = (target: InputReward) => {
-      tryAsync(async () => {
-        const newOne = await api.addReward(broadcasterId.value ?? '', target);
-        updateRewards([...rewards.value, newOne]);
-        await router.replace(`/rewards/${encodeURIComponent(broadcasterId.value ?? '')}`);
-      }, saveState);
-    };
-
-    return { saveReward, rewards, saveState, resetState };
-  },
-});
+const saveReward = (target: InputReward) => {
+  tryAsync(async () => {
+    const newOne = await api.addReward(broadcasterId.value ?? '', target);
+    updateRewards([...rewards.value, newOne]);
+    await router.replace(`/rewards/${encodeURIComponent(broadcasterId.value ?? '')}`);
+  }, saveState);
+};
 </script>

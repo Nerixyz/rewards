@@ -25,17 +25,17 @@
             </div>
             <OutlinedButton @click="revokeSpotifyAuth">Revoke</OutlinedButton>
           </div>
-          <CButton v-else :href="spotifyUrl.value ?? ''" :disabled="!!(spotifyUrl.loading || spotifyUrl.error)"
-            >Authorize</CButton
-          >
+          <CButton v-else :href="spotifyUrl.value ?? ''" :disabled="!!(spotifyUrl.loading || spotifyUrl.error)">
+            Authorize
+          </CButton>
         </div>
       </div>
     </div>
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, watch } from 'vue';
+<script setup lang="ts">
+import { onMounted, watch } from 'vue';
 import CLoader from '../components/core/CLoader.vue';
 import CButton from '../components/core/CButton.vue';
 import SpotifyIcon from '../components/icons/SpotifyIcon.vue';
@@ -47,46 +47,38 @@ import OutlinedButton from '../components/core/OutlinedButton.vue';
 import CSwitch from '../components/core/CSwitch.vue';
 import MainLayout from '../components/MainLayout.vue';
 
-export default defineComponent({
-  name: 'ConnectionsDashboard',
-  components: { MainLayout, CSwitch, OutlinedButton, Heading, SpotifyIcon, CButton, CLoader },
-  setup() {
-    const api = useApi();
-    const { state } = asyncState<Connections>({ spotify: undefined });
-    const { state: spotifyUrl } = asyncState<string | null>(null);
+const api = useApi();
+const { state } = asyncState<Connections>({ spotify: undefined });
+const { state: spotifyUrl } = asyncState<string | null>(null);
 
-    watch(
-      () => state.value,
-      state => {
-        if (!state.spotify) {
-          tryAsync(async url => {
-            url.value = await api.getSpotifyUrl();
-          }, spotifyUrl);
-        }
-      },
-    );
-
-    onMounted(() => {
-      tryAsync(async state => {
-        state.value = await api.getConnections();
-      }, state);
-    });
-
-    const revokeSpotifyAuth = () =>
-      tryAsync(async state => {
-        await api.removeConnection('spotify');
-        state.value = await api.getConnections();
-      }, state);
-
-    const sendSpotifySettings = () => {
-      tryAsync(async state => {
-        if (state.value.spotify) {
-          await api.updateSpotifySettings(state.value.spotify);
-        }
-      }, state);
-    };
-
-    return { state, spotifyUrl, revokeSpotifyAuth, sendSpotifySettings };
+watch(
+  () => state.value,
+  state => {
+    if (!state.spotify) {
+      tryAsync(async url => {
+        url.value = await api.getSpotifyUrl();
+      }, spotifyUrl);
+    }
   },
+);
+
+onMounted(() => {
+  tryAsync(async state => {
+    state.value = await api.getConnections();
+  }, state);
 });
+
+const revokeSpotifyAuth = () =>
+  tryAsync(async state => {
+    await api.removeConnection('spotify');
+    state.value = await api.getConnections();
+  }, state);
+
+const sendSpotifySettings = () => {
+  tryAsync(async state => {
+    if (state.value.spotify) {
+      await api.updateSpotifySettings(state.value.spotify);
+    }
+  }, state);
+};
 </script>

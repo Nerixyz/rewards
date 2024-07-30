@@ -2,27 +2,13 @@
   <CSwitch label="Allow Explicit" :model-value="modelValue.allow_explicit" @update:model-value="updateExplicit" />
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
 import { SpotifyPlayOptions } from '../../api/types';
 import CSwitch from '../core/CSwitch.vue';
 
-export default defineComponent({
-  name: 'SpotifyPlayOptions',
-  components: { CSwitch },
-  props: {
-    modelValue: {
-      type: Object as PropType<SpotifyPlayOptions>,
-      required: true,
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(_, { emit }) {
-    const updateExplicit = (v: boolean) => {
-      emit('update:modelValue', { allow_explicit: v });
-    };
+const [modelValue] = defineModel<SpotifyPlayOptions>({ required: true });
 
-    return { updateExplicit };
-  },
-});
+const updateExplicit = (v: boolean) => {
+  modelValue.value = { allow_explicit: v };
+};
 </script>
