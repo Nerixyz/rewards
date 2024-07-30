@@ -68,7 +68,7 @@ export class BaseClient {
 }
 
 function makeApiUrl(path: string) {
-  return `${import.meta.env.MODE === 'development' ? (import.meta.env['VITE_API_BASE_URL'] ?? '') : ''}/api/v1/${path}`;
+  return `${import.meta.env.MODE === 'development' ? import.meta.env['VITE_API_BASE_URL'] ?? '' : ''}/api/v1/${path}`;
 }
 
 function isOk(status: number) {
