@@ -76,7 +76,7 @@ prometheus = "0.13.4"
 uptimer = { git = "https://github.com/Nerixyz/uptimer.git" }
 
 anyhow = "1.0"
-errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", tag = "errors-v0.4.0" }
+errors = { git = "https://github.com/Nerixyz/nerix-utils-rs" }
 derive_more = "0.99"
 async-trait = "0.1"
 thiserror = "1.0"
