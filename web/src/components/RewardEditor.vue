@@ -41,12 +41,7 @@
         </div>
       </div>
 
-      <ActionEditor
-        v-model:action="reward.action.type"
-        v-model:data="reward.action.data"
-        :is-new="isNew"
-        @update:warn="updateActionWarn"
-      />
+      <ActionEditor v-model="reward.action" :is-new="isNew" @update:warn="updateActionWarn" />
     </div>
 
     <div class="flex flex-wrap mt-5 justify-end">
@@ -58,90 +53,75 @@
   </form>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType, reactive, ref, watch } from 'vue';
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from 'vue';
 import { assignDefaultToModel, assignToVRewardModel, toInputReward } from '../api/model-conversion';
 import { defaultNewReward } from '../api/rewards-data';
 import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
 import CSwitch from './core/CSwitch.vue';
 import WarnIcon from './icons/WarnIcon.vue';
-import { Reward } from '../api/types';
+import { InputReward, Reward } from '../api/types';
 import useVuelidate from '@vuelidate/core';
 import { numeric, required } from '@vuelidate/validators';
 import { isValidDuration } from '../utilities';
 import TextField from './core/TextField.vue';
 import ActionEditor from './ActionEditor.vue';
 
-export default defineComponent({
-  name: 'RewardEditor',
-  components: { ActionEditor, TextField, CButton, CSwitch, OutlinedButton, WarnIcon },
-  props: {
-    rewardModel: {
-      type: Object as PropType<Reward>,
-      required: false,
-      default: undefined,
-    },
-    canUpdate: {
-      type: Boolean,
-      required: false,
-    },
-    mainAction: {
-      type: String,
-      required: true,
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
+const props = withDefaults(
+  defineProps<{
+    rewardModel: Reward | undefined;
+    canUpdate?: boolean;
+    mainAction: string;
+    isNew?: boolean;
+  }>(),
+  { isNew: false },
+);
+const emit = defineEmits<{
+  update: [reward: InputReward];
+  done: [reward: InputReward];
+}>();
+
+const reward = reactive(defaultNewReward());
+watch(
+  () => props.rewardModel,
+  v => {
+    if (v) {
+      assignToVRewardModel(v, reward);
+    } else {
+      assignDefaultToModel(reward);
+    }
   },
-  emits: ['update', 'done'],
-  setup(props, { emit }) {
-    const reward = reactive(defaultNewReward());
-    watch(
-      () => props.rewardModel,
-      v => {
-        if (v) {
-          assignToVRewardModel(v, reward);
-        } else {
-          assignDefaultToModel(reward);
-        }
-      },
-      { immediate: true },
-    );
+  { immediate: true },
+);
 
-    const v$ = useVuelidate(
-      {
-        title: { required },
-        cost: { required, numeric },
-        usesPerStream: { numeric },
-        usesPerUser: { numeric },
-        cooldown: { isValidDuration },
-        prompt: { required },
-        liveDelay: {},
-        autoAccept: {},
-      },
-      reward,
-    );
-
-    const actionWarn = ref(false);
-    const updateActionWarn = (warn: boolean) => (actionWarn.value = warn);
-    const isInvalid = computed(() => actionWarn.value || v$.value.$invalid);
-
-    const buttons = {
-      onUpdate: () => {
-        if (isInvalid.value) return;
-
-        emit('update', toInputReward(reward));
-      },
-      onDone: () => {
-        if (isInvalid.value) return;
-
-        emit('done', toInputReward(reward));
-        assignDefaultToModel(reward);
-      },
-    };
-    return { reward, v$, isInvalid, updateActionWarn, ...buttons };
+const v$ = useVuelidate(
+  {
+    title: { required },
+    cost: { required, numeric },
+    usesPerStream: { numeric },
+    usesPerUser: { numeric },
+    cooldown: { isValidDuration },
+    prompt: { required },
+    liveDelay: {},
+    autoAccept: {},
   },
-});
+  reward,
+);
+
+const actionWarn = ref(false);
+const updateActionWarn = (warn: boolean) => (actionWarn.value = warn);
+const isInvalid = computed(() => actionWarn.value || v$.value.$invalid);
+
+const onUpdate = () => {
+  if (isInvalid.value) return;
+
+  emit('update', toInputReward(reward));
+};
+const onDone = () => {
+  if (isInvalid.value) return;
+
+  emit('done', toInputReward(reward));
+  assignDefaultToModel(reward);
+};
 </script>

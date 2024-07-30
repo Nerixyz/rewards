@@ -34,8 +34,8 @@
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, reactive, watch } from 'vue';
+<script setup lang="ts">
+import { reactive, watch } from 'vue';
 import MainLayout from '../components/MainLayout.vue';
 import { useDataStore } from '../store';
 import { useApi } from '../api/plugin';
@@ -49,46 +49,36 @@ import { asyncState, tryAsync } from '../async-state';
 import CButton from '../components/core/CButton.vue';
 import BackIcon from '../components/icons/BackIcon.vue';
 
-export default defineComponent({
-  name: 'EditReward',
-  components: { BackIcon, CButton, RewardEditor, CLoader, MainLayout },
-  setup() {
-    const store = useDataStore();
-    const api = useApi();
-    const route = useRoute();
-    const router = useRouter();
-    const { broadcasterId } = useBroadcaster({ store, route });
-    const { updateRewards, rewards } = useRewards({ store, api, broadcasterId });
+const store = useDataStore();
+const api = useApi();
+const route = useRoute();
+const router = useRouter();
+const { broadcasterId } = useBroadcaster({ store, route });
+const { updateRewards, rewards } = useRewards({ store, api, broadcasterId });
 
-    const { state: updateState, reset: resetUpdate } = asyncState(0, false);
+const { state: updateState, reset: resetUpdate } = asyncState(0, false);
 
-    const reward = reactive<{ value: null | Reward }>({ value: null });
-    watch(
-      () => [rewards.value, route.params.rewardId] as const,
-      ([rewards, rewardId]) => {
-        reward.value = rewards.find(x => x.twitch.id === rewardId) ?? null;
-        resetUpdate();
-      },
-      { immediate: true },
-    );
-
-    const tryUpdate = (toUpdate: InputReward, post?: () => void) => {
-      tryAsync(async () => {
-        const updated = await api.updateReward(broadcasterId.value ?? '', toUpdate, reward.value?.twitch.id ?? '');
-        updateRewards(rewards.value.map(r => (r.twitch.id === updated.twitch.id ? updated : r)));
-        post?.();
-      }, updateState);
-    };
-
-    const handlers = {
-      onUpdate: (reward: InputReward) => {
-        tryUpdate(reward);
-      },
-      onDone: (reward: InputReward) => {
-        tryUpdate(reward, () => router.push(`/rewards/${encodeURIComponent(broadcasterId.value ?? '')}`));
-      },
-    };
-    return { reward, rewards, updateState, resetUpdate, ...handlers };
+const reward = reactive<{ value: null | Reward }>({ value: null });
+watch(
+  () => [rewards.value, route.params['rewardId']] as const,
+  ([rewards, rewardId]) => {
+    reward.value = rewards.find(x => x.twitch.id === rewardId) ?? null;
+    resetUpdate();
   },
-});
+  { immediate: true },
+);
+
+const tryUpdate = (toUpdate: InputReward, post?: () => void) => {
+  tryAsync(async () => {
+    const updated = await api.updateReward(broadcasterId.value ?? '', toUpdate, reward.value?.twitch.id ?? '');
+    updateRewards(rewards.value.map(r => (r.twitch.id === updated.twitch.id ? updated : r)));
+    post?.();
+  }, updateState);
+};
+const onUpdate = (reward: InputReward) => {
+  tryUpdate(reward);
+};
+const onDone = (reward: InputReward) => {
+  tryUpdate(reward, () => router.push(`/rewards/${encodeURIComponent(broadcasterId.value ?? '')}`));
+};
 </script>

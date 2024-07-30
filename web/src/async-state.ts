@@ -50,7 +50,7 @@ export async function tryAsync<T>(fn: (state: AsyncState<T>) => Promise<unknown>
     state.error = null;
     await fn(state);
   } catch (e) {
-    state.error = e.toString();
+    state.error = e instanceof Error ? e : new Error('unknown error');
   } finally {
     state.loading = false;
   }
@@ -62,7 +62,7 @@ export async function tryAsyncDialog(fn: () => Promise<unknown>, dialog: AsyncDi
     dialog.error = null;
     await fn();
   } catch (e) {
-    dialog.error = e.toString();
+    dialog.error = e instanceof Error ? e : new Error('unknown error');
   } finally {
     dialog.loading = false;
     dialog.success = true;

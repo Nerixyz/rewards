@@ -55,59 +55,35 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref, toRefs } from 'vue';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import WarnIcon from '../icons/WarnIcon.vue';
 
-export default defineComponent({
-  name: 'TextField',
-  components: { WarnIcon },
-  props: {
-    placeholder: {
-      type: String,
-      required: false,
-      default: '',
-    },
-    modelValue: {
-      type: String,
-      required: false,
-      default: '',
-    },
-    disabled: {
-      type: Boolean,
-      required: false,
-    },
-    label: {
-      type: String,
-      required: true,
-    },
-    warn: {
-      type: Boolean,
-      required: false,
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const { modelValue } = toRefs(props);
+withDefaults(
+  defineProps<{
+    placeholder?: string;
+    disabled?: boolean;
+    label: string;
+    warn?: boolean;
+  }>(),
+  { placeholder: '', disabled: false, warn: false },
+);
+const [modelValue] = defineModel<string>({ default: '' });
 
-    const onInput = (e: Event) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      emit('update:modelValue', (e.target as any).value);
-    };
+const onInput = (e: Event) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modelValue.value = (e.target as any).value;
+};
 
-    const isFocused = ref(false);
-    const onFocus = () => {
-      isFocused.value = true;
-    };
-    const onBlur = () => {
-      isFocused.value = false;
-    };
+const isFocused = ref(false);
+const onFocus = () => {
+  isFocused.value = true;
+};
+const onBlur = () => {
+  isFocused.value = false;
+};
 
-    const isOccupied = computed(() => isFocused.value || modelValue.value);
-
-    return { onInput, isOccupied, onFocus, onBlur, isFocused };
-  },
-});
+const isOccupied = computed(() => isFocused.value || modelValue.value);
 </script>
 <style scoped>
 .nerix-underline-tf::after {

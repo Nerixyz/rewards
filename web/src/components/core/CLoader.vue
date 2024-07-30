@@ -8,13 +8,7 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-
-export default defineComponent({
-  name: 'CLoader',
-});
-</script>
+<script setup lang="ts"></script>
 
 <style>
 .loader-outer {
@@ -44,7 +38,8 @@ export default defineComponent({
 
 .loader-circle {
   stroke: currentColor;
-  animation: loading-animation-circle-array var(--inner-duration, 1s) cubic-bezier(0.215, 0.61, 0.355, 1) infinite,
+  animation:
+    loading-animation-circle-array var(--inner-duration, 1s) cubic-bezier(0.215, 0.61, 0.355, 1) infinite,
     loading-animation-circle-offset var(--inner-duration, 1s) cubic-bezier(0.535, 0.655, 0.535, 1) infinite,
     loading-animation-opacity var(--inner-duration, 1s) linear infinite;
   stroke-dasharray: 163.36281798666926px;

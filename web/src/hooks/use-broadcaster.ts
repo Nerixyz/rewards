@@ -10,7 +10,7 @@ export function useBroadcaster(pre: { route?: RouteLocationNormalized; store?: D
   const store = pre.store ?? useDataStore();
 
   const broadcasterId = computed(() => {
-    const routeId = route.params.id as string | undefined;
+    const routeId = route.params['id'] as string | undefined;
     const storeId = store.user.value?.id;
     return routeId || storeId || undefined;
   });

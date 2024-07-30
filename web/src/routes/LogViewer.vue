@@ -31,8 +31,8 @@
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
 import { useRoute } from 'vue-router';
 import { useDataStore } from '../store';
@@ -44,45 +44,37 @@ import BackIcon from '../components/icons/BackIcon.vue';
 import ReloadIcon from '../components/icons/ReloadIcon.vue';
 import MainLayout from '../components/MainLayout.vue';
 
-export default defineComponent({
-  name: 'LogViewer',
-  components: { MainLayout, ReloadIcon, BackIcon, CLoader, OutlinedButton },
-  setup() {
-    const route = useRoute();
-    const api = useApi();
-    const dataStore = useDataStore();
+const route = useRoute();
+const api = useApi();
+const dataStore = useDataStore();
 
-    // core stuff to ensure we have a user id
+// core stuff to ensure we have a user id
 
-    const getCurrentId = () => String(route.params.id || dataStore.user.value?.id || '');
-    const broadcasterId = ref(getCurrentId());
-    watch(
-      () => route.params.id,
-      () => (broadcasterId.value = getCurrentId()),
-    );
-    if (!route.params.id) {
-      const stop = watch(dataStore.user, () => {
-        broadcasterId.value = getCurrentId();
-        stop();
-      });
-    }
+const getCurrentId = () => String(route.params['id'] || dataStore.user.value?.id || '');
+const broadcasterId = ref(getCurrentId());
+watch(
+  () => route.params['id'],
+  () => (broadcasterId.value = getCurrentId()),
+);
+if (!route.params['id']) {
+  const stop = watch(dataStore.user, () => {
+    broadcasterId.value = getCurrentId();
+    stop();
+  });
+}
 
-    const { state: logs } = asyncState<LogEntry[]>([]);
-    const getLogs = (id: string) =>
-      tryAsync(async state => {
-        state.value = await api.getLogs(id);
-      }, logs);
+const { state: logs } = asyncState<LogEntry[]>([]);
+const getLogs = (id: string) =>
+  tryAsync(async state => {
+    state.value = await api.getLogs(id);
+  }, logs);
 
-    watch(broadcasterId, id => getLogs(id));
+watch(broadcasterId, id => getLogs(id));
 
-    if (broadcasterId.value) getLogs(broadcasterId.value);
+if (broadcasterId.value) getLogs(broadcasterId.value);
 
-    const reload = () => {
-      console.log('reload');
-      getLogs(broadcasterId.value);
-    };
-
-    return { logs, reload, broadcasterId };
-  },
-});
+const reload = () => {
+  console.log('reload');
+  getLogs(broadcasterId.value);
+};
 </script>

@@ -60,8 +60,8 @@
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { useApi } from '../api/plugin';
 import TextField from '../components/core/TextField.vue';
 import OutlinedButton from '../components/core/OutlinedButton.vue';
@@ -71,38 +71,29 @@ import { asyncState, tryAsync } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
 import MainLayout from '../components/MainLayout.vue';
 
-export default defineComponent({
-  name: 'EditorsDashboard',
-  components: { MainLayout, CLoader, PlaneIcon, TextField, OutlinedButton },
+const api = useApi();
 
-  setup() {
-    const api = useApi();
+const { state } = asyncState<TwitchUser[]>([]);
+tryAsync(async state => {
+  state.value = await api.getEditors();
+}, state);
 
-    const { state } = asyncState<TwitchUser[]>([]);
-    tryAsync(async state => {
-      state.value = await api.getEditors();
-    }, state);
+const editorAddName = ref('');
 
-    const editorAddName = ref('');
-
-    const addEditor = (e: Event) => {
-      e.preventDefault();
-      tryAsync(async state => {
-        const name = editorAddName.value.toLowerCase();
-        await api.addEditor(name);
-        const user = await api.getUserInfo(name);
-        state.value = [...state.value, user];
-        editorAddName.value = '';
-      }, state);
-    };
-    const removeEditor = (name: string) => {
-      tryAsync(async state => {
-        await api.removeEditor(name);
-        state.value = state.value.filter(x => x.login !== name);
-      }, state);
-    };
-
-    return { state, addEditor, removeEditor, editorAddName };
-  },
-});
+const addEditor = (e: Event) => {
+  e.preventDefault();
+  tryAsync(async state => {
+    const name = editorAddName.value.toLowerCase();
+    await api.addEditor(name);
+    const user = await api.getUserInfo(name);
+    state.value = [...state.value, user];
+    editorAddName.value = '';
+  }, state);
+};
+const removeEditor = (name: string) => {
+  tryAsync(async state => {
+    await api.removeEditor(name);
+    state.value = state.value.filter(x => x.login !== name);
+  }, state);
+};
 </script>

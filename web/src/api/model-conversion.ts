@@ -33,15 +33,7 @@ export function toVRewardModel(reward: Reward): VRewardModel {
     color: reward.twitch.background_color,
     imageUrl: getImageUrl(reward),
 
-    action: {
-      type: reward.data.type,
-      data:
-        typeof reward.data.data === 'object' && reward.data.data !== null
-          ? {
-              ...reward.data.data,
-            }
-          : reward.data.data,
-    },
+    action: cloneRewardData(reward.data),
 
     liveDelay: reward.live_delay ?? '',
     autoAccept: reward.auto_accept,
@@ -58,15 +50,7 @@ export function assignToVRewardModel(reward: Reward, model: VRewardModel): void 
   model.color = reward.twitch.background_color;
   model.imageUrl = getImageUrl(reward);
 
-  model.action = {
-    type: reward.data.type,
-    data:
-      typeof reward.data.data === 'object' && reward.data.data !== null
-        ? {
-            ...reward.data.data,
-          }
-        : reward.data.data,
-  };
+  model.action = cloneRewardData(reward.data);
 
   model.liveDelay = reward.live_delay ?? '';
   model.autoAccept = reward.auto_accept;
@@ -94,15 +78,7 @@ export function toInputReward(vmodel: VRewardModel): InputReward {
       should_redemptions_skip_request_queue: false,
       background_color: vmodel.color || undefined,
     },
-    data: {
-      type: vmodel.action.type,
-      data:
-        typeof vmodel.action.data === 'object' && vmodel.action.data !== null
-          ? {
-              ...vmodel.action.data,
-            }
-          : vmodel.action.data,
-    },
+    data: cloneRewardData(vmodel.action),
     live_delay: vmodel.liveDelay.trim() || undefined,
     auto_accept: vmodel.autoAccept,
   };
@@ -114,6 +90,7 @@ export function assignDefaultToModel(model: VRewardModel): void {
 
 export function copyModel(from: VRewardModel, to: VRewardModel): void {
   for (const [key, value] of Object.entries(from)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (to as any)[key] = value; // TODO: this is ugly
   }
 }
@@ -123,4 +100,11 @@ export function simpleClone<T>(value: T): T {
     return { ...value };
   }
   return value;
+}
+
+function cloneRewardData({ type, data }: RewardData): RewardData {
+  return {
+    type,
+    data: typeof data === 'object' && data !== null ? { ...data } : data,
+  } as RewardData;
 }

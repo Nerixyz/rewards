@@ -2,56 +2,32 @@
   <div class="w-full mb-2">
     <span v-if="label">{{ label }}</span>
     <div class="flex w-full gap-3 px-1">
-      <input class="flex-grow" type="range" :value="value" :min="min" :max="max" :step="step" @input="onUpdate" />
+      <!-- eslint-disable-next-line vue/html-self-closing -->
+      <input class="flex-grow" type="range" :value="modelValue" :min="min" :max="max" :step="step" @input="onUpdate" />
       <span>{{ currentValueStr }}</span>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { computed, toRefs } from 'vue';
 
-export default defineComponent({
-  name: 'CSlider',
-  props: {
-    label: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-    modelValue: {
-      type: Number,
-      required: true,
-    },
-    min: {
-      type: Number,
-      required: false,
-      default: 0,
-    },
-    max: {
-      type: Number,
-      required: false,
-      default: 100,
-    },
-    step: {
-      type: Number,
-      required: false,
-      default: 1,
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const { modelValue, min, step } = toRefs(props);
-    const value = ref(modelValue.value);
-    watch(modelValue, v => {
-      value.value = v;
-    });
-    const onUpdate = (e: Event) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      emit('update:modelValue', Number((e.target as any).value) || min.value);
-    };
-    const currentValueStr = computed(() => (Math.round(value.value / step.value) * step.value).toString());
-    return { value, onUpdate, currentValueStr };
-  },
-});
+const props = withDefaults(
+  defineProps<{
+    label?: string;
+    min?: number;
+    max?: number;
+    step?: number;
+  }>(),
+  { min: 0, max: 100, step: 1, label: undefined },
+);
+const [modelValue] = defineModel<number>({ required: true });
+
+const { min, step } = toRefs(props);
+
+const onUpdate = (e: Event) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modelValue.value = Number((e.target as any).value) || min.value;
+};
+const currentValueStr = computed(() => (Math.round(modelValue.value / step.value) * step.value).toString());
 </script>

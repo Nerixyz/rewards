@@ -8,27 +8,11 @@
   </button>
 </template>
 
-<script lang="ts">
-import { defineComponent, toRefs } from 'vue';
-
-export default defineComponent({
-  name: 'OutlinedButton',
-  props: {
-    disabled: {
-      type: Boolean,
-      required: false,
-    },
-  },
-  setup(props) {
-    const { disabled } = toRefs(props);
-
-    const tryClick = (e: Event) => {
-      if (disabled.value) {
-        e.stopPropagation();
-      }
-    };
-
-    return { tryClick };
-  },
-});
+<script setup lang="ts">
+const props = withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false });
+const tryClick = (e: Event) => {
+  if (props.disabled) {
+    e.stopPropagation();
+  }
+};
 </script>

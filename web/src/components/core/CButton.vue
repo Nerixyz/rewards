@@ -10,32 +10,16 @@
   </component>
 </template>
 
-<script lang="ts">
-import { defineComponent, toRefs } from 'vue';
+<script setup lang="ts">
+import { toRefs } from 'vue';
 
-export default defineComponent({
-  name: 'CButton',
-  props: {
-    disabled: {
-      type: Boolean,
-      required: false,
-    },
-    href: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-  },
-  setup(props) {
-    const { disabled } = toRefs(props);
+const props = withDefaults(defineProps<{ disabled?: boolean; href?: string }>(), { href: undefined, disabled: false });
 
-    const tryClick = (e: Event) => {
-      if (disabled.value) {
-        e.stopPropagation();
-      }
-    };
+const { disabled } = toRefs(props);
 
-    return { tryClick };
-  },
-});
+const tryClick = (e: Event) => {
+  if (disabled.value) {
+    e.stopPropagation();
+  }
+};
 </script>

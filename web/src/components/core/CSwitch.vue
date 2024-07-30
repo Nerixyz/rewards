@@ -6,7 +6,7 @@
         :model-value="modelValue"
         :class="modelValue ? 'bg-red' : 'bg-gray-500'"
         class="relative inline-flex flex-shrink-0 h-6 w-10 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none"
-        @update:model-value="onUpdate"
+        @update:model-value="setValue"
       >
         <span
           aria-hidden="true"
@@ -18,29 +18,12 @@
   </SwitchGroup>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { Switch, SwitchLabel, SwitchGroup } from '@headlessui/vue';
 
-export default defineComponent({
-  name: 'CSwitch',
-  components: { Switch, SwitchLabel, SwitchGroup },
-  props: {
-    modelValue: {
-      type: Boolean,
-      required: true,
-    },
-    label: {
-      type: String,
-      required: true,
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(_, { emit }) {
-    const onUpdate = (v: boolean) => {
-      emit('update:modelValue', !!v);
-    };
-    return { onUpdate };
-  },
-});
+defineProps<{ label: string }>();
+const [modelValue] = defineModel<boolean>({ required: true });
+const setValue = (v: boolean) => {
+  modelValue.value = v;
+};
 </script>

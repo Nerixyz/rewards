@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: ['master']
+    branches: [master, main]
   pull_request:
-    branches: ['master']
+    branches: [master, main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,13 +14,17 @@ jobs:
     name: Build and Lint Rust Code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
       - name: Setup Postgres
         uses: harmon758/postgresql-action@v1
         with:
-          postgresql version: '13'
+          postgresql version: '15'
           postgresql user: 'rewards'
           postgresql password: 'alien'
       - name: Setup sqlx
@@ -37,10 +41,10 @@ jobs:
     name: Build and Lint JS Code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
       - name: Install Dependencies
@@ -48,7 +52,7 @@ jobs:
         run: npm ci
       - name: Build
         working-directory: web
-        run: npm run vite-build
+        run: npm run build
       - name: Lint
         working-directory: web
         run: npm run lint

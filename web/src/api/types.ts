@@ -14,7 +14,7 @@ export interface TwitchInputReward {
   /** 	Is the reward currently enabled, if false the reward won’t show up to viewers. Default: true */
   is_enabled?: boolean;
   /** 	Custom background color for the reward. Format: Hex with # prefix. Example: #00E5CB. */
-  background_color?: string;
+  background_color?: string | undefined;
   /** 	Does the user need to enter information when redeeming the reward. Default: false. */
   is_user_input_required?: boolean;
   /** 	Whether a maximum per stream is enabled. Default: false. */
@@ -82,7 +82,9 @@ interface TwitchRewardImage {
   url_4x: string;
 }
 
-export type RewardData<K extends keyof RewardDataMap = keyof RewardDataMap> = { type: K; data: RewardDataMap[K] };
+export type RewardData = {
+  [K in keyof RewardDataMap]: { type: K; data: RewardDataMap[K] };
+}[keyof RewardDataMap];
 
 export interface RewardDataMap {
   Timeout: TimeoutRewardData;
@@ -145,7 +147,7 @@ export interface Reward {
 export interface InputReward {
   twitch: TwitchInputReward;
   data: RewardData;
-  live_delay?: string;
+  live_delay?: string | undefined;
   auto_accept: boolean;
 }
 
@@ -159,5 +161,5 @@ export interface SpotifySettings {
 }
 
 export interface Connections {
-  spotify?: SpotifySettings;
+  spotify?: SpotifySettings | undefined;
 }

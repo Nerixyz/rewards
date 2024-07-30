@@ -1,11 +1,11 @@
 <template>
-  <nav v-if="isAuthenticated" class="w-full h-14 bg-gray-dark border-b border-opacity-10 border-white">
+  <nav v-if="api.isAuthenticated" class="w-full h-14 bg-gray-dark border-b border-opacity-10 border-white">
     <div class="mx-auto w-full max-w-7xl flex justify-between items-center h-full">
       <div class="flex flex-wrap divide-opacity-20 divide-white divide-solid divide-x">
         <div v-for="route of routes" :key="route.path" class="flex">
           <router-link
             :to="route.path.replace(/\/:.+$/, '')"
-            :class="`mx-4 ${route.name === currentRoute.name ? 'nerix-underline-active' : ''} nerix-underline`"
+            :class="`mx-4 ${currentRoute.name === route.name ? 'nerix-underline-active' : ''} nerix-underline`"
           >
             {{ route.name }}
           </router-link>
@@ -63,8 +63,8 @@
   </nav>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, reactive } from 'vue';
+<script setup lang="ts">
+import { computed, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useApi } from '../api/plugin';
 import { useDataStore } from '../store';
@@ -75,65 +75,47 @@ import OutlinedButton from './core/OutlinedButton.vue';
 import CButton from './core/CButton.vue';
 import GithubIcon from './icons/GithubIcon.vue';
 
-export default defineComponent({
-  name: 'NavBar',
-  components: { GithubIcon, CButton, OutlinedButton, DialogButtons, CDialog, ChevronDown },
-  setup() {
-    const router = useRouter();
-    const route = useRoute();
-    const store = useDataStore();
-    const api = useApi();
+const router = useRouter();
+const currentRoute = useRoute();
+const store = useDataStore();
+const api = useApi();
 
-    const state = reactive({
-      menuOpen: false,
-      deleteDialogOpen: false,
-      logoutDialogOpen: false,
-    });
-    const withClose = (fn: () => unknown) => () => {
-      state.menuOpen = false;
-      state.deleteDialogOpen = false;
-      state.logoutDialogOpen = false;
-      fn();
-    };
-
-    const openDelete = withClose(() => (state.deleteDialogOpen = true));
-    const openLogout = withClose(() => (state.logoutDialogOpen = true));
-
-    const logout = withClose(() => {
-      api.logout();
-      router.replace('/');
-    });
-    const deleteAccount = withClose(() => {
-      api.deleteAccount().then(() => {
-        store.user.value = null;
-        router.replace('/');
-      });
-    });
-
-    const toggleMenu = () => (state.menuOpen = !state.menuOpen);
-
-    const closeAll = withClose(() => undefined);
-
-    return {
-      routes: router.getRoutes().filter(r => !!r.name && !r.meta.ignoreNav),
-      currentRoute: route,
-      userImage: computed(() => store.user.value?.profile_image_url),
-      userLoading: computed(() => !store.user.value),
-      userName: computed(() => store.user.value?.login),
-      isAuthenticated: api.isAuthenticated,
-
-      state,
-      openDelete,
-      openLogout,
-      toggleMenu,
-      closeAll,
-
-      logout,
-      deleteAccount,
-    };
-  },
+const state = reactive({
+  menuOpen: false,
+  deleteDialogOpen: false,
+  logoutDialogOpen: false,
 });
+const withClose = (fn: () => unknown) => () => {
+  state.menuOpen = false;
+  state.deleteDialogOpen = false;
+  state.logoutDialogOpen = false;
+  fn();
+};
+
+const openDelete = withClose(() => (state.deleteDialogOpen = true));
+const openLogout = withClose(() => (state.logoutDialogOpen = true));
+
+const logout = withClose(() => {
+  api.logout();
+  router.replace('/');
+});
+const deleteAccount = withClose(() => {
+  api.deleteAccount().then(() => {
+    store.user.value = null;
+    router.replace('/');
+  });
+});
+
+const toggleMenu = () => (state.menuOpen = !state.menuOpen);
+
+const closeAll = withClose(() => undefined);
+
+const routes = router.getRoutes().filter(r => !!r.name && !r.meta['ignoreNav']);
+const userImage = computed(() => store.user.value?.profile_image_url);
+const userLoading = computed(() => !store.user.value);
+const userName = computed(() => store.user.value?.login);
 </script>
+
 <style scoped>
 .nerix-underline::after {
   content: '';

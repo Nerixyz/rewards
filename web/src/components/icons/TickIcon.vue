@@ -10,14 +10,6 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-
-export default defineComponent({
-  name: 'TickIcon',
-});
-</script>
-
 <style scoped>
 .tick-outer {
   width: 60px;

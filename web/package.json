@@ -1,35 +1,33 @@
 {
   "name": "web",
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "vite-build": "vite build",
     "serve": "vite preview",
     "format": "prettier -w src/**/*.{vue,ts,tsx,js,html} --loglevel warn",
     "lint-fix": "eslint --fix src/**/*.{vue,ts,tsx,js,html}",
     "lint": "eslint src/**/*.{vue,ts,tsx,js,html}"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.5.0",
-    "@vuelidate/core": "2.0.0-alpha.34",
-    "@vuelidate/validators": "^2.0.0-alpha.27",
-    "vue": "^3.2.31",
-    "vue-router": "^4.0.14"
+    "@headlessui/vue": "^1.7.22",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
+    "vue": "^3.4.34",
+    "vue-router": "^4.4.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.2.4",
-    "@vue/compiler-sfc": "^3.2.31",
-    "@vue/eslint-config-typescript": "^10.0.0",
-    "autoprefixer": "^10.4.4",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "postcss": "^8.4.12",
-    "prettier": "^2.6.0",
-    "tailwindcss": "^3.0.23",
-    "typescript": "^4.6.2",
-    "vite": "^2.8.6",
-    "vue-tsc": "^0.33.2-patch.1"
+    "@babel/types": "^7.25.2",
+    "@vitejs/plugin-vue": "^5.1.1",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "postcss": "^8.4.40",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.5",
+    "vue-tsc": "^2.0.29"
   }
 }

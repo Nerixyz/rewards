@@ -10,3 +10,23 @@ updates:
       rust:
         patterns:
           - '*'
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: 'deps(ci)'
+    groups:
+      actions:
+        patterns:
+          - '*'
+  - package-ecosystem: npm
+    directory: '/web'
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: 'deps(npm)'
+    groups:
+      actions:
+        patterns:
+          - '*'

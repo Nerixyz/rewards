@@ -2,7 +2,7 @@
   <div class="flex flex-col p-1 gap-4 max-w-2xl w-full self-center mt-5">
     <h2 class="font-bold font-mono text-xl text-gray-700">Action</h2>
     <div class="flex gap-4 items-center">
-      <h1 class="font-mono font-bold text-3xl">{{ actionType }}</h1>
+      <h1 class="font-mono font-bold text-3xl">{{ reward.type }}</h1>
       <button
         :class="[
           `
@@ -22,19 +22,32 @@
         <EditIcon />
       </button>
     </div>
-    <TimeoutSettings v-if="actionType === 'Timeout'" v-model="actionData" @update:warn="updateWarn" />
-    <SESettings v-if="['SubOnly', 'EmoteOnly'].includes(actionType)" v-model="actionData" @update:warn="updateWarn" />
-    <EmoteSlotSettings v-else-if="['BttvSlot', 'FfzSlot', 'SevenTvSlot'].includes(actionType)" v-model="actionData" />
-    <EmoteSwapSettings v-else-if="['BttvSwap', 'FfzSwap', 'SevenTvSwap'].includes(actionType)" v-model="actionData" />
-    <SpotifyPlayOptions v-else-if="['SpotifyPlay', 'SpotifyQueue'].includes(actionType)" v-model="actionData" />
-    <RemEmoteSettings v-else-if="actionType === 'RemEmote'" v-model="actionData" />
+    <TimeoutSettings v-if="reward.type === 'Timeout'" v-model="reward.data" @update:warn="updateWarn" />
+    <SESettings
+      v-else-if="reward.type === 'SubOnly' || reward.type === 'EmoteOnly'"
+      v-model="reward.data"
+      @update:warn="updateWarn"
+    />
+    <EmoteSlotSettings
+      v-else-if="reward.type === 'BttvSlot' || reward.type === 'FfzSlot' || reward.type === 'SevenTvSlot'"
+      v-model="reward.data"
+    />
+    <EmoteSwapSettings
+      v-else-if="reward.type === 'BttvSwap' || reward.type === 'FfzSwap' || reward.type === 'SevenTvSwap'"
+      v-model="reward.data"
+    />
+    <SpotifyPlayOptions
+      v-else-if="reward.type === 'SpotifyPlay' || reward.type === 'SpotifyQueue'"
+      v-model="reward.data"
+    />
+    <RemEmoteSettings v-else-if="reward.type === 'RemEmote'" v-model="reward.data" />
   </div>
 
-  <ActionDialog v-model:action="actionType" v-model:open="dialogOpen" />
+  <ActionDialog v-model:action="reward.type" v-model:open="dialogOpen" />
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, onBeforeMount, PropType, ref } from 'vue';
+<script setup lang="ts">
+import { onBeforeMount, ref } from 'vue';
 import EditIcon from './icons/EditIcon.vue';
 import SESettings from './rewards/SESettings.vue';
 import TimeoutSettings from './rewards/TimeoutSettings.vue';
@@ -44,67 +57,32 @@ import SpotifyPlayOptions from './rewards/SpotifyPlayOptions.vue';
 import RemEmoteSettings from './rewards/RemEmoteSettings.vue';
 import ActionDialog from './ActionDialog.vue';
 import { StaticRewardData } from '../api/rewards-data';
-import { RewardDataMap } from '../api/types';
+import { RewardData } from '../api/types';
 import { simpleClone } from '../api/model-conversion';
 
-export default defineComponent({
-  name: 'ActionEditor',
-  components: {
-    ActionDialog,
-    EditIcon,
-    TimeoutSettings,
-    SESettings,
-    EmoteSlotSettings,
-    EmoteSwapSettings,
-    SpotifyPlayOptions,
-    RemEmoteSettings,
-  },
-  props: {
-    action: {
-      type: String as PropType<keyof RewardDataMap>,
-      required: true,
-    },
-    data: {
-      type: [Object, String],
-      required: true,
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['update:action', 'update:data', 'update:warn'],
-  setup(props, { emit }) {
-    const actionData = computed({
-      get: () => props.data,
-      set: data => {
-        emit('update:data', data);
-      },
-    });
-    const actionType = computed({
-      get: () => props.action,
-      set: (act: keyof RewardDataMap) => {
-        if (!StaticRewardData[act].validOptions(actionData.value)) {
-          // @ts-ignore -- we know the options are compatible
-          actionData.value = simpleClone(StaticRewardData[act].defaultOptions);
-        }
-
-        emit('update:action', act);
-      },
-    });
-
-    const updateWarn = (warn: boolean) => {
-      emit('update:warn', warn);
-    };
-
-    const dialogOpen = ref(false);
-    const hasOpened = ref(false);
-    onBeforeMount(() => (hasOpened.value = false));
-    const openDialog = () => {
-      hasOpened.value = true;
-      dialogOpen.value = true;
-    };
-    return { actionData, actionType, updateWarn, dialogOpen, hasOpened, openDialog };
+const [reward] = defineModel<RewardData>({
+  required: true,
+  set(v) {
+    if (!StaticRewardData[v.type].validOptions(v.data)) {
+      v.data = simpleClone(StaticRewardData[v.type].defaultOptions);
+    }
+    return v;
   },
 });
+defineProps<{ isNew?: boolean }>();
+const emit = defineEmits<{
+  'update:warn': [warn: boolean];
+}>();
+
+const updateWarn = (warn: boolean) => {
+  emit('update:warn', warn);
+};
+
+const dialogOpen = ref(false);
+const hasOpened = ref(false);
+onBeforeMount(() => (hasOpened.value = false));
+const openDialog = () => {
+  hasOpened.value = true;
+  dialogOpen.value = true;
+};
 </script>

@@ -6,21 +6,6 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-
-export default defineComponent({
-  name: 'ActionCategory',
-  props: {
-    name: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: false,
-      default: '',
-    },
-  },
-});
+<script setup lang="ts">
+withDefaults(defineProps<{ name: string; description?: string }>(), { description: '' });
 </script>

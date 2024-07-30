@@ -31,31 +31,22 @@
   </MainLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { useApi } from '../api/plugin';
 import { TwitchUser } from '../api/types';
 import { asyncState, tryAsync } from '../async-state';
 import CLoader from '../components/core/CLoader.vue';
 import MainLayout from '../components/MainLayout.vue';
 
-export default defineComponent({
-  name: 'BroadcastersDashboard',
-  components: { MainLayout, CLoader },
-  setup() {
-    const api = useApi();
+const api = useApi();
 
-    const { state } = asyncState<TwitchUser[]>([]);
+const { state } = asyncState<TwitchUser[]>([]);
 
-    tryAsync(async state => {
-      state.value = await api.getBroadcasters();
-    }, state);
+tryAsync(async state => {
+  state.value = await api.getBroadcasters();
+}, state);
 
-    const makeBroadcasterLink = (id: string) => {
-      return `/rewards/${encodeURIComponent(id)}`;
-    };
-
-    return { state, makeBroadcasterLink };
-  },
-});
+const makeBroadcasterLink = (id: string) => {
+  return `/rewards/${encodeURIComponent(id)}`;
+};
 </script>

@@ -2,32 +2,19 @@
   <TextField :model-value="modelValue" label="Duration" :warn="warn" @update:model-value="onUpdate" />
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { computed, watch } from 'vue';
 import TextField from '../core/TextField.vue';
 import { isValidRewardDurationExpression } from '../../utilities';
 
-export default defineComponent({
-  name: 'TSESettings',
-  components: { TextField },
-  props: {
-    modelValue: {
-      type: String,
-      required: true,
-      default: '',
-    },
-  },
-  emits: ['update:modelValue', 'update:warn'],
-  setup(props, { emit }) {
-    const { modelValue } = toRefs(props);
+const emit = defineEmits<{
+  'update:warn': [warn: boolean];
+}>();
+const [modelValue] = defineModel<string>({ required: true });
 
-    const warn = computed(() => !isValidRewardDurationExpression(modelValue.value.trim()));
-    const onUpdate = (value: string) => {
-      emit('update:modelValue', value);
-    };
-    watch(warn, v => emit('update:warn', v));
-
-    return { onUpdate, modelValue, warn };
-  },
-});
+const warn = computed(() => !isValidRewardDurationExpression(modelValue.value.trim()));
+const onUpdate = (value: string) => {
+  modelValue.value = value;
+};
+watch(warn, v => emit('update:warn', v));
 </script>
