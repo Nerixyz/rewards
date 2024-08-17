@@ -100,12 +100,16 @@ pub async fn refresh_token(
 }
 
 pub async fn skip_next(auth_token: &str) -> AnyResult<()> {
-    post204("https://api.spotify.com/v1/me/player/next", auth_token).await?;
+    post204_or_200_because_the_docs_are_wrong(
+        "https://api.spotify.com/v1/me/player/next",
+        auth_token,
+    )
+    .await?;
     Ok(())
 }
 
 pub async fn queue_item(uri: &str, auth_token: &str) -> AnyResult<()> {
-    post204(
+    post204_or_200_because_the_docs_are_wrong(
         format!(
             "https://api.spotify.com/v1/me/player/queue?{}",
             serde_qs::to_string(&QueueTrack { uri })
@@ -171,16 +175,6 @@ pub async fn search_track(
     .await
 }
 
-async fn post204<U: IntoUrl>(url: U, auth_token: &str) -> AnyResult<()> {
-    let response = SPOTIFY_CLIENT
-        .post(url)
-        .json(&serde_json::Value::Null)
-        .header("Authorization", format!("Bearer {}", auth_token))
-        .send()
-        .await?;
-    no_content_result(response)
-}
-
 async fn put204<U: IntoUrl, T: Serialize>(
     url: U,
     body: &T,
@@ -195,9 +189,32 @@ async fn put204<U: IntoUrl, T: Serialize>(
     no_content_result(response)
 }
 
+async fn post204_or_200_because_the_docs_are_wrong<U: IntoUrl>(
+    url: U,
+    auth_token: &str,
+) -> AnyResult<()> {
+    let response = SPOTIFY_CLIENT
+        .post(url)
+        .json(&serde_json::Value::Null)
+        .header("Authorization", format!("Bearer {}", auth_token))
+        .send()
+        .await?;
+    maybe_no_content_result(response)
+}
+
 fn no_content_result(response: Response) -> AnyResult<()> {
     match response.status() {
         StatusCode::NO_CONTENT => Ok(()),
+        StatusCode::FORBIDDEN => Err(AnyError::msg(
+            "Controlling the player requires Spotify premium :/",
+        )),
+        x => Err(AnyError::msg(format!("Expected 204 - got {}", x))),
+    }
+}
+
+fn maybe_no_content_result(response: Response) -> AnyResult<()> {
+    match response.status() {
+        StatusCode::NO_CONTENT | StatusCode::OK => Ok(()),
         StatusCode::FORBIDDEN => Err(AnyError::msg(
             "Controlling the player requires Spotify premium :/",
         )),
