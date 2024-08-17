@@ -190,7 +190,7 @@ impl EmoteRW for SevenTvEmotes {
         if !emote_set.emotes.iter().any(|emote| emote.id == *emote_id) {
             match redis::cmd("DEL")
                 .arg(format!("rewards:seventv:cache:{platform_id}:{emote_id}"))
-                .query_async::<_, usize>(&mut redis_pool.get().await?)
+                .query_async::<usize>(&mut redis_pool.get().await?)
                 .await
             {
                 Ok(x) if x > 0 => (),

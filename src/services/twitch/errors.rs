@@ -10,25 +10,25 @@ use twitch_api::helix::{
 
 #[derive(Display, Debug)]
 pub enum TwitchApiError {
-    #[display(fmt = "Reqwest Error")]
+    #[display("Reqwest Error")]
     ReqwestError,
-    #[display(fmt = "Http crate error")]
+    #[display("Http crate error")]
     HttpCrateError,
-    #[display(fmt = "No Page")]
+    #[display("No Page")]
     NoPage,
-    #[display(fmt = "Invalid Uri")]
+    #[display("Invalid Uri")]
     InvalidUri,
-    #[display(fmt = "Invalid Utf8 received")]
+    #[display("Invalid Utf8 received")]
     Utf8,
-    #[display(fmt = "Serde error")]
+    #[display("Serde error")]
     Serde,
-    #[display(fmt = "TwitchError: {} - {}", _0, _1)]
+    #[display("TwitchError: {} - {}", _0, _1)]
     Response(StatusCode, String),
-    #[display(fmt = "Some custom error")]
+    #[display("Some custom error")]
     Custom,
-    #[display(fmt = "Unknown and unexpected Twitch error (no further info)")]
+    #[display("Unknown and unexpected Twitch error (no further info)")]
     Unknown,
-    #[display(fmt = "{}", _0)]
+    #[display("{}", _0)]
     Other(String),
 }
 

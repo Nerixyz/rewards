@@ -58,7 +58,7 @@ impl Handler<ChannelTimeoutMessage> for TimeoutActor {
                         .arg("NX")
                         .arg("EX")
                         .arg(msg.duration.as_secs() as usize)
-                        .query_async::<_, ()>(&mut conn)
+                        .query_async::<()>(&mut conn)
                         .await,
                     "Couldn't set timeout"
                 );

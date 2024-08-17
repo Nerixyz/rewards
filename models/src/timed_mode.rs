@@ -21,9 +21,9 @@ pub struct TimedMode {
 #[sqlx(type_name = "timed_mode", rename_all = "snake_case")]
 pub enum Mode {
     // the display values are for IRC
-    #[display(fmt = "emoteonly")]
+    #[display("emoteonly")]
     Emoteonly,
-    #[display(fmt = "subscribers")]
+    #[display("subscribers")]
     Subonly,
 }
 

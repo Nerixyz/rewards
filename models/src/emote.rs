@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 )]
 #[sqlx(type_name = "slot_platform", rename_all = "snake_case")]
 pub enum SlotPlatform {
-    #[display(fmt = "BTTV")]
+    #[display("BTTV")]
     Bttv,
-    #[display(fmt = "FFZ")]
+    #[display("FFZ")]
     Ffz,
     #[sqlx(rename = "7tv")]
-    #[display(fmt = "7TV")]
+    #[display("7TV")]
     SevenTv,
 }
 
