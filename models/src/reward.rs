@@ -42,31 +42,31 @@ pub struct LiveRewardAT {
 // the tags are used in the debug command.
 #[serde(tag = "type", content = "data")]
 pub enum RewardData {
-    #[display(fmt = "timeout")]
+    #[display("timeout")]
     Timeout(TimeoutRewardData),
-    #[display(fmt = "mode::sub")]
+    #[display("mode::sub")]
     SubOnly(String),
-    #[display(fmt = "mode::emote")]
+    #[display("mode::emote")]
     EmoteOnly(String),
-    #[display(fmt = "swap::bttv")]
+    #[display("swap::bttv")]
     BttvSwap(#[serde(default)] SwapRewardData),
-    #[display(fmt = "swap::ffz")]
+    #[display("swap::ffz")]
     FfzSwap(#[serde(default)] SwapRewardData),
-    #[display(fmt = "swap::7tv")]
+    #[display("swap::7tv")]
     SevenTvSwap(#[serde(default)] SwapRewardData),
-    #[display(fmt = "slot::bttv")]
+    #[display("slot::bttv")]
     BttvSlot(SlotRewardData),
-    #[display(fmt = "slot::ffz")]
+    #[display("slot::ffz")]
     FfzSlot(SlotRewardData),
-    #[display(fmt = "slot::7tv")]
+    #[display("slot::7tv")]
     SevenTvSlot(SlotRewardData),
-    #[display(fmt = "spotify::skip")]
+    #[display("spotify::skip")]
     SpotifySkip(()),
-    #[display(fmt = "spotify::queue")]
+    #[display("spotify::queue")]
     SpotifyQueue(SpotifyPlayOptions),
-    #[display(fmt = "spotify::play")]
+    #[display("spotify::play")]
     SpotifyPlay(SpotifyPlayOptions),
-    #[display(fmt = "rem-emote")]
+    #[display("rem-emote")]
     RemEmote(RemEmoteRewardData),
 }
 

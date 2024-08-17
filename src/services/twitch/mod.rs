@@ -34,7 +34,7 @@ pub async fn get_many_users(
         cmd.arg(format!("rewards:user:{}", id));
     }
     match cmd
-        .query_async::<_, Vec<Option<String>>>(redis)
+        .query_async::<Vec<Option<String>>>(redis)
         .await
         .ok()
         .map(|res| {
@@ -92,9 +92,6 @@ async fn save_users_to_redis(
                     .map_err(|_| TwitchApiError::Serde)?,
             );
     }
-    log_err!(
-        pipe.query_async::<_, ()>(redis).await,
-        "Couldn't set on redis"
-    );
+    log_err!(pipe.query_async::<()>(redis).await, "Couldn't set on redis");
     Ok(())
 }

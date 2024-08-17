@@ -79,7 +79,7 @@ async fn check_update_cooldown(
         .arg(&channel_key)
         .arg(1)
         .arg(1)
-        .query_async::<_, ()>(conn)
+        .query_async::<()>(conn)
         .await?;
     Ok(true)
 }
