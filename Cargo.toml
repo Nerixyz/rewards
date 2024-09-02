@@ -110,5 +110,5 @@ git = "https://github.com/twitch-rs/twitch_api.git"
 git = "https://github.com/twitch-rs/twitch_api.git"
 
 [build-dependencies]
-git_info = "0.1.2"
-rustc_version = "0.4.0"
+git_info = "0.1.3"
+rustc_version = "0.4.1"
