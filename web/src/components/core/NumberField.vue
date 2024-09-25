@@ -1,16 +1,19 @@
 <template>
   <BaseInput :is-focused="isFocused" :is-occupied="isOccupied" :label="label">
-    <WarnIcon
-      v-if="warn"
-      class="text-yellow-400 absolute left-auto right-2 max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap pointer-events-none origin-top-left top-4"
-    />
     <input
       :value="modelValue"
       :disabled="disabled"
       class="bg-transparent w-full h-full px-3 py-2 border-none mt-2 outline-none"
+      type="number"
+      :min="min"
+      :max="max"
+      required
       @input="onInput"
       @focus="onFocus"
       @blur="onBlur"
+    />
+    <WarnIcon
+      class="text-yellow-400 on-invalid-warn absolute left-auto right-10 max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap pointer-events-none origin-top-left top-4"
     />
   </BaseInput>
 </template>
@@ -25,14 +28,18 @@ withDefaults(
     placeholder?: string;
     disabled?: boolean;
     label: string;
-    warn?: boolean;
+    min: number;
+    max: number;
   }>(),
-  { placeholder: '', disabled: false, warn: false },
+  { placeholder: '', disabled: false },
 );
-const [modelValue] = defineModel<string>({ default: '' });
+const [modelValue] = defineModel<number>({ default: 0 });
 
 const onInput = (e: Event) => {
-  modelValue.value = (e.target as HTMLInputElement).value;
+  const el = e.target as HTMLInputElement;
+  if (el.validity.valid) {
+    modelValue.value = (e.target as HTMLInputElement).valueAsNumber;
+  }
 };
 
 const isFocused = ref(false);
@@ -45,3 +52,8 @@ const onBlur = () => {
 
 const isOccupied = computed(() => !!(isFocused.value || modelValue.value));
 </script>
+<style scoped>
+input:not(:invalid) + .on-invalid-warn {
+  display: none;
+}
+</style>

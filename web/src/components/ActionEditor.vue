@@ -35,6 +35,7 @@
     <EmoteSwapSettings
       v-else-if="reward.type === 'BttvSwap' || reward.type === 'FfzSwap' || reward.type === 'SevenTvSwap'"
       v-model="reward.data"
+      :is-seventv="reward.type === 'SevenTvSwap'"
     />
     <SpotifyPlayOptions
       v-else-if="reward.type === 'SpotifyPlay' || reward.type === 'SpotifyQueue'"
