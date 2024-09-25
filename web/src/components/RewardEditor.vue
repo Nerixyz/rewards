@@ -1,5 +1,5 @@
 <template>
-  <form class="p-4" @submit.prevent="">
+  <form ref="main-form" class="p-4" @submit.prevent="">
     <div class="flex flex-col gap-4">
       <div class="flex bg-white bg-opacity-10 p-4 rounded-md items-center">
         <input
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, useTemplateRef } from 'vue';
 import { assignDefaultToModel, assignToVRewardModel, toInputReward } from '../api/model-conversion';
 import { defaultNewReward } from '../api/rewards-data';
 import OutlinedButton from './core/OutlinedButton.vue';
@@ -113,6 +113,8 @@ const actionWarn = ref(false);
 const updateActionWarn = (warn: boolean) => (actionWarn.value = warn);
 const isInvalid = computed(() => actionWarn.value || v$.value.$invalid);
 
+const mainForm = useTemplateRef<HTMLFormElement>('main-form');
+
 const onUpdate = () => {
   if (isInvalid.value) return;
 
@@ -120,6 +122,7 @@ const onUpdate = () => {
 };
 const onDone = () => {
   if (isInvalid.value) return;
+  if (!mainForm.value?.checkValidity()) return;
 
   emit('done', toInputReward(reward));
   assignDefaultToModel(reward);

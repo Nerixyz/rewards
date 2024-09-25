@@ -10,6 +10,7 @@ const ConnectionsDashboard = () => import('./routes/ConnectionsDashboard.vue');
 const LogViewer = () => import('./routes/LogViewer.vue');
 const EditReward = () => import('./routes/EditReward.vue');
 const NewReward = () => import('./routes/NewReward.vue');
+const TestRewardEditor = () => import('./routes/TestRewardEditor.vue');
 
 const router = createRouter({
   routes: [
@@ -49,6 +50,13 @@ const router = createRouter({
       component: NewReward,
       meta: {
         ignoreNav: true,
+      },
+    },
+    {
+      path: '/testing/editor',
+      component: TestRewardEditor,
+      meta: {
+        open: true,
       },
     },
     {
