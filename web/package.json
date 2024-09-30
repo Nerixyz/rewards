@@ -14,7 +14,7 @@
     "@headlessui/vue": "^1.7.23",
     "@vuelidate/core": "^2.0.3",
     "@vuelidate/validators": "^2.0.4",
-    "vue": "^3.5.8",
+    "vue": "^3.5.10",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
@@ -27,7 +27,7 @@
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
-    "vite": "^5.4.7",
+    "vite": "^5.4.8",
     "vue-tsc": "^2.1.6"
   }
 }
