@@ -81,7 +81,7 @@ class HttpClient extends BaseClient {
       .map(({ date, content }) => {
         try {
           return { date: fmt.format(date), content };
-        } catch (e) {
+        } catch {
           return { date: '?', content };
         }
       });
