@@ -27,6 +27,6 @@ updates:
     commit-message:
       prefix: 'deps(npm)'
     groups:
-      actions:
+      npm:
         patterns:
           - '*'
