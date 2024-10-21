@@ -418,9 +418,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.89"
+version = "1.0.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86fdf8605db99b54d3cd748a44c6d04df638eb5dafb219b135d0149bd0db01f6"
+checksum = "37bf3594c4c988a53154954629820791dde498571819ae4ca50ca811e060cc95"
 
 [[package]]
 name = "arc-swap"
@@ -1191,7 +1191,7 @@ dependencies = [
  "base64 0.21.7",
  "bytes",
  "http-body-util",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "hyper-util",
  "pin-project",
  "rand",
@@ -1627,9 +1627,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50dfd22e0e76d0f662d429a5f80fcaf3855009297eab6a0a9f8543834744ba05"
+checksum = "bbbff0a806a4728c99295b254c8838933b5b082d75e3cb70c8dab21fdfbcfa9a"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1654,7 +1654,7 @@ checksum = "5ee4be2c948921a1a5320b629c4193916ed787a7f7f293fd3f7f5a6c9de74155"
 dependencies = [
  "futures-util",
  "http 1.1.0",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "hyper-util",
  "rustls",
  "rustls-pki-types",
@@ -1684,7 +1684,7 @@ checksum = "70206fc6890eaca9fde8a0bf71caa2ddfc9fe045ac9e5c70df101a7dbde866e0"
 dependencies = [
  "bytes",
  "http-body-util",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "hyper-util",
  "native-tls",
  "tokio",
@@ -1703,7 +1703,7 @@ dependencies = [
  "futures-util",
  "http 1.1.0",
  "http-body 1.0.1",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "pin-project-lite",
  "socket2",
  "tokio",
@@ -2620,7 +2620,7 @@ dependencies = [
  "http 1.1.0",
  "http-body 1.0.1",
  "http-body-util",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "hyper-rustls",
  "hyper-tls 0.6.0",
  "hyper-util",
@@ -2902,9 +2902,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.128"
+version = "1.0.132"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ff5456707a1de34e7e37f2a6fd3d3f808c318259cbd01ab6377795054b483d8"
+checksum = "d726bfaff4b320266d395898905d0eba0345aae23b54aee3a737e260fd46db03"
 dependencies = [
  "itoa",
  "memchr",
@@ -3720,7 +3720,7 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#0e3bddb0cc8b3ef739338d3a7078a6d40b20c0d3"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#201a64c4000e5daf32d89859289e2606bd265c8e"
 dependencies = [
  "rand",
  "thiserror",
@@ -3734,14 +3734,14 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#6b525d9ee9153b6ac186fed244f20401881b5ae9"
+source = "git+https://github.com/twitch-rs/twitch_api.git#b578d6a9cca6d31f5a5453f0ac77b85cb38e480c"
 dependencies = [
  "aliri_braid",
  "async-trait",
  "displaydoc",
  "futures",
  "http 1.1.0",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "once_cell",
  "reqwest 0.12.8",
  "serde",
@@ -3782,7 +3782,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.14.0"
-source = "git+https://github.com/twitch-rs/twitch_api.git#6b525d9ee9153b6ac186fed244f20401881b5ae9"
+source = "git+https://github.com/twitch-rs/twitch_api.git#b578d6a9cca6d31f5a5453f0ac77b85cb38e480c"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3802,8 +3802,8 @@ dependencies = [
 
 [[package]]
 name = "twitch_types"
-version = "0.4.5"
-source = "git+https://github.com/twitch-rs/twitch_api.git#6b525d9ee9153b6ac186fed244f20401881b5ae9"
+version = "0.4.6"
+source = "git+https://github.com/twitch-rs/twitch_api.git#b578d6a9cca6d31f5a5453f0ac77b85cb38e480c"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4330,12 +4330,12 @@ dependencies = [
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#4bf331b14053f882ef9e40724a49f572d8ffcc9e"
+source = "git+https://github.com/nerixyz/ws-pool#70c0d990ae9fca90453149e9afc497a2e0411330"
 dependencies = [
  "fastwebsockets",
  "http 1.1.0",
  "http-body-util",
- "hyper 1.4.1",
+ "hyper 1.5.0",
  "hyper-util",
  "rand",
  "simd-json",
