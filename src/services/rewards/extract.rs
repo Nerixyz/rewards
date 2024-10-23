@@ -72,7 +72,7 @@ pub fn ffz_id(str: &str) -> AnyResult<&str> {
 pub fn seventv_id(str: &str) -> AnyResult<&str> {
     lazy_static! {
         static ref SEVENTV_REGEX: Regex = Regex::new(
-            "(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([a-f0-9]{24})(?:$| )"
+            "(?:^| )(?:https?://)?(?:7tv\\.app/)?(?:emotes/)?([0-7][0-9A-HJKMNP-TV-Z]{25})(?:$| )"
         )
         .expect("must compile");
     }
