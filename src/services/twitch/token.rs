@@ -53,7 +53,7 @@ impl Clone for DbToken {
 
 impl DbToken {
     pub fn data(&self) -> &TokenData {
-        return self.0.as_ref();
+        self.0.as_ref()
     }
 }
 
