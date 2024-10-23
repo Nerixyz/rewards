@@ -28,18 +28,19 @@ impl EmoteData {
         channel_id: &str,
         channel_login: &str,
         pool: &PgPool,
-    ) -> AnyResult<Self> {
-        future::try_join3(
+    ) -> Self {
+        let (seventv, ffz, bttv) = future::join3(
             extract_seventv(channel_id, pool),
             extract_ffz(channel_id, channel_login, pool),
             extract_bttv(channel_id, pool),
         )
-        .await
-        .map(|(seventv, ffz, bttv)| Self {
+        .await;
+
+        Self {
             seventv: seventv.into(),
             ffz: ffz.into(),
             bttv: bttv.into(),
-        })
+        }
     }
 }
 
@@ -87,18 +88,18 @@ async fn extract_seventv(
     )
     .await?;
 
-    Ok(Some(EmotePlatformData {
+    Ok(EmotePlatformData {
         remaining_emotes: set.capacity.saturating_sub(set.emotes.len()),
         open_slots: slots,
         swap_capacity: swaps.1.unwrap_or(set.capacity).saturating_sub(swaps.0),
-    }))
+    })
 }
 
 async fn extract_ffz(
     channel_id: &str,
     channel_login: &str,
     pool: &PgPool,
-) -> AnyResult<Option<EmotePlatformData>> {
+) -> AnyResult<EmotePlatformData> {
     if !ffz::is_editor_in(channel_login).await {
         bail!("not an editor");
     }
@@ -112,20 +113,20 @@ async fn extract_ffz(
     .await?;
     let added_emotes: usize =
         room.sets.values().map(|s| s.emoticons.len()).sum();
-    Ok(Some(EmotePlatformData {
+    Ok(EmotePlatformData {
         remaining_emotes: user.max_emoticons.saturating_sub(added_emotes),
         open_slots: slots,
         swap_capacity: swaps
             .1
             .unwrap_or(user.max_emoticons)
             .saturating_sub(swaps.0),
-    }))
+    })
 }
 
 async fn extract_bttv(
     channel_id: &str,
     pool: &PgPool,
-) -> AnyResult<Option<EmotePlatformData>> {
+) -> AnyResult<EmotePlatformData> {
     let bttv_id = bttv::get_or_fetch_id(channel_id, pool).await?;
     let limits = match bttv::get_user_limits(&bttv_id).await {
         Ok(l) => l,
@@ -140,7 +141,7 @@ async fn extract_bttv(
     )
     .await?;
 
-    Ok(Some(EmotePlatformData {
+    Ok(EmotePlatformData {
         remaining_emotes: limits
             .channel_emotes
             .saturating_sub(user.shared_emotes.len()),
@@ -149,7 +150,7 @@ async fn extract_bttv(
             .1
             .unwrap_or(limits.channel_emotes)
             .saturating_sub(swaps.0),
-    }))
+    })
 }
 
 async fn get_open_slots(
@@ -178,8 +179,8 @@ async fn get_swap_data(
     Ok((active as usize, limit))
 }
 
-impl From<Option<EmotePlatformData>> for EpDataOpt {
-    fn from(opt: Option<EmotePlatformData>) -> Self {
+impl From<AnyResult<EmotePlatformData>> for EpDataOpt {
+    fn from(opt: AnyResult<EmotePlatformData>) -> Self {
         Self(opt)
     }
 }
