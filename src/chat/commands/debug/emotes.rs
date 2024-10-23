@@ -2,7 +2,7 @@ use crate::{
     services::{bttv, ffz, seven_tv},
     PgPool,
 };
-use anyhow::Result as AnyResult;
+use anyhow::{bail, Result as AnyResult};
 use config::CONFIG;
 use futures_util::future;
 use models::{emote::SlotPlatform, reward, slot, swap_emote};
@@ -21,7 +21,7 @@ pub struct EmotePlatformData {
 }
 
 #[repr(transparent)]
-pub struct EpDataOpt(Option<EmotePlatformData>);
+pub struct EpDataOpt(AnyResult<EmotePlatformData>);
 
 impl EmoteData {
     pub async fn get(
@@ -56,8 +56,8 @@ impl Display for EmotePlatformData {
 impl Display for EpDataOpt {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.0 {
-            Some(epd) => Display::fmt(epd, f),
-            None => write!(f, "❌"),
+            Ok(epd) => Display::fmt(epd, f),
+            Err(e) => write!(f, "❌ {e}"),
         }
     }
 }
@@ -65,7 +65,7 @@ impl Display for EpDataOpt {
 async fn extract_seventv(
     channel_id: &str,
     pool: &PgPool,
-) -> AnyResult<Option<EmotePlatformData>> {
+) -> AnyResult<EmotePlatformData> {
     let stv_user = seven_tv::requests::get_user(channel_id).await?;
     // check if we're an editor
     if !stv_user
@@ -74,11 +74,11 @@ async fn extract_seventv(
         .iter()
         .any(|e| e.id == CONFIG.emotes.seven_tv.user_id)
     {
-        return Ok(None);
+        bail!("not an editor");
     }
 
     let Some(ref set) = stv_user.emote_set else {
-        return Ok(None);
+        bail!("active emote-set is null");
     };
 
     let (slots, swaps) = future::try_join(
@@ -100,7 +100,7 @@ async fn extract_ffz(
     pool: &PgPool,
 ) -> AnyResult<Option<EmotePlatformData>> {
     if !ffz::is_editor_in(channel_login).await {
-        return Ok(None);
+        bail!("not an editor");
     }
 
     let (slots, swaps, user, room) = future::try_join4(
@@ -126,14 +126,11 @@ async fn extract_bttv(
     channel_id: &str,
     pool: &PgPool,
 ) -> AnyResult<Option<EmotePlatformData>> {
-    let bttv_id = match bttv::get_or_fetch_id(channel_id, pool).await {
-        Ok(id) => id,
-        Err(_) => return Ok(None),
-    };
+    let bttv_id = bttv::get_or_fetch_id(channel_id, pool).await?;
     let limits = match bttv::get_user_limits(&bttv_id).await {
         Ok(l) => l,
         // user isn't an editor
-        Err(_) => return Ok(None),
+        Err(_) => bail!("not an editor"),
     };
 
     let (slots, swaps, user) = future::try_join3(
