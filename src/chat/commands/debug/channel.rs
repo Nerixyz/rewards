@@ -16,14 +16,14 @@ impl ChannelData {
         channel_login: &str,
         pool: &PgPool,
     ) -> AnyResult<Self> {
-        future::try_join(
+        let (emote_data, twitch_auth) = future::join(
             EmoteData::get(channel_id, channel_login, pool),
             Self::get_twitch_auth(channel_id, pool),
         )
-        .await
-        .map(|(emote_data, twitch_auth)| Self {
+        .await;
+        Ok(Self {
             emote_data,
-            twitch_auth,
+            twitch_auth: twitch_auth?,
         })
     }
 

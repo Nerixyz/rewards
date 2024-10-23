@@ -6,7 +6,7 @@ use crate::{
     },
     RedisPool,
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use models::{
     banned_emote, log_entry::LogEntry, reward::SwapRewardData,
     swap_emote::SwapEmote,
@@ -103,7 +103,7 @@ where
         pool,
     )
     .await
-    .map_err(|_| AnyError::msg("Could not save emote in DB"))?;
+    .map_err(|e| anyhow!("Could not save emote in DB ({})", e.error))?;
 
     log_err!(
         LogEntry::create(
