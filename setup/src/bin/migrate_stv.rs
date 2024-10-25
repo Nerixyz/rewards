@@ -42,8 +42,9 @@ async fn fix_table(
         .collect::<HashSet<_>>();
 
     let mut resolved = Vec::with_capacity(ids.len());
-    for id in ids {
-        eprintln!("{id}");
+    let len = ids.len();
+    for (i, id) in ids.into_iter().enumerate() {
+        eprintln!("[{i}/{}] {id}", len);
         match resolve_id(id).await {
             Ok(res) => resolved.push((id, res)),
             Err(e) => eprintln!("Failed to resolve {id} - {e}"),
@@ -53,8 +54,32 @@ async fn fix_table(
     eprintln!("applying...");
     let tx = pg.transaction().await?;
     for (id, resolved) in resolved {
-        tx.execute(&format!("update {name} set emote_id = $2 where platform = '7tv' and emote_id = $1"), &[&id, &resolved]).await?;
+        let base_query = format!("update {name} set emote_id = $2 where platform = '7tv' and emote_id = $1");
+        if let Err(e) = tx.execute(&base_query, &[&id, &resolved]).await {
+            eprintln!("while applying -> {e}");
+            assert_eq!(name, "banned_emotes");
+
+            let old = tx.query("select channel_id from banned_emotes where platform = '7tv' and emote_id = $1", &[&id]).await?;
+            let new = tx.query("select channel_id from banned_emotes where platform = '7tv' and emote_id = $1", &[&resolved]).await?;
+
+            let old_set = old
+                .iter()
+                .map(|r| r.get::<_, &str>(0))
+                .collect::<HashSet<_>>();
+            let new_set = new
+                .iter()
+                .map(|r| r.get::<_, &str>(0))
+                .collect::<HashSet<_>>();
+
+            // delete the duplicates (old ids)
+            for &chan in old_set.intersection(&new_set) {
+                tx.execute("delete from banned_emotes where channel_id = $1 and platform = '7tv' and emote_id = $2", &[&chan, &id]).await?;
+            }
+
+            tx.execute(&base_query, &[&id, &resolved]).await?;
+        }
     }
+    eprintln!("committing...");
     tx.commit().await?;
     eprintln!("<- done");
 
