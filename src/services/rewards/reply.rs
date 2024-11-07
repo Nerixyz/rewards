@@ -58,7 +58,7 @@ pub async fn reply_to_redemption(
             log_err!(
                 send_chat_message(
                     broadcaster_id,
-                    &format!("@{} ⚠ {}", user, e),
+                    &format!("@{} [⚠ Refund] {}", user, e),
                     &twitch::get_token(),
                 )
                 .await,

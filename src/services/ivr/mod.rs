@@ -15,25 +15,26 @@ lazy_static! {
         .unwrap();
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct ModVips {
+    #[serde(default)]
     pub vips: Vec<User>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct User {
     pub id: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 struct IvrErrorResponse {
     error: IvrError,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 struct IvrError {
     message: String,
@@ -51,13 +52,13 @@ where
     let status = response.status();
     match status {
         s if s.is_success() => Ok(response.json().await?),
-        _ => {
-            let json: IvrErrorResponse = response.json().await?;
-            Err(anyhow!(
-                "IVR Error - {} (http-status={})",
-                json.error.message,
-                status
-            ))
-        }
+        _ => match response.json::<IvrErrorResponse>().await {
+            Ok(json) => {
+                Err(anyhow!("IVR Error - {} ({status})", json.error.message))
+            }
+            Err(e) => Err(anyhow!(
+                "IVR error {status} + failed to decode error response"
+            )),
+        },
     }
 }
