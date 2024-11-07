@@ -64,7 +64,13 @@ where
             //     "IVR error {status} + failed to decode error response"
             // )),
             // }
-            Err(anyhow!("ivr: {}", &text[..100.min(text.len())]))
+            Err(anyhow!("ivr: {}", text))
         }
     }
+}
+
+#[cfg(test)]
+#[tokio::test]
+async fn ivr_test() {
+    let _ = dbg!(modvips("m0xyy").await);
 }
