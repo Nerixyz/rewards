@@ -4,6 +4,8 @@ use reqwest::{Client, IntoUrl};
 use serde::{de::DeserializeOwned, Deserialize};
 use std::time::Duration;
 
+use super::spotify::responses;
+
 lazy_static! {
     static ref IVR_CLIENT: Client = Client::builder()
         .user_agent(format!(
@@ -52,13 +54,17 @@ where
     let status = response.status();
     match status {
         s if s.is_success() => Ok(response.json().await?),
-        _ => match response.json::<IvrErrorResponse>().await {
-            Ok(json) => {
-                Err(anyhow!("IVR Error - {} ({status})", json.error.message))
-            }
-            Err(e) => Err(anyhow!(
-                "IVR error {status} + failed to decode error response"
-            )),
-        },
+        _ => {
+            let text = response.text().await?;
+            // match response.json::<IvrErrorResponse>().await {
+            // Ok(json) => {
+            //     Err(anyhow!("IVR Error - {} ({status})", json.error.message))
+            // }
+            // Err(e) => Err(anyhow!(
+            //     "IVR error {status} + failed to decode error response"
+            // )),
+            // }
+            Err(anyhow!("ivr: {}", text[..100.min(text.len())]))
+        }
     }
 }
