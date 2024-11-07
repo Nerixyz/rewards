@@ -78,6 +78,7 @@ pub struct SevenUserResponse {
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenUser {
+    #[serde(default)]
     pub editors: Vec<SevenEditor>,
 }
 
@@ -86,6 +87,7 @@ pub struct SevenUser {
 pub struct SevenEmoteSet {
     pub id: String,
     pub capacity: usize,
+    #[serde(default)]
     pub emotes: Vec<SevenEmote>,
 }
 
