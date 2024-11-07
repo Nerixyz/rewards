@@ -76,7 +76,13 @@ pub async fn timeout(
         if timeout.vip {
             let vips = ivr::modvips(redemption.broadcaster_user_login.as_str())
                 .await
-                .map_err(|e| anyhow!("Attempt to read VIPs failed: {}", e))?
+                .map_err(|e| {
+                    anyhow!(
+                        "Attempt to read VIPs for '{}' failed: {}",
+                        redemption.broadcaster_user_login.as_str(),
+                        e
+                    )
+                })?
                 .vips;
             if vips.iter().any(|v| v.id == user.id.as_str()) {
                 return Err(anyhow!("I won't timeout VIPs."));
