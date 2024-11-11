@@ -79,7 +79,7 @@ anyhow = "1.0"
 errors = { git = "https://github.com/Nerixyz/nerix-utils-rs" }
 derive_more = { version = "1.0", features = ["display"] }
 async-trait = "0.1"
-thiserror = "1.0"
+thiserror = "2.0"
 
 itertools = "0.13.0"
 paste = "1.0"
