@@ -3912,7 +3912,7 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#e054ee9c4a84fcd0b1fb00ed9799910dbd5c73e9"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#758389bf912a4bdce66e6619d7d2e99a39566773"
 dependencies = [
  "rand",
  "thiserror 2.0.3",
@@ -3926,7 +3926,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#120c8e31c1f7b62dd2ebddd2763522cc76336b20"
+source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3974,7 +3974,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.14.0"
-source = "git+https://github.com/twitch-rs/twitch_api.git#120c8e31c1f7b62dd2ebddd2763522cc76336b20"
+source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3994,8 +3994,8 @@ dependencies = [
 
 [[package]]
 name = "twitch_types"
-version = "0.4.7"
-source = "git+https://github.com/twitch-rs/twitch_api.git#120c8e31c1f7b62dd2ebddd2763522cc76336b20"
+version = "0.4.8"
+source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4097,9 +4097,9 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.5.3"
+version = "2.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d157f1b96d14500ffdc1f10ba712e780825526c03d9a49b4d0324b0d9113ada"
+checksum = "32f8b686cadd1473f4bd0117a5d28d36b1ade384ea9b5069a1c40aefed7fda60"
 dependencies = [
  "form_urlencoded",
  "idna 1.0.3",
@@ -4546,7 +4546,7 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#ff4c2f41ec0f0033a7b4abd2afc11eb827ec3282"
+source = "git+https://github.com/nerixyz/ws-pool#6b5fe7b0a37fdbbf6dd340277fc6fa18f63ddbe4"
 dependencies = [
  "fastwebsockets",
  "http 1.1.0",
