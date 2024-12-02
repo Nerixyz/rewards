@@ -3912,7 +3912,7 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#758389bf912a4bdce66e6619d7d2e99a39566773"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#959df2b5217ddc30775ba8a1985d5213c6c2a9b0"
 dependencies = [
  "rand",
  "thiserror 2.0.3",
@@ -3926,7 +3926,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
+source = "git+https://github.com/twitch-rs/twitch_api.git#0c7edfc0a49df89ab9502ca59102e5fe1adf0fc9"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3974,7 +3974,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.14.0"
-source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
+source = "git+https://github.com/twitch-rs/twitch_api.git#0c7edfc0a49df89ab9502ca59102e5fe1adf0fc9"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -3995,7 +3995,7 @@ dependencies = [
 [[package]]
 name = "twitch_types"
 version = "0.4.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#a8922e140385d3fe627f9dbc3a24510c952d6b2e"
+source = "git+https://github.com/twitch-rs/twitch_api.git#0c7edfc0a49df89ab9502ca59102e5fe1adf0fc9"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4546,7 +4546,7 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#6b5fe7b0a37fdbbf6dd340277fc6fa18f63ddbe4"
+source = "git+https://github.com/nerixyz/ws-pool#da5a1578103fc66d1050c376d630831f3cace3a5"
 dependencies = [
  "fastwebsockets",
  "http 1.1.0",
