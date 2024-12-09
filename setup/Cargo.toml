@@ -16,7 +16,7 @@ twitch_oauth2 = { version = "0.13", features = ["reqwest"] }
 tokio = { version = "1", features = ["macros", "fs"] }
 reqwest = "0.12"
 dotenv = "0.15.0"
-chrono = { version = "0.4.38", features = ["serde"] }
+chrono = { version = "0.4.39", features = ["serde"] }
 regex = "1.11.1"
 tokio-postgres = { version = "0.7.12", features = ["with-serde_json-1"] }
 serde = { version = "1.0", features = ["derive"] }
