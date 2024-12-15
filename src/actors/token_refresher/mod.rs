@@ -56,7 +56,7 @@ impl Actor for TokenRefresher {
         );
 
         ctx.run_interval(Duration::from_secs(60), |_this, ctx| {
-            ctx.spawn(async { seven_tv::approve_all_pending_editors() })
+            ctx.spawn(async { seven_tv::approve_all_pending_editors() });
         });
     }
 }
