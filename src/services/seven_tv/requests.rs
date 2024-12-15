@@ -96,12 +96,12 @@ pub struct SevenEmoteSet {
 pub struct SevenEditorRelation {
     pub user_id: String,
     pub editor_id: String,
-    pub status: SevenEditorStatus,
+    pub state: SevenEditorState,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(rename_all = "UPPERCASE")]
-pub enum SevenEditorStatus {
+pub enum SevenEditorState {
     Accepted,
     Rejected,
     Pending,
@@ -111,8 +111,14 @@ pub enum SevenEditorStatus {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+struct GqlEditorRelationResponse {
+    pub users: GqlEditorUsersWrap,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct GqlEditorUsersWrap {
-    pub users: GqlEditorUserWrap,
+    pub user: GqlEditorUserWrap,
 }
 
 #[derive(Deserialize, Debug)]
@@ -202,7 +208,7 @@ pub async fn remove_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
 }
 
 pub async fn get_editor_relations() -> AnyResult<Vec<SevenEditorRelation>> {
-    let res = seven_tv_post::<GqlEditorUsersWrap>(
+    let res = seven_tv_post::<GqlEditorRelationResponse>(
         "https://7tv.io/v4/gql",
         &GqlRequest {
             query: r#"
@@ -225,7 +231,7 @@ pub async fn get_editor_relations() -> AnyResult<Vec<SevenEditorRelation>> {
     )
     .await?;
 
-    Ok(res.data.users.editor_for)
+    Ok(res.data.users.user.editor_for)
 }
 
 pub async fn approve_editor(user_id: &str, editor_id: &str) -> AnyResult<()> {
@@ -277,8 +283,9 @@ where
     J: DeserializeOwned,
 {
     let response = SEVENTV_CLIENT.post(url).json(request).send().await?;
-    let status = response.status();
-    let response = response.json().await?;
+    let status = dbg!(response.status());
+    let text = dbg!(response.text().await?);
+    let response = serde_json::from_str(&text)?;
     match response {
         GqlResponse {
             errors: Some(errors),

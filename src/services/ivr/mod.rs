@@ -56,7 +56,7 @@ where
             Ok(json) => {
                 Err(anyhow!("IVR Error - {} ({status})", json.error.message))
             }
-            Err(e) => Err(anyhow!(
+            Err(_) => Err(anyhow!(
                 "IVR error {status} + failed to decode error response"
             )),
         },

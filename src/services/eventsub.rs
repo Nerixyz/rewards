@@ -110,6 +110,7 @@ pub async fn clear_invalid_rewards(
         .req_get(GetEventSubSubscriptionsRequest::default(), &*token)
         .await?;
 
+    let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
     loop {
         for sub in &rewards.data.subscriptions {
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
@@ -133,10 +134,7 @@ pub async fn clear_invalid_rewards(
                 }
             }
             if !is_enabled
-                || (!is_this_server
-                    && Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io")
-                        .unwrap()
-                        .is_match(&transport.callback))
+                || (!is_this_server && ng_re.is_match(&transport.callback))
             {
                 if let Err(e) =
                     delete_subscription(&token, sub.id.clone()).await

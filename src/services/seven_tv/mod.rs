@@ -2,7 +2,7 @@ use anyhow::{Error as AnyError, Result as AnyResult};
 
 use config::CONFIG;
 use log::warn;
-use requests::SevenEditorStatus;
+use requests::SevenEditorState;
 
 pub mod requests;
 
@@ -24,7 +24,7 @@ pub async fn approve_all_pending_editors() -> AnyResult<()> {
 
     for relation in all_relations
         .iter()
-        .filter(|r| r.status == SevenEditorStatus::Pending)
+        .filter(|r| r.state == SevenEditorState::Pending)
     {
         if let Err(e) =
             requests::approve_editor(&relation.user_id, &relation.editor_id)
