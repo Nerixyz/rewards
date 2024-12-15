@@ -109,13 +109,6 @@ pub enum SevenEditorStatus {
     Other,
 }
 
-#[derive(Serialize, Debug, PartialEq, Eq, Clone)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum SevenEditorUpdateStatus {
-    Accept,
-    Reject,
-}
-
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct GqlEditorUsersWrap {

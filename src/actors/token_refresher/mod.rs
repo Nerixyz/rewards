@@ -55,8 +55,16 @@ impl Actor for TokenRefresher {
             async move { Self::refresh(&pool, &db).await }.into_actor(self),
         );
 
-        ctx.run_interval(Duration::from_secs(60), |_this, ctx| {
-            ctx.spawn(async { seven_tv::approve_all_pending_editors() });
+        ctx.run_interval(Duration::from_secs(60), |this, ctx| {
+            ctx.spawn(
+                async {
+                    log_err!(
+                        seven_tv::approve_all_pending_editors().await,
+                        "Failed to get editors"
+                    );
+                }
+                .into_actor(this),
+            );
         });
     }
 }
