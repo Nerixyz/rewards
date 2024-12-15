@@ -283,8 +283,8 @@ where
     J: DeserializeOwned,
 {
     let response = SEVENTV_CLIENT.post(url).json(request).send().await?;
-    let status = dbg!(response.status());
-    let text = dbg!(response.text().await?);
+    let status = response.status();
+    let text = response.text().await?;
     let response = serde_json::from_str(&text)?;
     match response {
         GqlResponse {
