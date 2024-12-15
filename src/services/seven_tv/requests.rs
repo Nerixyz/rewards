@@ -92,6 +92,43 @@ pub struct SevenEmoteSet {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SevenEditorRelation {
+    pub user_id: String,
+    pub editor_id: String,
+    pub status: SevenEditorStatus,
+}
+
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum SevenEditorStatus {
+    Accepted,
+    Rejected,
+    Pending,
+    #[serde(other)]
+    Other,
+}
+
+#[derive(Serialize, Debug, PartialEq, Eq, Clone)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum SevenEditorUpdateStatus {
+    Accept,
+    Reject,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GqlEditorUsersWrap {
+    pub users: GqlEditorUserWrap,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GqlEditorUserWrap {
+    pub editor_for: Vec<SevenEditorRelation>,
+}
+
+#[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct SevenEditor {
     pub id: String,
@@ -107,6 +144,12 @@ struct GqlEmoteInSetVars<'a> {
     set_id: &'a str,
     emote_id: &'a str,
     name: Option<&'a str>,
+}
+
+#[derive(Serialize)]
+struct GqlEditorUpdateVars<'a> {
+    editor_id: &'a str,
+    user_id: &'a str,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -161,6 +204,56 @@ pub async fn remove_emote(emote_set_id: &str, emote_id: &str) -> AnyResult<()> {
         query: "mutation($set_id: ObjectID!, $emote_id: ObjectID!, $name: String) { emoteSet(id: $set_id) { emotes(id: $emote_id, action: REMOVE, name: $name) { id } } }",
         variables: GqlEmoteInSetVars { set_id: emote_set_id, emote_id, name: None }
     }).await?;
+
+    Ok(())
+}
+
+pub async fn get_editor_relations() -> AnyResult<Vec<SevenEditorRelation>> {
+    let res = seven_tv_post::<GqlEditorUsersWrap>(
+        "https://7tv.io/v4/gql",
+        &GqlRequest {
+            query: r#"
+                query ($id: Id!) {
+                    users {
+                        user(id: $id) {
+                            editorFor {
+                                userId
+                                editorId
+                                state
+                            }
+                        }
+                    }
+                }
+            "#,
+            variables: GqlIdVars {
+                id: &CONFIG.emotes.seven_tv.user_id,
+            },
+        },
+    )
+    .await?;
+
+    Ok(res.data.users.editor_for)
+}
+
+pub async fn approve_editor(user_id: &str, editor_id: &str) -> AnyResult<()> {
+    seven_tv_post::<VoidObject>(
+        "https://7tv.io/v4/gql",
+        &GqlRequest {
+            query: r#"
+                mutation ($user_id: Id!, $editor_id: Id!) {
+                    userEditors {
+                        editor(userId: $user_id, editorId: $editor_id) {
+                            updateState(state: ACCEPT) {
+                                state
+                            }
+                        }
+                    }
+                }
+            "#,
+            variables: GqlEditorUpdateVars { editor_id, user_id },
+        },
+    )
+    .await?;
 
     Ok(())
 }

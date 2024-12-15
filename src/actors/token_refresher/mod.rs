@@ -1,7 +1,7 @@
 use crate::{
     actors::db::{DbActor, SaveToken},
     log_err,
-    services::{spotify::requests::refresh_token, twitch},
+    services::{seven_tv, spotify::requests::refresh_token, twitch},
 };
 use actix::{Actor, Addr, AsyncContext, Context, WrapFuture};
 use anyhow::Result as AnyResult;
@@ -54,6 +54,10 @@ impl Actor for TokenRefresher {
         ctx.spawn(
             async move { Self::refresh(&pool, &db).await }.into_actor(self),
         );
+
+        ctx.run_interval(Duration::from_secs(60), |_this, ctx| {
+            ctx.spawn(async { seven_tv::approve_all_pending_editors() })
+        });
     }
 }
 
