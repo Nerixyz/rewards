@@ -2009,7 +2009,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -3888,7 +3888,7 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#94e043acc7007d011d0279b77172f8e24b3aae35"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#621d58f20ac92fffce8a5b5ad35fef03b3194d87"
 dependencies = [
  "rand",
  "thiserror 2.0.7",
@@ -4529,7 +4529,7 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#38330f11f2d96847a5bdf28c2f3897fcf25cf860"
+source = "git+https://github.com/nerixyz/ws-pool#8912561f0f8f1c84444c0b8574e98bfa08b98f11"
 dependencies = [
  "fastwebsockets",
  "http 1.2.0",
