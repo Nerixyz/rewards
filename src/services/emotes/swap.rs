@@ -94,7 +94,7 @@ where
 
     let emote_name = override_name.unwrap_or(data.emote.name());
 
-    SwapEmote::add(
+    SwapEmote::add_or_update(
         broadcaster_id,
         &data.emote.id().to_string(),
         RW::platform(),
