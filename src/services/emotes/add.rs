@@ -24,7 +24,7 @@ pub async fn track_emote(
             CONFIG.bot.prefix
         ));
     }
-    SwapEmote::add(
+    SwapEmote::add_or_update(
         channel_id,
         emote_id,
         slot_platform,

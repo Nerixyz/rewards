@@ -50,6 +50,19 @@ impl SwapEmote {
         Ok(())
     }
 
+    pub async fn add_or_update(
+        user_id: &str,
+        emote_id: &str,
+        platform: SlotPlatform,
+        name: &str,
+        added_by: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        // language=PostgreSQL
+        sqlx::query!("INSERT INTO swap_emotes (user_id, emote_id, platform, name, added_by, added_at) VALUES ($1, $2, $3, $4, $5, now()) ON CONFLICT(user_id, platform, name) DO UPDATE SET emote_id = $2, added_by = $5, added_at = now()", user_id, emote_id, platform as _, name, added_by).execute(pool).await?;
+        Ok(())
+    }
+
     pub async fn remove(id: i64, pool: &PgPool) -> SqlResult<()> {
         // language=PostgreSQL
         sqlx::query!("DELETE FROM swap_emotes WHERE id = $1", id)
