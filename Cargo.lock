@@ -1194,9 +1194,9 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "fastwebsockets"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5574849ef5c007a399f8426b9254bcf2d8a6d739039c08c739d95f47ce46c0a3"
+checksum = "305d3ba574508e27190906d11707dad683e0494e6b85eae9b044cb2734a5e422"
 dependencies = [
  "base64 0.21.7",
  "bytes",
@@ -2095,9 +2095,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.22"
+version = "0.4.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 
 [[package]]
 name = "md-5"
@@ -3043,9 +3043,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.135"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
+checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
 dependencies = [
  "itoa",
  "memchr",
@@ -3906,7 +3906,7 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#7059b6654d4e287380fb95b16cfa6e23f370da32"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#69d6a9b867cbdfd9b09d023707c98b9ad3642437"
 dependencies = [
  "rand",
  "thiserror 2.0.11",
@@ -4623,7 +4623,7 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#df223f302a780a6be33f4012bfa1235d7e711dca"
+source = "git+https://github.com/nerixyz/ws-pool#98fc0cc916d4d4faed0ec80a6e862da02e04266c"
 dependencies = [
  "fastwebsockets",
  "http 1.2.0",
