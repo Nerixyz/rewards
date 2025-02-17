@@ -29,7 +29,7 @@ withDefaults(
   }>(),
   { placeholder: '', disabled: false, warn: false },
 );
-const [modelValue] = defineModel<string>({ default: '' });
+const [modelValue] = defineModel<string>({ required: true });
 
 const onInput = (e: Event) => {
   modelValue.value = (e.target as HTMLInputElement).value;
