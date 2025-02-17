@@ -18,6 +18,6 @@ reqwest = "0.12"
 dotenv = "0.15.0"
 chrono = { version = "0.4.39", features = ["serde"] }
 regex = "1.11.1"
-tokio-postgres = { version = "0.7.12", features = ["with-serde_json-1"] }
+tokio-postgres = { version = "0.7.13", features = ["with-serde_json-1"] }
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.8.19"
+toml = "0.8.20"
