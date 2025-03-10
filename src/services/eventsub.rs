@@ -193,6 +193,7 @@ pub async fn clear_invalid_subs(
     let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
     let mut n = 0;
     loop {
+        log::info!("page");
         for sub in &res.data.subscriptions {
             n += 1;
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
