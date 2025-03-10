@@ -1,36 +1,87 @@
 use crate::{
-    log_err,
-    services::twitch::{
-        eventsub::{delete_subscription, subscribe_to_rewards},
-        RHelixClient,
-    },
+    services::twitch::{eventsub::delete_subscription, RHelixClient},
     util::result::{ResultCExt, ResultExt as _},
 };
 use actix_web::Result as ActixResult;
 use anyhow::Result as AnyhowResult;
 use config::CONFIG;
 use futures::{FutureExt, TryStreamExt};
-use models::{reward::RewardToUpdate, user::User};
+use models::user::User;
 use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use twitch_api::{
     eventsub::{
-        channel::ChannelPointsCustomRewardRedemptionAddV1, EventSubscription,
-        Status, TransportResponse,
-    },
-    helix::{
-        points::{
-            CustomRewardRedemption, CustomRewardRedemptionStatus,
-            GetCustomRewardRedemptionRequest, UpdateRedemptionStatusBody,
-            UpdateRedemptionStatusRequest,
+        channel::{
+            ChannelModerateV2, ChannelPointsCustomRewardRedemptionAddV1,
         },
-        Response,
+        stream::StreamOnlineV1,
+        EventSubscription, Status, TransportResponse,
     },
-    twitch_oauth2::{AppAccessToken, UserToken},
-    types::{IntoCow, RewardIdRef},
+    helix::eventsub::CreateEventSubSubscription,
+    twitch_oauth2::AppAccessToken,
 };
+
+use super::twitch::HelixResult;
+
+trait KnownSub: EventSubscription {
+    async fn subscribe(
+        id: &str,
+        token: &AppAccessToken,
+    ) -> HelixResult<CreateEventSubSubscription<Self>>;
+}
+
+impl KnownSub for ChannelPointsCustomRewardRedemptionAddV1 {
+    async fn subscribe(
+        id: &str,
+        token: &AppAccessToken,
+    ) -> HelixResult<CreateEventSubSubscription<Self>> {
+        super::twitch::eventsub::subscribe_to(
+            token,
+            Self::broadcaster_user_id(id),
+        )
+        .await
+    }
+}
+
+impl KnownSub for StreamOnlineV1 {
+    async fn subscribe(
+        id: &str,
+        token: &AppAccessToken,
+    ) -> HelixResult<CreateEventSubSubscription<Self>> {
+        super::twitch::eventsub::subscribe_to(
+            token,
+            Self::broadcaster_user_id(id),
+        )
+        .await
+    }
+}
+
+impl KnownSub for ChannelModerateV2 {
+    async fn subscribe(
+        id: &str,
+        token: &AppAccessToken,
+    ) -> HelixResult<CreateEventSubSubscription<Self>> {
+        super::twitch::eventsub::subscribe_to(
+            token,
+            Self::new(id, CONFIG.twitch.user_id.as_str()),
+        )
+        .await
+    }
+}
+
+async fn register_for_id<S: KnownSub>(
+    id: &str,
+    token: &AppAccessToken,
+    pool: &PgPool,
+) -> ActixResult<()> {
+    let sub = S::subscribe(id, token).await?;
+
+    models::eventsub::add(&sub.id, id, S::EVENT_TYPE.to_str(), pool)
+        .await
+        .err_into()
+}
 
 pub async fn register_all_eventsub_for_id(
     id: impl AsRef<str>,
@@ -39,26 +90,22 @@ pub async fn register_all_eventsub_for_id(
 ) -> ActixResult<()> {
     let id = id.as_ref();
     let token = token.read().await;
-    register_redemption_eventsub_for_id(id, &token, pool).await?;
+
+    // points
+    register_for_id::<ChannelPointsCustomRewardRedemptionAddV1>(
+        id, &token, pool,
+    )
+    .await?;
+    // stream.online
+    register_for_id::<StreamOnlineV1>(id, &token, pool)
+        .await
+        .log_if_err("register stream online");
+    // channel.moderate
+    register_for_id::<ChannelModerateV2>(id, &token, pool)
+        .await
+        .log_if_err("register channel moderate");
 
     Ok(())
-}
-
-async fn register_redemption_eventsub_for_id(
-    id: &str,
-    token: &AppAccessToken,
-    pool: &PgPool,
-) -> ActixResult<()> {
-    let reward = subscribe_to_rewards(&token, id).await?;
-
-    models::eventsub::add(
-        &reward.id,
-        id,
-        ChannelPointsCustomRewardRedemptionAddV1::EVENT_TYPE.to_str(),
-        pool,
-    )
-    .await
-    .err_into()
 }
 
 pub async fn unregister_eventsub_for_user(
@@ -84,28 +131,42 @@ pub async fn register_eventsub_for_all_unregistered(
     pool: &PgPool,
 ) -> AnyhowResult<()> {
     let token = token.read().await;
-    register_redemptions_for_unregistered(&token, pool)
+
+    // points
+    register_for_unregistered::<ChannelPointsCustomRewardRedemptionAddV1>(
+        &token, pool,
+    )
+    .await
+    .log_if_err("register redemptions");
+
+    // stream.online
+    register_for_unregistered::<StreamOnlineV1>(&token, pool)
         .await
-        .log_if_err("register redemptions");
+        .log_if_err("register streams");
+
+    // channel.moderate
+    register_for_unregistered::<ChannelModerateV2>(&token, pool)
+        .await
+        .log_if_err("register channel.moderate");
 
     Ok(())
 }
 
-async fn register_redemptions_for_unregistered(
+async fn register_for_unregistered<S: KnownSub>(
     token: &AppAccessToken,
     pool: &PgPool,
 ) -> AnyhowResult<()> {
-    let non_subs = User::get_all_non_subscribers(
-        pool,
-        ChannelPointsCustomRewardRedemptionAddV1::EVENT_TYPE.to_str(),
-    )
-    .await?;
+    let non_subs =
+        User::get_all_non_subscribers(pool, S::EVENT_TYPE.to_str()).await?;
 
     for user_id in non_subs {
-        register_redemption_eventsub_for_id(&user_id, token, pool)
+        register_for_id::<S>(&user_id, token, pool)
             .await
             .inspect_err(|e| {
-                log::warn!("Failed to register redemptions for {user_id}: {e}")
+                log::warn!(
+                    "Register {} for {user_id}: {e}",
+                    S::EVENT_TYPE.to_str()
+                )
             })
             .ok();
     }
@@ -113,7 +174,7 @@ async fn register_redemptions_for_unregistered(
     Ok(())
 }
 
-pub async fn clear_invalid_rewards(
+pub async fn clear_invalid_subs(
     token: &Arc<RwLock<AppAccessToken>>,
     pool: &PgPool,
 ) -> AnyhowResult<()> {
@@ -149,80 +210,6 @@ pub async fn clear_invalid_rewards(
                     .log_if_err("deleting eventsub on twitch");
             }
         }
-    }
-
-    Ok(())
-}
-
-pub async fn clear_unfulfilled_redemptions(pool: &PgPool) -> AnyhowResult<()> {
-    let mut stream = RewardToUpdate::get_all(pool);
-    let client = RHelixClient::default();
-
-    while let Some(reward_with_user) = stream.try_next().await? {
-        let (reward_id, token) = reward_with_user.into();
-        log_err!(
-            clear_unfulfilled_redemptions_for_id(reward_id, &token, &client)
-                .await,
-            "Could not clear redemptions for id"
-        );
-    }
-
-    Ok(())
-}
-
-pub async fn clear_unfulfilled_redemptions_for_id<'a>(
-    reward_id: impl IntoCow<'a, RewardIdRef> + 'a,
-    token: &'a UserToken,
-    client: &RHelixClient<'_>,
-) -> AnyhowResult<()> {
-    let mut rewards: Response<
-        GetCustomRewardRedemptionRequest,
-        Vec<CustomRewardRedemption>,
-    > = client
-        .req_get(
-            GetCustomRewardRedemptionRequest::broadcaster_id(
-                token.user_id.as_str(),
-            )
-            .reward_id(reward_id)
-            .status(CustomRewardRedemptionStatus::Unfulfilled),
-            token,
-        )
-        .await?;
-
-    loop {
-        for redemption in &rewards.data {
-            log::info!(
-                "Clearing unfulfilled: broadcaster={}; reward_id={}; redemption_id={}",
-                redemption.broadcaster_login,
-                redemption.reward.id,
-                redemption.id,
-            );
-
-            if let Err(e) = client
-                .req_patch(
-                    UpdateRedemptionStatusRequest::builder()
-                        .broadcaster_id(redemption.broadcaster_id.clone())
-                        .reward_id(redemption.reward.id.clone())
-                        .id(redemption.id.clone())
-                        .build(),
-                    UpdateRedemptionStatusBody::builder()
-                        .status(CustomRewardRedemptionStatus::Canceled)
-                        .build(),
-                    token,
-                )
-                .await
-            {
-                log::warn!("Could not update redemption: {}", e);
-            }
-        }
-
-        if rewards.pagination.is_some() {
-            if let Some(res) = rewards.get_next(client, token).await? {
-                rewards = res;
-                continue;
-            }
-        }
-        break;
     }
 
     Ok(())

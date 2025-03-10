@@ -126,6 +126,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Scope::ModeratorReadChatSettings,
         Scope::ModeratorManageChatSettings,
         Scope::ModeratorManageBannedUsers,
+        Scope::ModeratorReadBlockedTerms,
+        Scope::ModeratorReadUnbanRequests,
+        Scope::ModeratorReadChatMessages,
+        Scope::ModeratorReadWarnings,
+        Scope::ModeratorReadModerators,
+        Scope::ModeratorReadVips,
     ]);
     let (url, csrf) = builder.generate_url();
 

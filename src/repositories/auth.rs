@@ -16,10 +16,7 @@ use twitch_api::twitch_oauth2::{
 use url::Url;
 
 use crate::{
-    actors::{
-        irc::{IrcActor, JoinMessage, PartMessage},
-        pubsub::{PubSubActor, SubMessage},
-    },
+    actors::irc::{IrcActor, JoinMessage, PartMessage},
     log_discord,
     services::{
         eventsub::{
@@ -46,7 +43,6 @@ struct TwitchCallbackQuery {
 async fn twitch_callback(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-    pubsub: web::Data<Addr<PubSubActor>>,
     app_access_token: web::Data<RwLock<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
 ) -> Result<HttpResponse> {
@@ -112,7 +108,6 @@ async fn twitch_callback(
 
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
-    pubsub.do_send(SubMessage(user.id));
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.take()))
         .map_err(|_| {

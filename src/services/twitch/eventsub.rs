@@ -4,7 +4,7 @@ use crate::{
 };
 use config::CONFIG;
 use twitch_api::{
-    eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport},
+    eventsub::Transport,
     helix::{
         eventsub::{
             CreateEventSubSubscription, DeleteEventSubSubscriptionRequest,
@@ -17,9 +17,7 @@ use twitch_api::{
         Response,
     },
     twitch_oauth2::{AppAccessToken, UserToken},
-    types::{
-        EventSubIdRef, IntoCow, RedemptionIdRef, RewardIdRef, UserId, UserIdRef,
-    },
+    types::{EventSubIdRef, IntoCow, RedemptionIdRef, RewardIdRef, UserIdRef},
 };
 
 pub async fn delete_subscription<'a>(
@@ -33,7 +31,7 @@ pub async fn delete_subscription<'a>(
     Ok(())
 }
 
-async fn subscribe_to<T>(
+pub async fn subscribe_to<T>(
     token: &AppAccessToken,
     subscription: T,
 ) -> HelixResult<CreateEventSubSubscription<T>>
@@ -51,19 +49,6 @@ where
         )
         .await
         .err_into()
-}
-
-pub async fn subscribe_to_rewards(
-    token: &AppAccessToken,
-    id: impl Into<UserId>,
-) -> HelixResult<
-    CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>,
-> {
-    subscribe_to(
-        token,
-        ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(id),
-    )
-    .await
 }
 
 pub async fn update_reward_redemption<'a>(

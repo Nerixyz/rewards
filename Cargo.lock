@@ -3146,7 +3146,7 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "toml",
- "twitch_oauth2 0.13.0",
+ "twitch_oauth2 0.15.2",
 ]
 
 [[package]]
@@ -3984,13 +3984,12 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85858e19ae428c146d44741989eede06f12239bfb41ee7f197c3f79b80584a4e"
+version = "0.15.1"
+source = "git+https://github.com/twitch-rs/twitch_api.git#7af647b1eb548366f1d16c70fbabab2311cd04b1"
 dependencies = [
  "aliri_braid",
  "async-trait",
- "base64 0.21.7",
+ "base64 0.22.1",
  "displaydoc",
  "http 1.2.0",
  "once_cell",
@@ -4006,8 +4005,9 @@ dependencies = [
 
 [[package]]
 name = "twitch_oauth2"
-version = "0.15.1"
-source = "git+https://github.com/twitch-rs/twitch_api.git#7af647b1eb548366f1d16c70fbabab2311cd04b1"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eaec6e008ed2818c0d9a146ffc16b0af8491a71fc8d433ef09d79de740980a51"
 dependencies = [
  "aliri_braid",
  "async-trait",

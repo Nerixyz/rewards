@@ -15,22 +15,22 @@ use twitch_api::{
     twitch_oauth2::{AppAccessToken, ClientId, ClientSecret},
 };
 
-use actors::{irc::JoinAllMessage, pubsub::SubAllMessage};
+use actors::irc::JoinAllMessage;
 
 use crate::{
     actors::{
         chat::ChatActor, db::DbActor, discord::DiscordActor, irc::IrcActor,
-        live::LiveActor, pubsub::PubSubActor, rewards::RewardsActor,
-        slot::SlotActor, supinic::SupinicActor, timeout::TimeoutActor,
+        live::LiveActor, rewards::RewardsActor, slot::SlotActor,
+        supinic::SupinicActor, timeout::TimeoutActor,
         token_refresher::TokenRefresher,
     },
     middleware::useragent::UserAgentGuard,
     repositories::init_repositories,
     services::{
         eventsub::{
-            clear_invalid_rewards, clear_unfulfilled_redemptions,
-            register_eventsub_for_all_unregistered,
+            clear_invalid_subs, register_eventsub_for_all_unregistered,
         },
+        redemptions::clear_unfulfilled_redemptions,
         twitch::{self, requests::send_chat_message},
     },
 };
@@ -138,12 +138,6 @@ async fn main() -> std::io::Result<()> {
 
     TokenRefresher::new(pg_pool.clone(), db_actor).start();
     let live_actor = LiveActor::new(pg_pool.clone()).start();
-    let pubsub =
-        PubSubActor::run(pg_pool.clone(), live_actor, timeout_actor.clone());
-    let initial_listens = make_initial_pubsub_listens(&pg_pool)
-        .await
-        .expect("sql thingy");
-    pubsub.do_send(SubAllMessage(initial_listens));
 
     let rewards_actor = RewardsActor {
         db: pg_pool.clone(),
@@ -158,7 +152,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Clearing old rewards");
 
-    clear_invalid_rewards(&app_access_token, &pg_pool)
+    clear_invalid_subs(&app_access_token, &pg_pool)
         .await
         .expect("Could not clear invalid rewards");
 
@@ -182,8 +176,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(redis_pool.clone()))
             .app_data(web::Data::new(irc_actor.clone()))
             .app_data(web::Data::new(timeout_actor.clone()))
+            .app_data(web::Data::new(live_actor.clone()))
             .app_data(web::Data::new(rewards_actor.clone()))
-            .app_data(web::Data::new(pubsub.clone()))
             .app_data(app_access_token.clone())
             .wrap(get_default_headers())
             .wrap(UserAgentGuard::single("paloaltonetworks.com".to_string()))
@@ -232,14 +226,6 @@ fn create_cors() -> Cors {
     } else {
         Cors::default().allowed_origin(&CONFIG.server.url)
     }
-}
-
-async fn make_initial_pubsub_listens(
-    pool: &PgPool,
-) -> Result<Vec<String>, AnyError> {
-    let users = User::get_all(pool).await?;
-
-    Ok(users.into_iter().map(|user| user.id).collect())
 }
 
 fn announce_start() {
