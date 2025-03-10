@@ -16,7 +16,6 @@ pub struct User {
     pub refresh_token: String,
     pub scopes: String,
     pub name: String,
-    pub eventsub_id: Option<String>,
 }
 
 #[derive(FromRow)]
@@ -35,7 +34,7 @@ pub struct UserSevenTvData {
 impl User {
     pub async fn get_by_id(id: &str, pool: &PgPool) -> SqlResult<User> {
         // language=PostgreSQL
-        let user: User = sqlx::query_as!(User, "SELECT id, access_token, refresh_token, scopes, name, eventsub_id FROM users WHERE id = $1", id)
+        let user: User = sqlx::query_as!(User, "SELECT id, access_token, refresh_token, scopes, name FROM users WHERE id = $1", id)
             .fetch_one(pool)
             .await?;
 
@@ -46,7 +45,7 @@ impl User {
         // language=PostgreSQL
         let users = sqlx::query_as!(
             User,
-            "SELECT id, access_token, refresh_token, scopes, name, eventsub_id FROM users"
+            "SELECT id, access_token, refresh_token, scopes, name FROM users"
         )
         .fetch_all(pool)
         .await?;
@@ -67,10 +66,17 @@ impl User {
 
     pub async fn get_all_non_subscribers(
         pool: &PgPool,
+        name: &str,
     ) -> SqlResult<Vec<String>> {
         // language=PostgreSQL
         let ids = sqlx::query_scalar!(
-            "SELECT id FROM users WHERE eventsub_id IS null"
+            "
+                SELECT users.id FROM users
+                LEFT JOIN eventsubs e
+                    ON users.id = e.user_id AND e.name = $1
+                WHERE e.user_id is null
+            ",
+            name
         )
         .fetch_all(pool)
         .await?;
@@ -198,54 +204,6 @@ impl User {
 
         tx.commit().await?;
         Ok(())
-    }
-
-    pub async fn set_eventsub_id(
-        user_id: &str,
-        eventsub_id: &str,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
-        // language=PostgreSQL
-        let _ = sqlx::query!(
-            "UPDATE users SET eventsub_id = $2 WHERE id = $1",
-            user_id,
-            eventsub_id
-        )
-        .execute(pool)
-        .await?;
-        Ok(())
-    }
-
-    pub async fn clear_eventsub_id(
-        eventsub_id: &str,
-        pool: &PgPool,
-    ) -> SqlResult<()> {
-        // language=PostgreSQL
-        let _ = sqlx::query!(
-            "UPDATE users SET eventsub_id = null WHERE eventsub_id = $1",
-            eventsub_id
-        )
-        .execute(pool)
-        .await?;
-        Ok(())
-    }
-    pub async fn clear_eventsub_for_user(
-        user_id: &str,
-        pool: &PgPool,
-    ) -> SqlResult<Option<String>> {
-        // language=PostgreSQL
-        let old_id = sqlx::query_scalar!(
-            "
-            UPDATE users
-            SET eventsub_id = null
-            WHERE id= $1
-            RETURNING (SELECT eventsub_id FROM users WHERE id = $1)
-            ",
-            user_id
-        )
-        .fetch_one(pool)
-        .await?;
-        Ok(old_id)
     }
 }
 

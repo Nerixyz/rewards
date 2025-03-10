@@ -52,7 +52,7 @@ impl Editor {
             User,
             // language=PostgreSQL
             "
-                SELECT u.id, access_token, refresh_token, scopes, name, eventsub_id
+                SELECT u.id, access_token, refresh_token, scopes, name
                 FROM editors
                     LEFT JOIN users u on u.id = editors.broadcaster_id
                 WHERE broadcaster_id = $2 and editor_id = $1

@@ -3,7 +3,6 @@ pub mod db;
 pub mod discord;
 pub mod irc;
 pub mod live;
-pub mod pubsub;
 pub mod rewards;
 pub mod slot;
 pub mod supinic;

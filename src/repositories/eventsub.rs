@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use actix::Addr;
 use actix_web::{
     post,
@@ -10,12 +12,15 @@ use twitch_api::eventsub::{
 };
 
 use crate::{
-    actors::rewards::RewardsActor,
+    actors::{
+        live::{self, LiveActor},
+        rewards::RewardsActor,
+        timeout::{self, TimeoutActor},
+    },
     extractors::eventsub::EventsubPayload,
     log_discord,
-    services::rewards::{
-        redemption,
-        redemption::{ReceiveRedemptionCtx, ReceiveRedemptionError},
+    services::rewards::redemption::{
+        self, ReceiveRedemptionCtx, ReceiveRedemptionError,
     },
 };
 use models::user::User;
@@ -25,16 +30,29 @@ async fn reward_redemption(
     pool: web::Data<PgPool>,
     payload: EventsubPayload,
     executor: web::Data<Addr<RewardsActor>>,
+    live_actor: web::Data<Addr<LiveActor>>,
+    timeout_actor: web::Data<Addr<TimeoutActor>>,
 ) -> Result<HttpResponse> {
     match payload.0 {
+        // verification
         Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
             message: Message::VerificationRequest(req),
-            subscription,
             ..
-        }) => {
-            log::info!("verification for sub: {:?}", subscription);
-            Ok(HttpResponse::Ok().body(req.challenge))
-        }
+        })
+        | Event::StreamOnlineV1(Payload {
+            message: Message::VerificationRequest(req),
+            ..
+        })
+        | Event::StreamOfflineV1(Payload {
+            message: Message::VerificationRequest(req),
+            ..
+        })
+        | Event::ChannelModerateV2(Payload {
+            message: Message::VerificationRequest(req),
+            ..
+        }) => Ok(HttpResponse::Ok().body(req.challenge)),
+
+        // actual events
         Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
             message: Message::Notification(notification),
             subscription,
@@ -68,6 +86,44 @@ async fn reward_redemption(
 
             Ok(HttpResponse::Ok().finish())
         }
+
+        Event::StreamOnlineV1(Payload {
+            message: Message::Notification(notification),
+            ..
+        }) => {
+            live_actor.do_send(live::LiveMessage(
+                notification.broadcaster_user_id.take(),
+            ));
+            Ok(HttpResponse::Ok().finish())
+        }
+        Event::StreamOfflineV1(Payload {
+            message: Message::Notification(notification),
+            ..
+        }) => {
+            live_actor.do_send(live::OfflineMessage(
+                notification.broadcaster_user_id.take(),
+            ));
+            Ok(HttpResponse::Ok().finish())
+        }
+
+        Event::ChannelModerateV2(Payload {
+            message: Message::Notification(notification),
+            ..
+        }) => {
+            match notification.action {
+                twitch_api::eventsub::channel::moderate::ActionV2::Untimeout(untimeout) => {
+                    timeout_actor
+                        .do_send(timeout::RemoveTimeoutMessage {
+                            channel_id: notification.broadcaster_user_id.take(),
+                            user_id: untimeout.user_id.take(),
+                            later: Duration::from_secs(0),
+                        });
+                },
+                _ => (),
+            }
+            Ok(HttpResponse::Ok().finish())
+        }
+
         Event::UserAuthorizationRevokeV1(re) => {
             log::warn!("auth revoke: {:?}", re);
             log_discord!(

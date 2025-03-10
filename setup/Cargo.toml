@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 dialoguer = "0.11.0"
-twitch_oauth2 = { version = "0.13", features = ["reqwest"] }
+twitch_oauth2 = { version = "0.15.2", features = ["reqwest"] }
 tokio = { version = "1", features = ["macros", "fs"] }
 reqwest = "0.12"
 dotenv = "0.15.0"
