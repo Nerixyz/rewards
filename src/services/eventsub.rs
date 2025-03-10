@@ -185,11 +185,14 @@ pub async fn clear_invalid_subs(
 
     let mut stream =
         client.get_eventsub_subscriptions(None, None, None, &*token);
+    log::info!("stream");
     while let Some(subs) = stream.try_next().await? {
+        log::info!("batch: {}", subs.subscriptions.len());
         for sub in subs.subscriptions {
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
             let TransportResponse::Webhook(transport) = &sub.transport else {
+                dbg!(&sub);
                 continue; // websocket
             };
 
@@ -214,6 +217,7 @@ pub async fn clear_invalid_subs(
             }
         }
     }
+    log::info!("stream over");
 
     Ok(())
 }
