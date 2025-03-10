@@ -5,7 +5,7 @@ use crate::{
 use actix_web::Result as ActixResult;
 use anyhow::Result as AnyhowResult;
 use config::CONFIG;
-use futures::{FutureExt, TryStreamExt};
+use futures::FutureExt;
 use models::user::User;
 use regex::Regex;
 use sqlx::PgPool;
@@ -19,7 +19,10 @@ use twitch_api::{
         stream::StreamOnlineV1,
         EventSubscription, Status, TransportResponse,
     },
-    helix::eventsub::CreateEventSubSubscription,
+    helix::eventsub::{
+        CreateEventSubSubscription, EventSubSubscriptions,
+        GetEventSubSubscriptionsRequest,
+    },
     twitch_oauth2::AppAccessToken,
 };
 
@@ -180,50 +183,51 @@ pub async fn clear_invalid_subs(
 ) -> AnyhowResult<()> {
     let token = token.read().await;
     let client = RHelixClient::default();
+    let mut res: twitch_api::helix::Response<
+        GetEventSubSubscriptionsRequest,
+        EventSubSubscriptions,
+    > = client
+        .req_get(GetEventSubSubscriptionsRequest::default(), &*token)
+        .await?;
 
     let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
-
-    let mut stream = client
-        .get_eventsub_subscriptions(None, None, None, &*token)
-        .map_ok(|it| {
-            futures::stream::iter(
-                it.subscriptions
-                    .into_iter()
-                    .map(Ok::<_, twitch_api::helix::ClientRequestError<_>>),
-            )
-        })
-        .try_flatten();
-    log::info!("stream");
     let mut n = 0;
-    while let Some(sub) = stream.try_next().await? {
-        n += 1;
-        // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
+    loop {
+        for sub in &res.data.subscriptions {
+            n += 1;
+            // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
-        let TransportResponse::Webhook(transport) = &sub.transport else {
-            dbg!(&sub);
-            continue; // websocket
-        };
+            let TransportResponse::Webhook(transport) = &sub.transport else {
+                continue; // websocket
+            };
 
-        let is_enabled = sub.status == Status::Enabled;
-        if !is_enabled {
-            dbg!(&sub.id);
-        }
-        let is_this_server = transport.callback.starts_with(&CONFIG.server.url);
+            let is_enabled = sub.status == Status::Enabled;
+            let is_this_server =
+                transport.callback.starts_with(&CONFIG.server.url);
 
-        if !is_enabled || !is_this_server {
-            models::eventsub::remove(sub.id.as_ref(), pool)
-                .await
-                .dbg_if_err("clearing eventsub in db");
+            if !is_enabled || !is_this_server {
+                models::eventsub::remove(sub.id.as_ref(), pool)
+                    .await
+                    .dbg_if_err("clearing eventsub in db");
+            }
+            if !is_enabled
+                || (!is_this_server && ng_re.is_match(&transport.callback))
+            {
+                delete_subscription(&token, sub.id.clone())
+                    .await
+                    .log_if_err("deleting eventsub on twitch");
+            }
         }
-        if !is_enabled
-            || (!is_this_server && ng_re.is_match(&transport.callback))
-        {
-            delete_subscription(&token, sub.id.clone())
-                .await
-                .log_if_err("deleting eventsub on twitch");
+
+        if res.pagination.is_some() {
+            if let Some(next) = res.get_next(&client, &*token).await? {
+                res = next;
+                continue;
+            }
         }
+        break;
     }
-    log::info!("stream over {n}");
+    log::info!("Visited {n} subs");
 
     Ok(())
 }
