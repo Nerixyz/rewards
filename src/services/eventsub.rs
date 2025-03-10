@@ -194,6 +194,9 @@ pub async fn clear_invalid_subs(
             };
 
             let is_enabled = sub.status == Status::Enabled;
+            if !is_enabled {
+                dbg!(&sub.id);
+            }
             let is_this_server =
                 transport.callback.starts_with(&CONFIG.server.url);
 

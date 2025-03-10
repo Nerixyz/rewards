@@ -33,8 +33,6 @@ async fn reward_redemption(
     live_actor: web::Data<Addr<LiveActor>>,
     timeout_actor: web::Data<Addr<TimeoutActor>>,
 ) -> Result<HttpResponse> {
-    dbg!(&payload.0);
-
     match payload.0 {
         // verification
         Event::ChannelPointsCustomRewardRedemptionAddV1(Payload {
