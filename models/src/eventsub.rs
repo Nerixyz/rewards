@@ -25,7 +25,7 @@ pub async fn add(
 }
 
 pub async fn remove(id: &EventSubIdRef, pool: &PgPool) -> SqlResult<()> {
-    sqlx::query_scalar!("DELETE FROM eventsubs WHERE id = $1", id.as_str(),)
+    sqlx::query_scalar!("DELETE FROM eventsubs WHERE id = $1", id.as_str())
         .execute(pool)
         .await?;
 
