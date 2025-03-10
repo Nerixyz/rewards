@@ -1,14 +1,13 @@
-use crate::services::twitch::{
-    errors::TwitchApiError, HelixResult, RHelixClient,
+use crate::{
+    services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient},
+    util::result::ResultCExt,
 };
 use config::CONFIG;
 use twitch_api::{
     eventsub::{channel::ChannelPointsCustomRewardRedemptionAddV1, Transport},
     helix::{
         eventsub::{
-            CreateEventSubSubscription, CreateEventSubSubscriptionBody,
-            CreateEventSubSubscriptionRequest,
-            DeleteEventSubSubscriptionRequest,
+            CreateEventSubSubscription, DeleteEventSubSubscriptionRequest,
         },
         points::{
             CustomRewardRedemption, CustomRewardRedemptionStatus,
@@ -34,39 +33,37 @@ pub async fn delete_subscription<'a>(
     Ok(())
 }
 
+async fn subscribe_to<T>(
+    token: &AppAccessToken,
+    subscription: T,
+) -> HelixResult<CreateEventSubSubscription<T>>
+where
+    T: twitch_api::eventsub::EventSubscription + Send,
+{
+    RHelixClient::new()
+        .create_eventsub_subscription(
+            subscription,
+            Transport::webhook(
+                format!("{}/api/v1/eventsub/reward", CONFIG.server.url),
+                CONFIG.twitch.eventsub.secret.to_string(),
+            ),
+            token,
+        )
+        .await
+        .err_into()
+}
+
 pub async fn subscribe_to_rewards(
     token: &AppAccessToken,
     id: impl Into<UserId>,
 ) -> HelixResult<
     CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>,
 > {
-    let response: Response<
-        CreateEventSubSubscriptionRequest<
-            ChannelPointsCustomRewardRedemptionAddV1,
-        >,
-        CreateEventSubSubscription<ChannelPointsCustomRewardRedemptionAddV1>,
-    > = RHelixClient::default()
-        .req_post(
-            CreateEventSubSubscriptionRequest::default(),
-            CreateEventSubSubscriptionBody::builder()
-                .transport(
-                    Transport::webhook(
-                        format!(
-                            "{}/api/v1/eventsub/reward",
-                            CONFIG.server.url
-                        ),
-                        CONFIG.twitch.eventsub.secret.to_string()
-                    ),
-                )
-                .subscription(
-                    ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(id),
-                )
-                .build(),
-            token,
-        )
-        .await?;
-
-    Ok(response.data)
+    subscribe_to(
+        token,
+        ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(id),
+    )
+    .await
 }
 
 pub async fn update_reward_redemption<'a>(

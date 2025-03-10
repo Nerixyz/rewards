@@ -47,6 +47,7 @@ mod extractors;
 mod middleware;
 mod repositories;
 mod services;
+mod util;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

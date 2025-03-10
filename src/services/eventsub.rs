@@ -4,20 +4,23 @@ use crate::{
         eventsub::{delete_subscription, subscribe_to_rewards},
         RHelixClient,
     },
+    util::result::{ResultCExt, ResultExt as _},
 };
 use actix_web::Result as ActixResult;
 use anyhow::Result as AnyhowResult;
 use config::CONFIG;
-use futures::TryStreamExt;
+use futures::{FutureExt, TryStreamExt};
 use models::{reward::RewardToUpdate, user::User};
 use regex::Regex;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use twitch_api::{
-    eventsub::{Status, TransportResponse},
+    eventsub::{
+        channel::ChannelPointsCustomRewardRedemptionAddV1, EventSubscription,
+        Status, TransportResponse,
+    },
     helix::{
-        eventsub::{EventSubSubscriptions, GetEventSubSubscriptionsRequest},
         points::{
             CustomRewardRedemption, CustomRewardRedemptionStatus,
             GetCustomRewardRedemptionRequest, UpdateRedemptionStatusBody,
@@ -29,53 +32,49 @@ use twitch_api::{
     types::{IntoCow, RewardIdRef},
 };
 
-pub async fn register_eventsub_for_id(
+pub async fn register_all_eventsub_for_id(
     id: impl AsRef<str>,
     token: &Arc<RwLock<AppAccessToken>>,
     pool: &PgPool,
 ) -> ActixResult<()> {
     let id = id.as_ref();
     let token = token.read().await;
-
-    // this clears every subscription so we make sure, there's a new fresh one
-    unregister_eventsub_for_user(id, &token, pool).await.ok();
-
-    let reward = subscribe_to_rewards(&token, id).await?;
-
-    User::set_eventsub_id(id, &reward.id.take(), pool).await?;
+    register_redemption_eventsub_for_id(id, &token, pool).await?;
 
     Ok(())
 }
 
-pub async fn unregister_eventsub_for_user(
-    id: impl AsRef<str>,
+async fn register_redemption_eventsub_for_id(
+    id: &str,
     token: &AppAccessToken,
     pool: &PgPool,
 ) -> ActixResult<()> {
-    let old_id = User::clear_eventsub_for_user(id.as_ref(), pool).await?;
+    let reward = subscribe_to_rewards(&token, id).await?;
 
-    if let Some(old_id) = old_id {
-        log::info!(
-            "Clearing old subscription id={} user={}",
-            old_id,
-            id.as_ref()
-        );
-        delete_subscription(token, old_id).await?;
-    }
-
-    Ok(())
+    models::eventsub::add(
+        &reward.id,
+        id,
+        ChannelPointsCustomRewardRedemptionAddV1::EVENT_TYPE.to_str(),
+        pool,
+    )
+    .await
+    .err_into()
 }
 
-pub async fn unregister_eventsub_for_id(
-    id: String,
+pub async fn unregister_eventsub_for_user(
+    id: &str,
     token: &Arc<RwLock<AppAccessToken>>,
     pool: &PgPool,
 ) -> ActixResult<()> {
     let token = token.read().await;
 
-    User::clear_eventsub_id(&id, pool).await?;
+    let ids = models::eventsub::all_for_user(id, pool).await?;
 
-    delete_subscription(&token, id).await?;
+    futures::future::join_all(
+        ids.iter()
+            .map(|id| delete_subscription(&token, id).map(|_| ())),
+    )
+    .await;
 
     Ok(())
 }
@@ -84,14 +83,31 @@ pub async fn register_eventsub_for_all_unregistered(
     token: &Arc<RwLock<AppAccessToken>>,
     pool: &PgPool,
 ) -> AnyhowResult<()> {
-    let non_subs = User::get_all_non_subscribers(pool).await?;
+    let token = token.read().await;
+    register_redemptions_for_unregistered(&token, pool)
+        .await
+        .log_if_err("register redemptions");
+
+    Ok(())
+}
+
+async fn register_redemptions_for_unregistered(
+    token: &AppAccessToken,
+    pool: &PgPool,
+) -> AnyhowResult<()> {
+    let non_subs = User::get_all_non_subscribers(
+        pool,
+        ChannelPointsCustomRewardRedemptionAddV1::EVENT_TYPE.to_str(),
+    )
+    .await?;
 
     for user_id in non_subs {
-        log_err!(
-            register_eventsub_for_id(&user_id, token, pool).await,
-            "Could not register eventsub for id {} - {}",
-            user_id
-        );
+        register_redemption_eventsub_for_id(&user_id, token, pool)
+            .await
+            .inspect_err(|e| {
+                log::warn!("Failed to register redemptions for {user_id}: {e}")
+            })
+            .ok();
     }
 
     Ok(())
@@ -103,16 +119,13 @@ pub async fn clear_invalid_rewards(
 ) -> AnyhowResult<()> {
     let token = token.read().await;
     let client = RHelixClient::default();
-    let mut rewards: Response<
-        GetEventSubSubscriptionsRequest,
-        EventSubSubscriptions,
-    > = client
-        .req_get(GetEventSubSubscriptionsRequest::default(), &*token)
-        .await?;
 
     let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
-    loop {
-        for sub in &rewards.data.subscriptions {
+
+    let mut stream =
+        client.get_eventsub_subscriptions(None, None, None, &*token);
+    while let Some(subs) = stream.try_next().await? {
+        for sub in subs.subscriptions {
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
             let TransportResponse::Webhook(transport) = &sub.transport else {
@@ -124,36 +137,18 @@ pub async fn clear_invalid_rewards(
                 transport.callback.starts_with(&CONFIG.server.url);
 
             if !is_enabled || !is_this_server {
-                if let Err(e) =
-                    User::clear_eventsub_id(sub.id.as_ref(), pool).await
-                {
-                    log::warn!(
-                        "Error clearing eventsub in db, but ignoring: {:?}",
-                        e
-                    );
-                }
+                models::eventsub::remove(sub.id.as_ref(), pool)
+                    .await
+                    .dbg_if_err("clearing eventsub in db");
             }
             if !is_enabled
                 || (!is_this_server && ng_re.is_match(&transport.callback))
             {
-                if let Err(e) =
-                    delete_subscription(&token, sub.id.clone()).await
-                {
-                    log::warn!(
-                        "Error deleting eventsub on twitch, but ignoring: {:?}",
-                        e
-                    );
-                }
+                delete_subscription(&token, sub.id.clone())
+                    .await
+                    .log_if_err("deleting eventsub on twitch");
             }
         }
-
-        if rewards.pagination.is_some() {
-            if let Some(res) = rewards.get_next(&client, &*token).await? {
-                rewards = res;
-                continue;
-            }
-        }
-        break;
     }
 
     Ok(())
