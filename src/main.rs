@@ -150,20 +150,21 @@ async fn main() -> std::io::Result<()> {
 
     SupinicActor.start();
 
-    log::info!("Clearing old rewards");
-
-    clear_invalid_subs(&app_access_token, &pg_pool)
-        .await
-        .expect("Could not clear invalid rewards");
-
-    log::info!("Registering eventsub callbacks");
-
-    register_eventsub_for_all_unregistered(&app_access_token, &pg_pool)
-        .await
-        .expect("Could not register eventsub FeelsMan");
-
     let clear_pool = pg_pool.clone();
+    let clear_token = app_access_token.clone();
     actix::spawn(async move {
+        log::info!("Clearing old rewards");
+
+        clear_invalid_subs(&clear_token, &clear_pool)
+            .await
+            .expect("Could not clear invalid rewards");
+
+        log::info!("Registering eventsub callbacks");
+
+        register_eventsub_for_all_unregistered(&clear_token, &clear_pool)
+            .await
+            .expect("Could not register eventsub FeelsMan");
+
         log_err!(
             clear_unfulfilled_redemptions(&clear_pool).await,
             "Failed to clear redemptions"
