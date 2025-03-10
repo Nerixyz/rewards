@@ -198,13 +198,11 @@ pub async fn clear_invalid_subs(
     let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
     let mut n = 0;
     loop {
-        log::info!("page");
         for sub in &res.data.subscriptions {
             n += 1;
             // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
             let TransportResponse::Webhook(transport) = &sub.transport else {
-                dbg!("invalid transport");
                 continue; // websocket
             };
 
@@ -213,7 +211,6 @@ pub async fn clear_invalid_subs(
                 transport.callback.starts_with(&CONFIG.server.url);
 
             if !is_enabled || !is_this_server {
-                dbg!(("clearing", &sub.id));
                 models::eventsub::remove(sub.id.as_ref(), pool)
                     .await
                     .dbg_if_err("clearing eventsub in db");
