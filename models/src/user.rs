@@ -73,8 +73,8 @@ impl User {
             "
                 SELECT users.id FROM users
                 LEFT JOIN eventsubs e
-                    ON users.id = e.user_id
-                WHERE e.user_id is null AND e.name = $1
+                    ON users.id = e.user_id AND e.name = $1
+                WHERE e.user_id is null
             ",
             name
         )
