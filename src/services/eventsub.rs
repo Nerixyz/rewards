@@ -183,41 +183,47 @@ pub async fn clear_invalid_subs(
 
     let ng_re = Regex::new("https?://[\\w_-]+(:?\\.\\w+)?.ngrok.io").unwrap();
 
-    let mut stream =
-        client.get_eventsub_subscriptions(None, None, None, &*token);
+    let mut stream = client
+        .get_eventsub_subscriptions(None, None, None, &*token)
+        .map_ok(|it| {
+            futures::stream::iter(
+                it.subscriptions
+                    .into_iter()
+                    .map(Ok::<_, twitch_api::helix::ClientRequestError<_>>),
+            )
+        })
+        .try_flatten();
     log::info!("stream");
-    while let Some(subs) = stream.try_next().await? {
-        log::info!("batch: {}", subs.subscriptions.len());
-        for sub in subs.subscriptions {
-            // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
+    let mut n = 0;
+    while let Some(sub) = stream.try_next().await? {
+        n += 1;
+        // delete subscriptions that are not enabled, that are not from this server (only for ngrok.io)
 
-            let TransportResponse::Webhook(transport) = &sub.transport else {
-                dbg!(&sub);
-                continue; // websocket
-            };
+        let TransportResponse::Webhook(transport) = &sub.transport else {
+            dbg!(&sub);
+            continue; // websocket
+        };
 
-            let is_enabled = sub.status == Status::Enabled;
-            if !is_enabled {
-                dbg!(&sub.id);
-            }
-            let is_this_server =
-                transport.callback.starts_with(&CONFIG.server.url);
+        let is_enabled = sub.status == Status::Enabled;
+        if !is_enabled {
+            dbg!(&sub.id);
+        }
+        let is_this_server = transport.callback.starts_with(&CONFIG.server.url);
 
-            if !is_enabled || !is_this_server {
-                models::eventsub::remove(sub.id.as_ref(), pool)
-                    .await
-                    .dbg_if_err("clearing eventsub in db");
-            }
-            if !is_enabled
-                || (!is_this_server && ng_re.is_match(&transport.callback))
-            {
-                delete_subscription(&token, sub.id.clone())
-                    .await
-                    .log_if_err("deleting eventsub on twitch");
-            }
+        if !is_enabled || !is_this_server {
+            models::eventsub::remove(sub.id.as_ref(), pool)
+                .await
+                .dbg_if_err("clearing eventsub in db");
+        }
+        if !is_enabled
+            || (!is_this_server && ng_re.is_match(&transport.callback))
+        {
+            delete_subscription(&token, sub.id.clone())
+                .await
+                .log_if_err("deleting eventsub on twitch");
         }
     }
-    log::info!("stream over");
+    log::info!("stream over {n}");
 
     Ok(())
 }
