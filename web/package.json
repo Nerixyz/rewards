@@ -20,7 +20,7 @@
   "devDependencies": {
     "@babel/types": "^7.27.0",
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.23.0",
+    "@eslint/js": "^9.24.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-typescript": "^14.5.0",
     "autoprefixer": "^10.4.21",
@@ -28,8 +28,8 @@
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.2",
-    "vite": "^6.2.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.5",
     "vue-tsc": "^2.2.8"
   }
 }
