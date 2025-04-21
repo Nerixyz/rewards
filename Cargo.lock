@@ -112,7 +112,7 @@ dependencies = [
  "mime",
  "percent-encoding",
  "pin-project-lite",
- "rand 0.9.0",
+ "rand 0.9.1",
  "sha1",
  "smallvec",
  "tokio",
@@ -2507,7 +2507,7 @@ dependencies = [
  "hmac",
  "md-5",
  "memchr",
- "rand 0.9.0",
+ "rand 0.9.1",
  "sha2",
  "stringprep",
 ]
@@ -2652,13 +2652,12 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3779b94aeb87e8bd4e834cee3650289ee9e0d5677f976ecdb6d219e5f4f6cd94"
+checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.1",
- "zerocopy 0.8.18",
 ]
 
 [[package]]
@@ -2912,7 +2911,7 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prometheus 0.14.0",
- "rand 0.9.0",
+ "rand 0.9.1",
  "regex",
  "reqwest 0.12.15",
  "rustc_version",
@@ -3338,9 +3337,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14e22987355fbf8cfb813a0cf8cd97b1b4ec834b94dbd759a9e8679d41fabe83"
+checksum = "f3c3a85280daca669cfd3bcb68a337882a8bc57ec882f72c5d13a430613a738e"
 dependencies = [
  "sqlx-core",
  "sqlx-macros",
@@ -3351,9 +3350,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-core"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55c4720d7d4cd3d5b00f61d03751c685ad09c33ae8290c8a2c11335e0604300b"
+checksum = "f743f2a3cea30a58cd479013f75550e879009e3a02f616f18ca699335aa248c3"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -3387,9 +3386,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-macros"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "175147fcb75f353ac7675509bc58abb2cb291caf0fd24a3623b8f7e3eb0a754b"
+checksum = "7f4200e0fde19834956d4252347c12a083bdcb237d7a1a1446bffd8768417dce"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3400,9 +3399,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-macros-core"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cde983058e53bfa75998e1982086c5efe3c370f3250bf0357e344fa3352e32b"
+checksum = "882ceaa29cade31beca7129b6beeb05737f44f82dbe2a9806ecea5a7093d00b7"
 dependencies = [
  "dotenvy",
  "either",
@@ -3426,9 +3425,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-mysql"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "847d2e5393a4f39e47e4f36cab419709bc2b83cbe4223c60e86e1471655be333"
+checksum = "0afdd3aa7a629683c2d750c2df343025545087081ab5942593a5288855b1b7a7"
 dependencies = [
  "atoi",
  "base64 0.22.1",
@@ -3469,9 +3468,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-postgres"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc35947a541b9e0a2e3d85da444f1c4137c13040267141b208395a0d0ca4659f"
+checksum = "a0bedbe1bbb5e2615ef347a5e9d8cd7680fb63e77d9dafc0f29be15e53f1ebe6"
 dependencies = [
  "atoi",
  "base64 0.22.1",
@@ -3507,9 +3506,9 @@ dependencies = [
 
 [[package]]
 name = "sqlx-sqlite"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c48291dac4e5ed32da0927a0b981788be65674aeb62666d19873ab4289febde"
+checksum = "c26083e9a520e8eb87a06b12347679b142dc2ea29e6e409f805644a7a979a5bc"
 dependencies = [
  "atoi",
  "chrono",
@@ -3817,7 +3816,7 @@ dependencies = [
  "pin-project-lite",
  "postgres-protocol",
  "postgres-types",
- "rand 0.9.0",
+ "rand 0.9.1",
  "socket2",
  "tokio",
  "tokio-util",
@@ -3995,9 +3994,9 @@ dependencies = [
 [[package]]
 name = "twitch-pubsub"
 version = "0.3.0"
-source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#019ba23783be7a95171c7ad46f9f84e2a5505e4b"
+source = "git+https://github.com/Nerixyz/twitch-pubsub-rs#dd924450dd7b0092be2d13c448ac4dcb66a31578"
 dependencies = [
- "rand 0.9.0",
+ "rand 0.9.1",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
@@ -4009,7 +4008,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.2"
-source = "git+https://github.com/twitch-rs/twitch_api.git#ba8e64402ecdc5900686b6347c55d23f2c0af851"
+source = "git+https://github.com/twitch-rs/twitch_api.git#61f29e98c4cc0ab5e36e45b85b9aaad8e1d3b9ef"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4057,7 +4056,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.15.1"
-source = "git+https://github.com/twitch-rs/twitch_api.git#ba8e64402ecdc5900686b6347c55d23f2c0af851"
+source = "git+https://github.com/twitch-rs/twitch_api.git#61f29e98c4cc0ab5e36e45b85b9aaad8e1d3b9ef"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4078,7 +4077,7 @@ dependencies = [
 [[package]]
 name = "twitch_types"
 version = "0.4.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#ba8e64402ecdc5900686b6347c55d23f2c0af851"
+source = "git+https://github.com/twitch-rs/twitch_api.git#61f29e98c4cc0ab5e36e45b85b9aaad8e1d3b9ef"
 dependencies = [
  "serde",
  "serde_derive",
@@ -4762,14 +4761,14 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "ws-pool"
 version = "0.1.0"
-source = "git+https://github.com/nerixyz/ws-pool#a462fa58b9e55aeee35c73ed2f6152a872576a7d"
+source = "git+https://github.com/nerixyz/ws-pool#651a5a2b600a1ee04f8ffc3d60d3e48624c81f82"
 dependencies = [
  "fastwebsockets",
  "http 1.2.0",
  "http-body-util",
  "hyper 1.6.0",
  "hyper-util",
- "rand 0.9.0",
+ "rand 0.9.1",
  "simd-json",
  "thiserror 2.0.12",
  "tokio",
