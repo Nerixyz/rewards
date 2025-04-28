@@ -16,17 +16,16 @@ use twitch_api::twitch_oauth2::{
 use url::Url;
 
 use crate::{
-    actors::{
-        irc::{IrcActor, JoinMessage, PartMessage},
-        pubsub::{PubSubActor, SubMessage},
-    },
+    actors::irc::{IrcActor, JoinMessage, PartMessage},
     log_discord,
     services::{
-        eventsub::{register_eventsub_for_id, unregister_eventsub_for_id},
+        eventsub::{
+            register_all_eventsub_for_id, unregister_eventsub_for_user,
+        },
         jwt::{encode_jwt, JwtClaims},
-        twitch,
-        twitch::requests::delete_reward,
+        twitch::{self, requests::delete_reward},
     },
+    util::result::ResultExt,
 };
 use config::CONFIG;
 use models::{reward::Reward, user::User};
@@ -44,7 +43,6 @@ struct TwitchCallbackQuery {
 async fn twitch_callback(
     pool: web::Data<PgPool>,
     irc: web::Data<Addr<IrcActor>>,
-    pubsub: web::Data<Addr<PubSubActor>>,
     app_access_token: web::Data<RwLock<AppAccessToken>>,
     query: web::Query<TwitchCallbackQuery>,
 ) -> Result<HttpResponse> {
@@ -91,7 +89,6 @@ async fn twitch_callback(
         access_token: user_token.access_token.take(),
         scopes: scope,
         name: user_token.login.take(),
-        eventsub_id: None,
     };
 
     user.create(&pool).await.map_err(|_| {
@@ -99,7 +96,7 @@ async fn twitch_callback(
     })?;
 
     // register and save the id into the database
-    register_eventsub_for_id(&user_token.user_id, &app_access_token, &pool)
+    register_all_eventsub_for_id(&user_token.user_id, &app_access_token, &pool)
         .await?;
 
     log::info!("AUTH: Registered {}", user.name);
@@ -111,7 +108,6 @@ async fn twitch_callback(
 
     // join the user's channel
     irc.do_send(JoinMessage(user.name));
-    pubsub.do_send(SubMessage(user.id));
 
     let token = encode_jwt(&JwtClaims::new(user_token.user_id.take()))
         .map_err(|_| {
@@ -174,17 +170,15 @@ async fn revoke(
 ) -> Result<HttpResponse> {
     let user = claims.get_user(&pool).await?;
     let user_name = user.name.clone();
-    let eventsub_id = user.eventsub_id.clone();
     let token: UserToken = user.into();
 
-    if let Some(id) = eventsub_id {
-        if let Err(e) =
-            unregister_eventsub_for_id(id, &app_access_token, &pool).await
-        {
-            // we don't return the error, so me make sure everything is cleaned up
-            log::warn!("Eventsub unregister error: {}", e);
-        }
-    }
+    unregister_eventsub_for_user(
+        token.user_id.as_str(),
+        &app_access_token,
+        &pool,
+    )
+    .await
+    .log_if_err("unregistering eventsub");
 
     if let Ok(rewards) = Reward::get_all_for_user(&token.user_id, &pool).await {
         for reward in rewards {
