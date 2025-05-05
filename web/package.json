@@ -18,9 +18,9 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@babel/types": "^7.27.0",
+    "@babel/types": "^7.27.1",
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.25.1",
+    "@eslint/js": "^9.26.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-typescript": "^14.5.0",
     "autoprefixer": "^10.4.21",
@@ -29,7 +29,7 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
-    "vite": "^6.3.3",
+    "vite": "^6.3.5",
     "vue-tsc": "^2.2.10"
   }
 }
