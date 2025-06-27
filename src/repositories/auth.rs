@@ -105,7 +105,7 @@ async fn twitch_callback(
     {
         log::warn!(
             "Failed to register eventsub on login for '{}': {e}",
-            user_token.login
+            user.name
         );
     }
 
