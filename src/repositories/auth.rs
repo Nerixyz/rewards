@@ -17,7 +17,7 @@ use url::Url;
 
 use crate::{
     actors::irc::{IrcActor, JoinMessage, PartMessage},
-    log_discord,
+    log_discord, log_err,
     services::{
         eventsub::{
             register_all_eventsub_for_id, unregister_eventsub_for_user,
@@ -96,8 +96,18 @@ async fn twitch_callback(
     })?;
 
     // register and save the id into the database
-    register_all_eventsub_for_id(&user_token.user_id, &app_access_token, &pool)
-        .await?;
+    if let Err(e) = register_all_eventsub_for_id(
+        &user_token.user_id,
+        &app_access_token,
+        &pool,
+    )
+    .await
+    {
+        log::warn!(
+            "Failed to register eventsub on login for '{}': {e}",
+            user_token.login
+        );
+    }
 
     log::info!("AUTH: Registered {}", user.name);
     log_discord!(
