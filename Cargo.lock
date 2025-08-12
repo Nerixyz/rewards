@@ -2057,7 +2057,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -4072,7 +4072,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.2"
-source = "git+https://github.com/twitch-rs/twitch_api.git#98e2ce8017ef7df552b708b2c76afdc1e9b35860"
+source = "git+https://github.com/twitch-rs/twitch_api.git#7e676ec3c1c42aaab3c3baf03e905440aea9aed3"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4098,7 +4098,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.15.1"
-source = "git+https://github.com/twitch-rs/twitch_api.git#98e2ce8017ef7df552b708b2c76afdc1e9b35860"
+source = "git+https://github.com/twitch-rs/twitch_api.git#7e676ec3c1c42aaab3c3baf03e905440aea9aed3"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4141,7 +4141,7 @@ dependencies = [
 [[package]]
 name = "twitch_types"
 version = "0.4.8"
-source = "git+https://github.com/twitch-rs/twitch_api.git#98e2ce8017ef7df552b708b2c76afdc1e9b35860"
+source = "git+https://github.com/twitch-rs/twitch_api.git#7e676ec3c1c42aaab3c3baf03e905440aea9aed3"
 dependencies = [
  "serde",
  "serde_derive",
