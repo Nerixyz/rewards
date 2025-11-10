@@ -66,7 +66,7 @@ dotenv = "0.15"
 cookie = "0.18"
 reqwest = { version = "0.12", features = ["cookies", "json"] }
 
-jsonwebtoken = "9.3"
+jsonwebtoken = "10.2"
 
 humantime = "2.3"
 chrono = "0.4"
@@ -86,7 +86,7 @@ paste = "1.0"
 base64 = "0.22"
 hex = "0.4"
 rand = "0.9"
-regex = "1.11"
+regex = "1.12"
 percent-encoding = "2.3"
 either = "1.15"
 url = "2.5"
