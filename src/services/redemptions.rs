@@ -81,7 +81,7 @@ async fn clear_unfulfilled_redemptions_for_id<'a>(
             }
         }
 
-        if rewards.pagination.is_some() {
+        if rewards.pagination_data.cursor.is_some() {
             if let Some(res) = rewards.get_next(client, token).await? {
                 rewards = res;
                 continue;
