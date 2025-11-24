@@ -224,7 +224,7 @@ pub async fn clear_invalid_subs(
             }
         }
 
-        if res.pagination.is_some() {
+        if res.pagination_data.cursor.is_some() {
             if let Some(next) = res.get_next(&client, &*token).await? {
                 res = next;
                 continue;
