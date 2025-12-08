@@ -35,6 +35,6 @@ twitch_api = { git = "https://github.com/twitch-rs/twitch_api.git", features = [
 chrono = "0.4"
 futures = "0.3"
 http = "0.2"
-derive_more = { version = "2.0", features = ["display"] }
+derive_more = { version = "2.1", features = ["display"] }
 
 config = { path = "../config" }
