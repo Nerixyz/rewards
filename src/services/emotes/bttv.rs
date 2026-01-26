@@ -48,6 +48,7 @@ impl EmoteRW for BttvEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        reward_id: &str,
         overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
@@ -59,7 +60,7 @@ impl EmoteRW for BttvEmotes {
 
         let (bttv_id, history_len) = futures::future::try_join(
             get_or_fetch_id(broadcaster_id, pool),
-            SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
+            SwapEmote::emote_count(broadcaster_id, reward_id, pool)
                 .map_err(|_| AnyError::msg("Could not get past emotes")),
         )
         .await?;

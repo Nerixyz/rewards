@@ -52,6 +52,7 @@ pub trait EmoteRW {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        reward_id: &str,
         overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,

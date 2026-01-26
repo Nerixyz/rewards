@@ -88,13 +88,14 @@ impl EmoteRW for SevenTvEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        reward_id: &str,
         overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,
         redis_pool: &RedisPool,
     ) -> AnyResult<EmoteInitialData<Self::PlatformId, Self::Emote>> {
         let (history_len, emote, stv_user) = futures::future::try_join3(
-            SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
+            SwapEmote::emote_count(broadcaster_id, reward_id, pool)
                 .map_err(|_| AnyError::msg("Could not get past emotes")),
             seven_tv::get_emote(emote_id)
                 .map_err(|_| AnyError::msg("This emote doesn't exist.")),

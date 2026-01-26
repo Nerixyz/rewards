@@ -17,6 +17,7 @@ use std::{fmt::Display, str::FromStr};
 pub async fn swap_or_add_emote<RW>(
     broadcaster_id: &str,
     emote_id: &str,
+    reward_id: &str,
     override_name: Option<&str>,
     reward_data: SwapRewardData,
     executing_user: &str,
@@ -38,6 +39,7 @@ where
     let data = RW::get_check_initial_data(
         broadcaster_id,
         emote_id,
+        reward_id,
         override_name,
         reward_data.allow_unlisted,
         pool,
@@ -57,6 +59,7 @@ where
             remove_last_emote::<RW>(
                 broadcaster_id,
                 &data.platform_id,
+                reward_id,
                 pool,
                 redis_pool,
             )
@@ -100,6 +103,7 @@ where
         RW::platform(),
         emote_name,
         executing_user,
+        reward_id,
         pool,
     )
     .await
@@ -130,6 +134,7 @@ where
 pub async fn remove_last_emote<RW>(
     user_id: &str,
     platform_id: &RW::PlatformId,
+    reward_id: &str,
     pool: &PgPool,
     redis_pool: &RedisPool,
 ) -> (AnyResult<String>, usize)
@@ -142,7 +147,7 @@ where
     let mut emote = None;
     let mut removed_from_db = 0;
     while let Ok(Some(db_emote)) =
-        SwapEmote::oldest(user_id, RW::platform(), pool).await
+        SwapEmote::oldest(user_id, reward_id, pool).await
     {
         let actually_removed = if let Err(e) = RW::remove_emote(
             platform_id,
@@ -180,6 +185,7 @@ where
 
 pub async fn update_swap_limit<RW>(
     broadcaster_id: &str,
+    reward_id: &str,
     limit: u16,
     pool: &PgPool,
     redis_pool: &RedisPool,
@@ -192,8 +198,7 @@ where
 {
     let limit = limit as usize;
     let mut current_emotes =
-        SwapEmote::emote_count(broadcaster_id, RW::platform(), pool).await?
-            as usize;
+        SwapEmote::emote_count(broadcaster_id, reward_id, pool).await? as usize;
     if current_emotes > limit {
         let platform_id = RW::get_platform_id(broadcaster_id, pool).await?;
         // remove the last emotes
@@ -201,6 +206,7 @@ where
             let (res, removed) = remove_last_emote::<RW>(
                 broadcaster_id,
                 &platform_id,
+                reward_id,
                 pool,
                 redis_pool,
             )

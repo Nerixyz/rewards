@@ -25,6 +25,7 @@ pub async fn save_reward(
             if let Some(limit) = &swap.limit {
                 swap::update_swap_limit::<BttvEmotes>(
                     broadcaster_id,
+                    reward_id,
                     *limit,
                     pool,
                     redis_pool,
@@ -36,6 +37,7 @@ pub async fn save_reward(
             if let Some(limit) = &swap.limit {
                 swap::update_swap_limit::<FfzEmotes>(
                     broadcaster_id,
+                    reward_id,
                     *limit,
                     pool,
                     redis_pool,
@@ -47,6 +49,7 @@ pub async fn save_reward(
             if let Some(limit) = &swap.limit {
                 swap::update_swap_limit::<SevenTvEmotes>(
                     broadcaster_id,
+                    reward_id,
                     *limit,
                     pool,
                     redis_pool,

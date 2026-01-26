@@ -52,6 +52,7 @@ where
         match swap::swap_or_add_emote::<RW>(
             redemption.broadcaster_user_id.as_ref(),
             platform_id,
+            redemption.reward.id.as_str(),
             override_name,
             reward_data,
             &user,
@@ -218,6 +219,7 @@ where
     }
 
     // Try to find a swap emote
+    // This is fuzzy and searches in all rewards
     let emote = match spec {
         IdOrName::Id(id) => {
             SwapEmote::by_id(user_id, id, RW::platform(), pool).await?
