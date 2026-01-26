@@ -5,7 +5,11 @@ use crate::{
 use anyhow::{bail, Result as AnyResult};
 use config::CONFIG;
 use futures_util::future;
-use models::{emote::SlotPlatform, reward, slot, swap_emote};
+use models::{
+    emote::SlotPlatform,
+    reward::{self, SwapEmoteStat},
+    slot,
+};
 use std::fmt::{Display, Formatter};
 
 pub struct EmoteData {
@@ -17,7 +21,7 @@ pub struct EmoteData {
 pub struct EmotePlatformData {
     pub remaining_emotes: usize,
     pub open_slots: usize,
-    pub swap_capacity: usize,
+    pub swap_capacity: Vec<SwapEmoteStat>,
 }
 
 #[repr(transparent)]
@@ -48,9 +52,27 @@ impl Display for EmotePlatformData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "available={}, open-slots={}, available-swaps={}",
-            self.remaining_emotes, self.open_slots, self.swap_capacity
-        )
+            "available={}, open-slots={}, available-swaps=[",
+            self.remaining_emotes, self.open_slots,
+        )?;
+        let mut first = true;
+        for swap in &self.swap_capacity {
+            if !first {
+                write!(f, ", ")?;
+            }
+            first = false;
+            write!(
+                f,
+                "{{{}…: ({}/{})}}",
+                &swap.reward_id[..3.min(swap.reward_id.len())],
+                swap.count,
+                match swap.limit {
+                    Some(l) => l.to_string(),
+                    None => "∞".to_owned(),
+                }
+            )?;
+        }
+        write!(f, "]")
     }
 }
 
@@ -82,7 +104,7 @@ async fn extract_seventv(
         bail!("active emote-set is null");
     };
 
-    let (slots, swaps) = future::try_join(
+    let (slots, swap_capacity) = future::try_join(
         get_open_slots(channel_id, SlotPlatform::SevenTv, pool),
         get_swap_data(channel_id, SlotPlatform::SevenTv, pool),
     )
@@ -91,7 +113,7 @@ async fn extract_seventv(
     Ok(EmotePlatformData {
         remaining_emotes: set.capacity.saturating_sub(set.emotes.len()),
         open_slots: slots,
-        swap_capacity: swaps.1.unwrap_or(set.capacity).saturating_sub(swaps.0),
+        swap_capacity,
     })
 }
 
@@ -104,7 +126,7 @@ async fn extract_ffz(
         bail!("not an editor");
     }
 
-    let (slots, swaps, user, room) = future::try_join4(
+    let (slots, swap_capacity, user, room) = future::try_join4(
         get_open_slots(channel_id, SlotPlatform::Ffz, pool),
         get_swap_data(channel_id, SlotPlatform::Ffz, pool),
         ffz::requests::get_user(channel_id),
@@ -116,10 +138,7 @@ async fn extract_ffz(
     Ok(EmotePlatformData {
         remaining_emotes: user.max_emoticons.saturating_sub(added_emotes),
         open_slots: slots,
-        swap_capacity: swaps
-            .1
-            .unwrap_or(user.max_emoticons)
-            .saturating_sub(swaps.0),
+        swap_capacity,
     })
 }
 
@@ -134,7 +153,7 @@ async fn extract_bttv(
         Err(_) => bail!("not an editor"),
     };
 
-    let (slots, swaps, user) = future::try_join3(
+    let (slots, swap_capacity, user) = future::try_join3(
         get_open_slots(channel_id, SlotPlatform::Bttv, pool),
         get_swap_data(channel_id, SlotPlatform::Bttv, pool),
         bttv::requests::get_user(&bttv_id),
@@ -146,10 +165,7 @@ async fn extract_bttv(
             .channel_emotes
             .saturating_sub(user.shared_emotes.len()),
         open_slots: slots,
-        swap_capacity: swaps
-            .1
-            .unwrap_or(limits.channel_emotes)
-            .saturating_sub(swaps.0),
+        swap_capacity,
     })
 }
 
@@ -169,14 +185,10 @@ async fn get_swap_data(
     channel_id: &str,
     platform: SlotPlatform,
     pool: &PgPool,
-) -> AnyResult<(usize, Option<usize>)> {
-    let (active, limit) = future::try_join(
-        swap_emote::SwapEmote::emote_count(channel_id, platform, pool),
-        reward::Reward::get_swap_limit_for_user(channel_id, platform, pool),
-    )
-    .await?;
-
-    Ok((active as usize, limit))
+) -> AnyResult<Vec<reward::SwapEmoteStat>> {
+    reward::Reward::get_swap_stats_for_user(channel_id, platform, pool)
+        .await
+        .map_err(Into::into)
 }
 
 impl From<AnyResult<EmotePlatformData>> for EpDataOpt {

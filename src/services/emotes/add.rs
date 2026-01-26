@@ -1,8 +1,11 @@
 use crate::PgPool;
 use anyhow::{anyhow, Result as AnyResult};
 use config::CONFIG;
-use futures_util::future;
-use models::{emote::SlotPlatform, reward::Reward, swap_emote::SwapEmote};
+use models::{
+    emote::SlotPlatform,
+    reward::{self},
+    swap_emote::SwapEmote,
+};
 
 pub async fn track_emote(
     channel_id: &str,
@@ -12,24 +15,27 @@ pub async fn track_emote(
     slot_platform: SlotPlatform,
     pool: &PgPool,
 ) -> AnyResult<()> {
-    let (limit, count) = future::try_join(
-        Reward::get_swap_limit_for_user(channel_id, slot_platform, pool),
-        SwapEmote::emote_count(channel_id, slot_platform, pool),
+    let Some(chosen_reward) = reward::Reward::get_swap_stats_for_user(
+        channel_id,
+        slot_platform,
+        pool,
     )
-    .await?;
-    if limit.map(|lim| count >= lim as i64).unwrap_or(true) {
+    .await?
+    .into_iter()
+    .filter(|it| it.limit.is_none_or(|l| it.count < l as usize))
+    .next() else {
         return Err(anyhow!(
-            "No swap capacity (limit is {:?}), try {}emote reload",
-            limit,
+            "No reward with enough capacity, try {}emote reload",
             CONFIG.bot.prefix
         ));
-    }
+    };
     SwapEmote::add_or_update(
         channel_id,
         emote_id,
         slot_platform,
         emote_name,
         executing_user_login,
+        &chosen_reward.reward_id,
         pool,
     )
     .await?;

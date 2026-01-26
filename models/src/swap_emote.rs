@@ -12,25 +12,26 @@ pub struct SwapEmote {
     pub name: String,
     pub added_by: String,
     pub added_at: DateTime<Utc>,
+    pub reward_id: String,
 }
 
 impl SwapEmote {
     pub async fn oldest(
         user_id: &str,
-        platform: SlotPlatform,
+        reward_id: &str,
         pool: &PgPool,
     ) -> SqlResult<Option<Self>> {
         // language=PostgreSQL
         let emote = sqlx::query_as!(
             Self,
             r#"
-            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at, reward_id
             FROM swap_emotes
-            WHERE user_id = $1 AND platform = $2
+            WHERE user_id = $1 AND reward_id = $2
             ORDER BY added_at
             LIMIT 1"#,
             user_id,
-            platform as _
+            reward_id
         )
         .fetch_optional(pool)
         .await?;
@@ -43,10 +44,25 @@ impl SwapEmote {
         platform: SlotPlatform,
         name: &str,
         added_by: &str,
+        reward_id: &str,
         pool: &PgPool,
     ) -> SqlResult<()> {
         // language=PostgreSQL
-        sqlx::query!("INSERT INTO swap_emotes (user_id, emote_id, platform, name, added_by, added_at) VALUES ($1, $2, $3, $4, $5, now())", user_id, emote_id, platform as _, name, added_by).execute(pool).await?;
+        sqlx::query!(
+            r#"
+        INSERT INTO swap_emotes 
+            (user_id, emote_id, platform, name, added_by, added_at, reward_id) 
+        VALUES ($1, $2, $3, $4, $5, now(), $6)
+        "#,
+            user_id,
+            emote_id,
+            platform as _,
+            name,
+            added_by,
+            reward_id
+        )
+        .execute(pool)
+        .await?;
         Ok(())
     }
 
@@ -56,10 +72,32 @@ impl SwapEmote {
         platform: SlotPlatform,
         name: &str,
         added_by: &str,
+        reward_id: &str,
         pool: &PgPool,
     ) -> SqlResult<()> {
         // language=PostgreSQL
-        sqlx::query!("INSERT INTO swap_emotes (user_id, emote_id, platform, name, added_by, added_at) VALUES ($1, $2, $3, $4, $5, now()) ON CONFLICT(user_id, platform, name) DO UPDATE SET emote_id = $2, added_by = $5, added_at = now()", user_id, emote_id, platform as _, name, added_by).execute(pool).await?;
+        sqlx::query!(
+            r#"
+        INSERT INTO swap_emotes
+            (user_id, emote_id, platform, name, added_by, added_at, reward_id)
+        VALUES ($1, $2, $3, $4, $5, now(), $6)
+        ON CONFLICT(user_id, platform, name) 
+        DO UPDATE 
+            SET 
+                emote_id = $2,
+                added_by = $5,
+                added_at = now(),
+                reward_id = $6
+        "#,
+            user_id,
+            emote_id,
+            platform as _,
+            name,
+            added_by,
+            reward_id
+        )
+        .execute(pool)
+        .await?;
         Ok(())
     }
 
@@ -73,7 +111,7 @@ impl SwapEmote {
 
     pub async fn emote_count(
         user_id: &str,
-        platform: SlotPlatform,
+        reward_id: &str,
         pool: &PgPool,
     ) -> SqlResult<i64> {
         // language=PostgreSQL
@@ -81,9 +119,9 @@ impl SwapEmote {
             "
             SELECT count(*)
             FROM swap_emotes
-            WHERE user_id = $1 AND platform = $2",
+            WHERE user_id = $1 AND reward_id = $2",
             user_id,
-            platform as _
+            reward_id,
         )
         .fetch_one(pool)
         .await?;
@@ -99,7 +137,7 @@ impl SwapEmote {
         let emote = sqlx::query_as!(
             Self,
             r#"
-            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at, reward_id
             FROM swap_emotes
             WHERE user_id = $1 AND lower(name) = lower($2)"#,
             user_id,
@@ -120,7 +158,7 @@ impl SwapEmote {
         let emote = sqlx::query_as!(
             Self,
             r#"
-            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at, reward_id
             FROM swap_emotes
             WHERE user_id = $1 AND emote_id = $2 AND platform = $3"#,
             user_id,
@@ -153,7 +191,11 @@ impl SwapEmote {
         // language=PostgreSQL
         let emotes = sqlx::query_as!(
             Self,
-            r#"SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at FROM swap_emotes WHERE user_id = $1"#,
+            r#"
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at, reward_id
+            FROM swap_emotes
+            WHERE user_id = $1
+            "#,
             user_id,
         )
         .fetch_all(pool)

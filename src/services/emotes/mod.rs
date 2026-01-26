@@ -20,7 +20,7 @@ pub struct EmoteInitialData<I, E> {
     pub max_emotes: usize,
     pub current_emotes: usize,
     pub platform_id: I,
-    pub history_len: usize,
+    pub swap_history_len: usize,
     pub emote: E,
 }
 
@@ -52,6 +52,7 @@ pub trait EmoteRW {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        reward_id: &str,
         overwritten_name: Option<&str>,
         allow_unlisted: bool,
         pool: &PgPool,

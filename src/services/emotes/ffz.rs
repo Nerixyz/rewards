@@ -49,6 +49,7 @@ impl EmoteRW for FfzEmotes {
     async fn get_check_initial_data(
         broadcaster_id: &str,
         emote_id: &str,
+        reward_id: &str,
         overwritten_name: Option<&str>,
         _allow_unlisted: bool,
         pool: &PgPool,
@@ -72,7 +73,7 @@ impl EmoteRW for FfzEmotes {
                     log::warn!("err: {}", e);
                     AnyError::msg("No such ffz-room")
                 }),
-                SwapEmote::emote_count(broadcaster_id, Self::platform(), pool)
+                SwapEmote::emote_count(broadcaster_id, reward_id, pool)
                     .map_err(|e| {
                         log::warn!("err: {}", e);
                         AnyError::msg("No emote-count?!")
@@ -96,7 +97,7 @@ impl EmoteRW for FfzEmotes {
         Ok(EmoteInitialData {
             max_emotes: ffz_user.max_emoticons,
             current_emotes: room_emotes.len(),
-            history_len: ffz_history as usize,
+            swap_history_len: ffz_history as usize,
             platform_id: ffz_room.room._id,
             emote: ffz_emote,
         })

@@ -183,6 +183,7 @@ where
     let emote_data = RW::get_check_initial_data(
         broadcaster_id,
         emote_id,
+        reward_id,
         override_name,
         slot_data.allow_unlisted,
         pool,

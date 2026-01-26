@@ -38,6 +38,12 @@ pub struct LiveRewardAT {
     pub access_token: String,
 }
 
+pub struct SwapEmoteStat {
+    pub reward_id: String,
+    pub limit: Option<u16>,
+    pub count: usize,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, derive_more::Display)]
 // the tags are used in the debug command.
 #[serde(tag = "type", content = "data")]
@@ -186,39 +192,51 @@ impl Reward {
         Ok(rewards)
     }
 
-    pub async fn get_swap_limit_for_user(
+    pub async fn get_swap_stats_for_user(
         user_id: &str,
         platform: SlotPlatform,
         pool: &PgPool,
-    ) -> SqlResult<Option<usize>> {
-        let reward_type = platform.swap_reward_name();
-        // language=PostgreSQL
-        let data: Vec<RewardDataOnly> = sqlx::query_as!(
-            RewardDataOnly,
+    ) -> SqlResult<Vec<SwapEmoteStat>> {
+        #[derive(FromRow)]
+        struct Ret {
+            reward_id: String,
+            data: Json<RewardData>,
+            count: i64,
+        }
+
+        let swap_name = platform.swap_reward_name();
+        let data: Vec<Ret> = sqlx::query_as!(
+            Ret,
             r#"
-            SELECT data as "data: Json<RewardData>"
-            FROM rewards
-            WHERE user_id = $1 AND data ->> 'type' = $2
+            SELECT data as "data: Json<RewardData>", count(s.id) as "count!", r.id as "reward_id"
+            FROM rewards r
+                    LEFT JOIN (select id, reward_id from swap_emotes where platform = $2) s on s.reward_id = r.id
+                WHERE r.data->>'type' = $3 AND r.user_id = $1
+            GROUP BY r.id, r.data
             "#,
             user_id,
-            reward_type
+            platform as _,
+            swap_name
         )
         .fetch_all(pool)
         .await?;
 
-        let data = data
+        Ok(data
             .into_iter()
-            .filter_map(|r| match r.data.0 {
-                RewardData::FfzSwap(d) => Some(d),
-                RewardData::BttvSwap(d) => Some(d),
-                RewardData::SevenTvSwap(d) => Some(d),
-                _ => None,
+            .filter_map(|it| {
+                let limit = match it.data.0 {
+                    RewardData::FfzSwap(d) => d.limit,
+                    RewardData::BttvSwap(d) => d.limit,
+                    RewardData::SevenTvSwap(d) => d.limit,
+                    _ => return None,
+                };
+                Some(SwapEmoteStat {
+                    reward_id: it.reward_id,
+                    limit,
+                    count: it.count.try_into().unwrap_or_default(),
+                })
             })
-            .try_fold(0, |acc, swap| match (acc, &swap.limit) {
-                (acc, Some(lim)) => Some(acc + *lim as usize),
-                _ => None,
-            });
-        Ok(data)
+            .collect())
     }
 
     pub async fn get_all_live_for_user(
