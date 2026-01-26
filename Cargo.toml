@@ -64,7 +64,7 @@ dotenv_codegen = "0.15"
 dotenv = "0.15"
 
 cookie = "0.18"
-reqwest = { version = "0.12", features = ["cookies", "json"] }
+reqwest = { version = "0.13", features = ["cookies", "json"] }
 
 jsonwebtoken = { version = "10.2", features = ["rust_crypto"] }
 
