@@ -239,34 +239,6 @@ impl Reward {
             .collect())
     }
 
-    pub async fn get_swap_limit_for_user(
-        user_id: &str,
-        reward_id: &str,
-        pool: &PgPool,
-    ) -> SqlResult<Option<usize>> {
-        // language=PostgreSQL
-        let data: RewardDataOnly = sqlx::query_as!(
-            RewardDataOnly,
-            r#"
-            SELECT data as "data: Json<RewardData>"
-            FROM rewards
-            WHERE user_id = $1 AND id = $2
-            "#,
-            user_id,
-            reward_id,
-        )
-        .fetch_one(pool)
-        .await?;
-
-        let data = match data.data.0 {
-            RewardData::FfzSwap(d) => d.limit,
-            RewardData::BttvSwap(d) => d.limit,
-            RewardData::SevenTvSwap(d) => d.limit,
-            _ => None,
-        };
-        Ok(data.map(|l| l as usize))
-    }
-
     pub async fn get_all_live_for_user(
         user_id: &str,
         pool: &PgPool,
