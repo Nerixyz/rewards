@@ -204,17 +204,19 @@ impl Reward {
             count: i64,
         }
 
+        let swap_name = platform.swap_reward_name();
         let data: Vec<Ret> = sqlx::query_as!(
             Ret,
             r#"
             SELECT data as "data: Json<RewardData>", count(s.id) as "count!", r.id as "reward_id"
-            FROM swap_emotes s 
-            LEFT JOIN rewards r on s.reward_id = r.id 
-            WHERE r.user_id = $1 and s.platform = $2
-            GROUP BY r.id
+            FROM rewards r
+                    LEFT JOIN (select id, reward_id from swap_emotes where platform = $2) s on s.reward_id = r.id
+                WHERE r.data->>'type' = $3 AND r.user_id = $1
+            GROUP BY r.id, r.data
             "#,
             user_id,
-            platform as _
+            platform as _,
+            swap_name
         )
         .fetch_all(pool)
         .await?;
