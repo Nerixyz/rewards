@@ -50,7 +50,7 @@ where
     // remove emote if needed
     let above_swap_limit = reward_data
         .limit
-        .map(|l| data.history_len >= l as usize)
+        .map(|l| data.swap_history_len >= l as usize)
         .unwrap_or(false);
     let above_platform_limit = data.current_emotes >= data.max_emotes;
 

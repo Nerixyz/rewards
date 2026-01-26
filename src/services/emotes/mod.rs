@@ -20,7 +20,7 @@ pub struct EmoteInitialData<I, E> {
     pub max_emotes: usize,
     pub current_emotes: usize,
     pub platform_id: I,
-    pub history_len: usize,
+    pub swap_history_len: usize,
     pub emote: E,
 }
 

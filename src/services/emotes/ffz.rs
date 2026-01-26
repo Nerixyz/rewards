@@ -97,7 +97,7 @@ impl EmoteRW for FfzEmotes {
         Ok(EmoteInitialData {
             max_emotes: ffz_user.max_emoticons,
             current_emotes: room_emotes.len(),
-            history_len: ffz_history as usize,
+            swap_history_len: ffz_history as usize,
             platform_id: ffz_room.room._id,
             emote: ffz_emote,
         })

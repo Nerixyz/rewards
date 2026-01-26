@@ -132,7 +132,7 @@ impl EmoteRW for SevenTvEmotes {
         Ok(EmoteInitialData {
             max_emotes: stv_set.capacity,
             current_emotes: stv_set.emotes.len(),
-            history_len: history_len as usize,
+            swap_history_len: history_len as usize,
             platform_id: stv_set.id,
             emote,
         })

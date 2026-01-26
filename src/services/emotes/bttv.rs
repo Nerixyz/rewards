@@ -99,7 +99,7 @@ impl EmoteRW for BttvEmotes {
         Ok(EmoteInitialData {
             max_emotes: user_limits.channel_emotes,
             current_emotes: bttv_user.shared_emotes.len(),
-            history_len: history_len as usize,
+            swap_history_len: history_len as usize,
             platform_id: bttv_id,
             emote: emote_data,
         })
