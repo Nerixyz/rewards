@@ -26,7 +26,7 @@ export interface AsyncDialog extends AsyncState<boolean> {
   success: boolean;
 }
 
-export function asyncDialog(openRef: Ref<boolean>): { state: AsyncDialog; reset: () => void } {
+export function asyncDialog(openRef: Ref<boolean>): { state: AsyncDialog; reset: () => void; tryClear: () => void } {
   const state = reactive({
     loading: false,
     error: null,
@@ -40,6 +40,12 @@ export function asyncDialog(openRef: Ref<boolean>): { state: AsyncDialog; reset:
       state.loading = false;
       state.error = null;
       state.success = false;
+    },
+    tryClear: () => {
+      if (state.loading) {
+        return;
+      }
+      state.value = false;
     },
   };
 }
@@ -60,6 +66,7 @@ export async function tryAsyncDialog(fn: () => Promise<unknown>, dialog: AsyncDi
   try {
     dialog.loading = true;
     dialog.error = null;
+    dialog.success = false;
     await fn();
   } catch (e) {
     dialog.error = e instanceof Error ? e : new Error('unknown error');

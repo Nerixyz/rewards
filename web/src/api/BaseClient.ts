@@ -18,11 +18,11 @@ export class BaseClient {
   }
 
   protected get<T>(...segments: string[]): Promise<T> {
-    return this.baseRequest(segments.join('/'), {});
+    return this.baseRequest(buildUrl(segments), {});
   }
 
   protected put<T>(data: AnyObject | undefined, ...segments: string[]): Promise<T> {
-    return this.baseRequest(segments.join('/'), {
+    return this.baseRequest(buildUrl(segments), {
       method: 'PUT',
       body: (data && JSON.stringify(data)) ?? null,
       headers: { 'Content-Type': 'application/json' },
@@ -30,7 +30,7 @@ export class BaseClient {
   }
 
   protected patch<T>(data: AnyObject, ...segments: string[]): Promise<T> {
-    return this.baseRequest(segments.join('/'), {
+    return this.baseRequest(buildUrl(segments), {
       method: 'PATCH',
       body: JSON.stringify(data),
       headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@ export class BaseClient {
   }
 
   protected async delete(...segments: string[]): Promise<void> {
-    await this.baseRequest(segments.join('/'), { method: 'DELETE' });
+    await this.baseRequest(buildUrl(segments), { method: 'DELETE' });
   }
 
   private async baseRequest<T>(url: string, opts: RequestInit): Promise<T> {
@@ -68,7 +68,7 @@ export class BaseClient {
 }
 
 function makeApiUrl(path: string) {
-  return `${import.meta.env.MODE === 'development' ? import.meta.env['VITE_API_BASE_URL'] ?? '' : ''}/api/v1/${path}`;
+  return `${import.meta.env.MODE === 'development' ? (import.meta.env['VITE_API_BASE_URL'] ?? '') : ''}/api/v1/${path}`;
 }
 
 function isOk(status: number) {
@@ -86,4 +86,8 @@ function getToken() {
   document.cookie = 'auth_token=;expires=0;SameSite=None; Secure';
 
   return cookie;
+}
+
+function buildUrl(segments: string[]): string {
+  return segments.map(s => encodeURIComponent(s)).join('/');
 }

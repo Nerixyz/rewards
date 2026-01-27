@@ -10,6 +10,7 @@
   />
   <CSwitch v-model="state.allow_unlisted" label="Allow unlisted emotes" />
   <CSwitch v-model="state.reply" label="Reply after successful redemption" />
+  <OutlinedButton v-if="!isNew" @click="editSwapEmotes">Manage Emotes</OutlinedButton>
 </template>
 
 <script setup lang="ts">
@@ -17,8 +18,10 @@ import { computed, reactive, watch } from 'vue';
 import NumberField from '../core/NumberField.vue';
 import { SwapRewardData } from '../../api/types';
 import CSwitch from '../core/CSwitch.vue';
+import OutlinedButton from '../core/OutlinedButton.vue';
+import { useRouter } from 'vue-router';
 
-defineProps<{ isSeventv: boolean }>();
+defineProps<{ isSeventv: boolean; isNew: boolean }>();
 const [modelValue] = defineModel<SwapRewardData | null>({ required: true });
 
 const state = reactive({ limit: null, allow_unlisted: true, reply: true, ...modelValue.value });
@@ -36,4 +39,9 @@ watch(modelValue, newValue => {
 watch(state, value => {
   modelValue.value = value;
 });
+
+const router = useRouter();
+const editSwapEmotes = () => {
+  router.push(router.currentRoute.value.path + '/swap-emotes');
+};
 </script>

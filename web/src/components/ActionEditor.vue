@@ -10,7 +10,7 @@
             bg-red
             rounded-full
             p-2
-            transition transition-colors
+            transition-colors
             ring-offset-2 ring-offset-gray-dark ring ring-transparent
             hover:bg-red-dark
             focus:ring-red
@@ -36,6 +36,7 @@
       v-else-if="reward.type === 'BttvSwap' || reward.type === 'FfzSwap' || reward.type === 'SevenTvSwap'"
       v-model="reward.data"
       :is-seventv="reward.type === 'SevenTvSwap'"
+      :is-new="isNew"
     />
     <SpotifyPlayOptions
       v-else-if="reward.type === 'SpotifyPlay' || reward.type === 'SpotifyQueue'"

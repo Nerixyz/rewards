@@ -132,8 +132,10 @@ export interface InternalCustomReward {
   auto_accept: boolean;
 }
 
+export type SlotPlatform = 'Bttv' | 'Ffz' | 'SevenTv';
+
 export interface RemEmoteRewardData {
-  platform: 'Bttv' | 'Ffz' | 'SevenTv';
+  platform: SlotPlatform;
   reply?: boolean;
 }
 
@@ -162,4 +164,21 @@ export interface SpotifySettings {
 
 export interface Connections {
   spotify?: SpotifySettings | undefined;
+}
+
+export interface SwapEmote {
+  id: number;
+  user_id: string;
+  emote_id: string;
+  platform: SlotPlatform;
+  name: string;
+  added_by: string;
+  added_at: string;
+  reward_id: string;
+}
+
+export interface ListSwapEmotesResponse {
+  twitch: TwitchReward;
+  data: InternalCustomReward;
+  emotes: SwapEmote[];
 }

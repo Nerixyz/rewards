@@ -11,6 +11,7 @@ const LogViewer = () => import('./routes/LogViewer.vue');
 const EditReward = () => import('./routes/EditReward.vue');
 const NewReward = () => import('./routes/NewReward.vue');
 const TestRewardEditor = () => import('./routes/TestRewardEditor.vue');
+const SwapEmoteDashboard = () => import('./routes/SwapEmoteDashboard.vue');
 
 const router = createRouter({
   routes: [
@@ -63,6 +64,14 @@ const router = createRouter({
       name: 'Edit Reward',
       path: '/rewards/:id/:rewardId',
       component: EditReward,
+      meta: {
+        ignoreNav: true,
+      },
+    },
+    {
+      name: 'Emote Dashboard',
+      path: '/rewards/:id/:rewardId/swap-emotes',
+      component: SwapEmoteDashboard,
       meta: {
         ignoreNav: true,
       },
