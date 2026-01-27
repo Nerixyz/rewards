@@ -1,9 +1,10 @@
 use crate::emote::SlotPlatform;
 use chrono::{DateTime, Utc};
 use errors::sql::SqlResult;
+use serde::Serialize;
 use sqlx::{FromRow, PgPool};
 
-#[derive(FromRow, Debug)]
+#[derive(FromRow, Serialize, Debug)]
 pub struct SwapEmote {
     pub id: i64,
     pub user_id: String,
@@ -109,6 +110,27 @@ impl SwapEmote {
         Ok(())
     }
 
+    pub async fn remove_on_reward(
+        id: i64,
+        user_id: &str,
+        reward_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<()> {
+        // language=PostgreSQL
+        sqlx::query!(
+            r#"
+            DELETE FROM swap_emotes 
+            WHERE id = $1 AND user_id = $2 AND reward_id = $3
+            "#,
+            id,
+            user_id,
+            reward_id
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn emote_count(
         user_id: &str,
         reward_id: &str,
@@ -197,6 +219,27 @@ impl SwapEmote {
             WHERE user_id = $1
             "#,
             user_id,
+        )
+        .fetch_all(pool)
+        .await?;
+        Ok(emotes)
+    }
+
+    pub async fn all_for_reward(
+        user_id: &str,
+        reward_id: &str,
+        pool: &PgPool,
+    ) -> SqlResult<Vec<Self>> {
+        // language=PostgreSQL
+        let emotes = sqlx::query_as!(
+            Self,
+            r#"
+            SELECT id, user_id, emote_id, platform as "platform: _", name, added_by, added_at, reward_id
+            FROM swap_emotes
+            WHERE user_id = $1 AND reward_id = $2
+            "#,
+            user_id,
+            reward_id
         )
         .fetch_all(pool)
         .await?;
