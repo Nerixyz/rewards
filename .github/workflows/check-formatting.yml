@@ -23,6 +23,6 @@ jobs:
       - name: rustfmt
         run: cargo fmt --check
       - name: prettier
-        uses: actionsx/prettier@v3
+        uses: nerixyz/actionsx-prettier@v3-adj+prettier3.6.2
         with:
           args: -c .
