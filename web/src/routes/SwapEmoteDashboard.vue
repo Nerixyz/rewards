@@ -19,7 +19,9 @@
         />
         <h1 class="font-bold font-mono text-5xl">Emote Dashboard</h1>
       </div>
-      <h2 class="font-mono text-xl bg-white bg-opacity-10 p-4 rounded-md">{{ state.value.twitch.title }}</h2>
+      <h2 class="font-mono text-xl bg-white bg-opacity-10 p-4 rounded-md overflow-hidden text-ellipsis text-nowrap">
+        {{ state.value.twitch.title }}
+      </h2>
       <div class="flex items-center">
         <OutlinedButton @click="loadState"><ReloadIcon class="mr-2" /> Refresh </OutlinedButton>
         <OutlinedButton @click="onSync"><SyncIcon class="mr-2" /> Sync with {{ platformName }}</OutlinedButton>
