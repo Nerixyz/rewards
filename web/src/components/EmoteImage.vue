@@ -15,6 +15,7 @@ const imageUrl = computed(() => {
     case 'SevenTv':
       return `https://cdn.7tv.app/emote/${encodeURIComponent(props.id)}/2x.webp`;
   }
+  // @ts-expect-error
   return '';
 });
 const url = computed(() => {
@@ -26,6 +27,7 @@ const url = computed(() => {
     case 'SevenTv':
       return `https://7tv.app/emotes/${encodeURIComponent(props.id)}`;
   }
+  // @ts-expect-error
   return '';
 });
 </script>
