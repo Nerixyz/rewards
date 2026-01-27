@@ -336,23 +336,17 @@ async fn get_swap_emotes_usage(
     Ok(HttpResponse::Ok().json(GetSwapEmoteUsage { usage: count }))
 }
 
-#[derive(Deserialize)]
-struct UntrackSwapEmoteQuery {
-    id: i64,
-}
-
-#[delete("/{broadcaster_id}/{reward_id}/swap-emotes")]
+#[delete("/{broadcaster_id}/{reward_id}/swap-emotes/{id}")]
 async fn untrack_swap_emote(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
-    path: web::Path<(String, String)>,
-    query: web::Query<UntrackSwapEmoteQuery>,
+    path: web::Path<(String, String, i64)>,
 ) -> Result<HttpResponse> {
-    let (broadcaster_id, reward_id) = path.into_inner();
+    let (broadcaster_id, reward_id, id) = path.into_inner();
     get_user_or_editor(&claims, &broadcaster_id, &pool).await?;
 
     models::swap_emote::SwapEmote::remove_on_reward(
-        query.id,
+        id,
         &broadcaster_id,
         &reward_id,
         &pool,
