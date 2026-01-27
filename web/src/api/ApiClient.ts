@@ -2,6 +2,7 @@ import {
   Connections,
   InputReward,
   InternalCustomReward,
+  ListSwapEmotesResponse,
   LogEntry,
   Reward,
   SpotifySettings,
@@ -26,6 +27,22 @@ class HttpClient extends BaseClient {
 
   getEditors() {
     return this.get<TwitchUser[]>('editors');
+  }
+
+  listSwapEmotes(broadcaster_id: string, reward_id: string) {
+    return this.get<ListSwapEmotesResponse>('rewards', broadcaster_id, reward_id, 'swap-emotes');
+  }
+
+  getSwapEmotesUsage(broadcaster_id: string, reward_id: string) {
+    return this.get<{ usage: number }>('rewards', broadcaster_id, reward_id, 'swap-emotes', 'usage');
+  }
+
+  untrackSwapEmote(broadcaster_id: string, reward_id: string, id: number | string) {
+    return this.delete('rewards', broadcaster_id, reward_id, 'swap-emotes', id.toString());
+  }
+
+  refreshEmotes(broadcaster_id: string) {
+    return this.get<{ n_removed: number }>('users', broadcaster_id, 'refresh-emotes');
   }
 
   addEditor(name: string) {
