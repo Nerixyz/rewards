@@ -31,11 +31,21 @@
         />
       </div>
     </div>
+
+    <CDialog title="Are You sure?" :open="updateWarningShown" @dialog-closed="abortWarning">
+      <span class="max-w-xs">
+        {{ updateWarningText }}
+      </span>
+      <DialogButtons>
+        <OutlinedButton @click="abortWarning">Abort</OutlinedButton>
+        <CButton @click="replayUpdate">Update</CButton>
+      </DialogButtons>
+    </CDialog>
   </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import MainLayout from '../components/MainLayout.vue';
 import { useDataStore } from '../store';
 import { useApi } from '../api/plugin';
@@ -48,6 +58,9 @@ import { InputReward, Reward } from '../api/types';
 import { asyncState, tryAsync } from '../async-state';
 import CButton from '../components/core/CButton.vue';
 import BackIcon from '../components/icons/BackIcon.vue';
+import CDialog from '../components/core/CDialog.vue';
+import DialogButtons from '../components/DialogButtons.vue';
+import OutlinedButton from '../components/core/OutlinedButton.vue';
 
 const store = useDataStore();
 const api = useApi();
@@ -57,6 +70,10 @@ const { broadcasterId } = useBroadcaster({ store, route });
 const { updateRewards, rewards } = useRewards({ store, api, broadcasterId });
 
 const { state: updateState, reset: resetUpdate } = asyncState(0, false);
+const updateWarningText = ref<string>('');
+const updateWarningShown = ref(false);
+let acknowledgedWarning = false;
+let lastUpdateParams: null | { reward: InputReward; cb?: () => void } = null;
 
 const reward = reactive<{ value: null | Reward }>({ value: null });
 watch(
@@ -68,11 +85,52 @@ watch(
   { immediate: true },
 );
 
+const checkWarning = async (toUpdate: InputReward) => {
+  if (acknowledgedWarning) {
+    return true; // can continue
+  }
+  if (toUpdate.data.type !== 'BttvSwap' && toUpdate.data.type !== 'FfzSwap' && toUpdate.data.type !== 'SevenTvSwap') {
+    return true;
+  }
+
+  const limit = toUpdate.data.data?.limit;
+  if (!limit) {
+    return true;
+  }
+
+  const { usage } = await api.getSwapEmotesUsage(broadcasterId.value ?? '', reward.value?.twitch.id ?? '');
+  if (usage > limit) {
+    updateWarningText.value = `There are currently ${usage} emotes tracked with this reward. Updating the reward will cause the last ${usage - limit} emotes to be removed.`;
+    updateWarningShown.value = true;
+    return false;
+  }
+
+  return true;
+};
+
+const replayUpdate = () => {
+  acknowledgedWarning = true;
+  updateWarningShown.value = false;
+  if (lastUpdateParams) {
+    tryUpdate(lastUpdateParams.reward, lastUpdateParams.cb);
+  }
+};
+const abortWarning = () => {
+  updateWarningShown.value = false;
+};
+
 const tryUpdate = (toUpdate: InputReward, post?: () => void) => {
   tryAsync(async () => {
+    lastUpdateParams = { reward: toUpdate, cb: post };
+    if (!(await checkWarning(toUpdate).catch(() => true))) {
+      return;
+    }
+
     const updated = await api.updateReward(broadcasterId.value ?? '', toUpdate, reward.value?.twitch.id ?? '');
     updateRewards(rewards.value.map(r => (r.twitch.id === updated.twitch.id ? updated : r)));
     post?.();
+    lastUpdateParams = null;
+    acknowledgedWarning = false;
   }, updateState);
 };
 const onUpdate = (reward: InputReward) => {
