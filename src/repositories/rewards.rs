@@ -273,13 +273,14 @@ async fn list_for_user(
 }
 
 #[derive(Serialize)]
-struct GetRewardResponse {
+struct ListSwapEmotesResponse {
     twitch: CustomReward,
     data: Reward,
+    emotes: Vec<models::swap_emote::SwapEmote>,
 }
 
-#[get("/{broadcaster_id}/{reward_id}")]
-async fn get_reward(
+#[get("/{broadcaster_id}/{reward_id}/swap-emotes")]
+async fn list_swap_emotes(
     claims: JwtClaims,
     pool: web::Data<PgPool>,
     path: web::Path<(String, String)>,
@@ -289,20 +290,76 @@ async fn get_reward(
         .await?
         .into();
 
-    let (reward, saved_reward) = futures::future::join(
+    let (reward, saved_reward, emotes) = futures::future::join3(
         get_reward_for_broadcaster_by_id(
             &broadcaster_id,
             &[reward_id.as_str().into()],
             &token,
         ),
         Reward::get_by_id(&reward_id, &pool),
+        models::swap_emote::SwapEmote::all_for_reward(
+            &broadcaster_id,
+            &reward_id,
+            &pool,
+        ),
     )
     .await;
 
-    Ok(HttpResponse::Ok().json(GetRewardResponse {
+    Ok(HttpResponse::Ok().json(ListSwapEmotesResponse {
         data: saved_reward?,
         twitch: reward?,
+        emotes: emotes?,
     }))
+}
+
+#[derive(Serialize)]
+struct GetSwapEmoteUsage {
+    usage: i64,
+}
+
+#[get("/{broadcaster_id}/{reward_id}/swap-emotes/usage")]
+async fn get_swap_emotes_usage(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse> {
+    let (broadcaster_id, reward_id) = path.into_inner();
+    get_user_or_editor(&claims, &broadcaster_id, &pool).await?;
+
+    let count = models::swap_emote::SwapEmote::emote_count(
+        &broadcaster_id,
+        &reward_id,
+        &pool,
+    )
+    .await?;
+
+    Ok(HttpResponse::Ok().json(GetSwapEmoteUsage { usage: count }))
+}
+
+#[derive(Deserialize)]
+struct UntrackSwapEmoteQuery {
+    id: i64,
+}
+
+#[delete("/{broadcaster_id}/{reward_id}/swap-emotes")]
+async fn untrack_swap_emote(
+    claims: JwtClaims,
+    pool: web::Data<PgPool>,
+    path: web::Path<(String, String)>,
+    query: web::Query<UntrackSwapEmoteQuery>,
+) -> Result<HttpResponse> {
+    let (broadcaster_id, reward_id) = path.into_inner();
+    get_user_or_editor(&claims, &broadcaster_id, &pool).await?;
+
+    models::swap_emote::SwapEmote::remove_on_reward(
+        query.id,
+        &broadcaster_id,
+        &reward_id,
+        &pool,
+    )
+    .await?;
+
+    Ok(HttpResponse::NoContent().finish())
 }
 
 pub fn init_rewards_routes(config: &mut web::ServiceConfig) {
@@ -310,5 +367,8 @@ pub fn init_rewards_routes(config: &mut web::ServiceConfig) {
         .service(create)
         .service(update)
         .service(delete)
-        .service(list_for_user);
+        .service(list_for_user)
+        .service(list_swap_emotes)
+        .service(get_swap_emotes_usage)
+        .service(untrack_swap_emote);
 }
