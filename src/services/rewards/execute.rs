@@ -280,8 +280,12 @@ where
 
 pub async fn spotify_skip(redemption: Redemption, db: PgPool) -> AnyResult<()> {
     let (broadcaster_id, user) = get_reply_data(&redemption);
-    let res =
-        spotify::skip_track(redemption.broadcaster_user_id.as_ref(), &db).await;
+    let res = spotify::skip_track(
+        redemption.broadcaster_user_id.as_ref(),
+        false,
+        &db,
+    )
+    .await;
     reply_to_redemption(
         format_spotify_result(res, SpotifyAction::Skip).map(Some),
         &broadcaster_id,

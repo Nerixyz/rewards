@@ -40,6 +40,15 @@ impl std::fmt::Display for PlayingItem {
     }
 }
 
+impl PlayingItem {
+    pub fn spotify_url(&self) -> &str {
+        match self {
+            PlayingItem::Episode(ep) => &ep.external_urls.spotify,
+            PlayingItem::Track(track) => &track.external_urls.spotify,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
 pub struct TrackObject {
@@ -47,6 +56,7 @@ pub struct TrackObject {
     pub artists: Vec<ArtistObject>,
     pub uri: String,
     pub explicit: bool,
+    pub external_urls: ExternalUrls,
 }
 
 impl std::fmt::Display for TrackObject {
@@ -68,9 +78,16 @@ pub struct ArtistObject {
 
 #[derive(Deserialize, Debug)]
 #[non_exhaustive]
+pub struct ExternalUrls {
+    pub spotify: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[non_exhaustive]
 pub struct EpisodeObject {
     pub name: String,
     pub show: SimplifiedShowObject,
+    pub external_urls: ExternalUrls,
 }
 
 #[derive(Deserialize, Debug)]

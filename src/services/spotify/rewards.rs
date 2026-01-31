@@ -5,7 +5,7 @@ use crate::services::{
     },
     twitch::requests::is_user_live,
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{bail, Error as AnyError, Result as AnyResult};
 use lazy_static::lazy_static;
 use models::{reward::SpotifyPlayOptions, spotify::SpotifyData, user::User};
 use regex::Regex;
@@ -22,8 +22,12 @@ pub async fn get_spotify_token(
         .map(|s| s.access_token)
 }
 
-pub async fn skip_track(user_id: &str, pool: &PgPool) -> AnyResult<String> {
-    let token = get_token_and_verify(user_id, pool).await?;
+pub async fn skip_track(
+    user_id: &str,
+    is_command: bool,
+    pool: &PgPool,
+) -> AnyResult<String> {
+    let token = get_token_and_verify(user_id, is_command, pool).await?;
     let player = get_playing_player(&token).await?;
 
     requests::skip_next(&token).await.map_err(|e| {
@@ -42,7 +46,7 @@ pub async fn queue_track(
     track: TrackObject,
     pool: &PgPool,
 ) -> AnyResult<String> {
-    let token = get_token_and_verify(user_id, pool).await?;
+    let token = get_token_and_verify(user_id, false, pool).await?;
 
     get_playing_player(&token).await?;
 
@@ -61,7 +65,7 @@ pub async fn play_track(
     track: TrackObject,
     pool: &PgPool,
 ) -> AnyResult<String> {
-    let token = get_token_and_verify(user_id, pool).await?;
+    let token = get_token_and_verify(user_id, false, pool).await?;
 
     get_playing_player(&token).await?;
 
@@ -114,7 +118,7 @@ fn extract_spotify_id(str: &str) -> Option<&str> {
         .and_then(|c| c.iter().nth(1).flatten().map(|m| m.as_str()))
 }
 
-async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
+pub async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
     let player = requests::get_player(token).await.map_err(|e| {
         log::warn!("Could not get player: {}", e);
         e
@@ -125,8 +129,9 @@ async fn get_playing_player(token: &str) -> AnyResult<PlayerResponse> {
     Ok(player)
 }
 
-async fn get_token_and_verify(
+pub async fn get_token_and_verify(
     user_id: &str,
+    is_command: bool,
     pool: &PgPool,
 ) -> AnyResult<String> {
     // TODO: for now, every user has only_while_live set to true, so the token is always needed.
@@ -138,6 +143,10 @@ async fn get_token_and_verify(
     .await?;
     let data = data.ok_or_else(|| AnyError::msg("No spotify connection"))?;
     let user_token = user.into();
+
+    if !data.allow_commands && is_command {
+        bail!("Spotify commands are not allowed");
+    }
 
     if data.only_while_live
         && !is_user_live::<UserToken>(user_id, &user_token).await?
