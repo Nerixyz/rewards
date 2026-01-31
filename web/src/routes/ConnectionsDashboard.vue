@@ -13,15 +13,33 @@
           class="flex flex-col items-center justify-center gap-4 bg-gray-350 p-4 rounded-lg border border-gray-900 border-opacity-30 text-red"
         >
           <SpotifyIcon class="h-14 w-auto" />
-          <div v-if="state.value.spotify" class="flex flex-col items-center gap-3">
-            <span>Authorized</span>
-            <div class="mx-1 my-3 text-white">
-              <h4 class="font-serif text-xl mb-3 border-b border-white border-opacity-30">Settings</h4>
+          <div v-if="state.value.spotify" class="flex flex-col gap-3 max-w-lg items-stretch">
+            <span class="self-center">Authorized</span>
+            <div class="mx-1 my-3 text-white flex flex-col gap-2">
+              <h4 class="font-serif text-xl mb-1 border-b border-white border-opacity-30">Settings</h4>
               <CSwitch
                 v-model="state.value.spotify.only_while_live"
-                label="Allow control only while live"
+                label="Require active livestream"
                 @update:model-value="sendSpotifySettings"
               />
+              <CSwitch
+                v-model="state.value.spotify.allow_commands"
+                label="Allow chat commands (respects live setting)"
+                @update:model-value="sendSpotifySettings"
+              />
+            </div>
+            <div class="mx-1 my-3 text-white flex flex-col flex-shrink gap-2">
+              <h4 class="font-serif text-xl mb-1 border-b border-white border-opacity-30">Commands</h4>
+              <ul>
+                <li>
+                  <code class="font-mono text-wrap text-[90%] bg-gray-250 rounded-sm px-2 py-1">::spotify info</code>
+                  Replies with the current song and queue length. Available to any user.
+                </li>
+                <li>
+                  <code class="font-mono text-wrap text-[90%] bg-gray-250 rounded-sm px-2 py-1">::spotify skip</code>
+                  Skips the current song. Available to the broadcaster and editors.
+                </li>
+              </ul>
             </div>
             <OutlinedButton @click="revokeSpotifyAuth">Revoke</OutlinedButton>
           </div>

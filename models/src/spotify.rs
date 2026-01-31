@@ -8,11 +8,13 @@ pub struct SpotifyData {
     pub access_token: String,
     pub refresh_token: String,
     pub only_while_live: bool,
+    pub allow_commands: bool,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
 pub struct SpotifySettings {
     pub only_while_live: bool,
+    pub allow_commands: bool,
 }
 
 impl SpotifyData {
@@ -88,7 +90,7 @@ impl SpotifySettings {
         // language=PostgreSQL
         let data = sqlx::query_as!(
             Self,
-            "SELECT only_while_live FROM spotify WHERE user_id=$1",
+            "SELECT only_while_live, allow_commands FROM spotify WHERE user_id=$1",
             id
         )
         .fetch_optional(pool)
@@ -101,9 +103,10 @@ impl SpotifySettings {
         // language=PostgreSQL
         sqlx::query_as!(
             Self,
-            "UPDATE spotify SET only_while_live = $2 WHERE user_id = $1",
+            "UPDATE spotify SET only_while_live = $2, allow_commands = $3 WHERE user_id = $1",
             user_id,
-            self.only_while_live
+            self.only_while_live,
+            self.allow_commands,
         )
         .execute(pool)
         .await?;

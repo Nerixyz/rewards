@@ -1,7 +1,7 @@
 <template>
   <SwitchGroup>
     <div class="flex items-center cursor-pointer">
-      <SwitchLabel class="mr-4 select-none cursor-pointer">{{ label }}</SwitchLabel>
+      <SwitchLabel class="mr-4 select-none flex-grow cursor-pointer">{{ label }}</SwitchLabel>
       <Switch
         :model-value="modelValue"
         :class="modelValue ? 'bg-red' : 'bg-gray-500'"

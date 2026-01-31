@@ -2,7 +2,7 @@ pub mod command;
 pub mod commands;
 pub mod parse;
 
-use crate::chat::commands::debug::DebugCommand;
+use crate::chat::commands::{debug::DebugCommand, spotify::SpotifyAction};
 use anyhow::Result as AnyResult;
 use command::ChatCommand;
 use commands::{
@@ -22,6 +22,7 @@ pub fn try_parse_command(
         "slots" | "emoteslots" => SlotsCommand::parse(&command, args),
         "emotes" | "currentemotes" | "ce" => Emotes::parse(&command, args),
         "debug" | "dbg" => DebugCommand::parse(&command, args),
+        "spotify" | "sp" => SpotifyAction::parse(&command, args),
         _ => return None,
     };
 

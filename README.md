@@ -58,6 +58,8 @@ Users can rename emotes on 7TV by specifying `as=<name>`.
 - `::emotes`, `::ce`, `::currentemotes` Display the current emotes.
 - `::ping`, `::bing` Ping the bot.
 - `::about`, `::rewardmore`, `::who`, `::bot` Display details about the bot.
+- `::(sp)otify (i)nfo` Display the current song.
+- `::(sp)otify (s)kip` Skip the current song (requires broadcaster or editor rights).
 
 **Admin only**
 

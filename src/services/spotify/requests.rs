@@ -5,7 +5,7 @@ use crate::services::spotify::{
         SearchResponse, TrackObject,
     },
 };
-use anyhow::{Error as AnyError, Result as AnyResult};
+use anyhow::{anyhow, Error as AnyError, Result as AnyResult};
 use base64::Engine;
 use config::CONFIG;
 use futures::TryFutureExt;
@@ -256,6 +256,7 @@ where
     match res.status() {
         StatusCode::NO_CONTENT => Ok(None),
         StatusCode::OK => Ok(Some(res.json().await?)),
+        StatusCode::UNAUTHORIZED => Err(anyhow!("Missing Spotify permissions - the broadcaster might need to re-authenticate")),
         status => Err(AnyError::msg(format!("Bad status: {}", status))),
     }
 }

@@ -160,6 +160,7 @@ export interface LogEntry {
 
 export interface SpotifySettings {
   only_while_live: boolean;
+  allow_commands: boolean;
 }
 
 export interface Connections {
