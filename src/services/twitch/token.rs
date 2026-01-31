@@ -109,7 +109,7 @@ impl TwitchToken for DbToken {
     }
 }
 
-fn always_lock<T>(m: &std::sync::Mutex<T>) -> std::sync::MutexGuard<T> {
+fn always_lock<T>(m: &std::sync::Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     match m.lock() {
         Ok(v) => v,
         Err(e) => e.into_inner(),

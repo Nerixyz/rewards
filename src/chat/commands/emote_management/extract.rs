@@ -36,7 +36,9 @@ pub async fn extract_emote_data<'a>(
     })
 }
 
-pub fn extract_emote_by_url(emote: &str) -> Option<(Cow<str>, SlotPlatform)> {
+pub fn extract_emote_by_url(
+    emote: &str,
+) -> Option<(Cow<'_, str>, SlotPlatform)> {
     if let Some(id) = first_capture(emote, &BTTV_REGEX) {
         Some((id.into(), SlotPlatform::Bttv))
     } else if let Some(id) = first_capture(emote, &FFZ_REGEX) {
