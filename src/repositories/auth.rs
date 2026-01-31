@@ -17,7 +17,7 @@ use url::Url;
 
 use crate::{
     actors::irc::{IrcActor, JoinMessage, PartMessage},
-    log_discord, log_err,
+    log_discord,
     services::{
         eventsub::{
             register_all_eventsub_for_id, unregister_eventsub_for_user,
