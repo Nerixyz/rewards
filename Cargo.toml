@@ -54,7 +54,7 @@ futures = "0.3"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_qs = "0.15"
+serde_qs = "1.0"
 
 deadpool-redis = { version = "0.22", default-features = false, features = [
     "rt_tokio_1",
@@ -64,9 +64,9 @@ dotenv_codegen = "0.15"
 dotenv = "0.15"
 
 cookie = "0.18"
-reqwest = { version = "0.12", features = ["cookies", "json"] }
+reqwest = { version = "0.13", features = ["cookies", "json"] }
 
-jsonwebtoken = { version = "10.2", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
 
 humantime = "2.3"
 chrono = "0.4"
