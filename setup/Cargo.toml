@@ -14,7 +14,7 @@ path = "src/main.rs"
 dialoguer = "0.12.0"
 twitch_oauth2 = { version = "0.15.2", features = ["reqwest"] }
 tokio = { version = "1", features = ["macros", "fs"] }
-reqwest = "0.12"
+reqwest = "0.13"
 dotenv = "0.15.0"
 chrono = { version = "0.4.42", features = ["serde"] }
 regex = "1.12.2"
