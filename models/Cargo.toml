@@ -18,7 +18,7 @@ errors = { git = "https://github.com/Nerixyz/nerix-utils-rs", features = [
     "sql-result",
     "sql-log",
 ] }
-twitch-irc = { version = "5.0.1", features = [
+twitch-irc = { version = "6.0.0", features = [
     "refreshing-token-native-tls",
     "transport-tcp-native-tls",
     "metrics-collection",
