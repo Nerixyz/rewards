@@ -1,7 +1,7 @@
 use crate::{ClientId, Scope};
 use config::CONFIG;
 use once_cell::sync::OnceCell;
-use std::{sync::Arc, time::Duration};
+use std::{future::Future, sync::Arc, time::Duration};
 use twitch_api::{
     twitch_oauth2::{
         client::Client,
@@ -67,7 +67,6 @@ impl From<twitch_irc::login::UserAccessToken> for TokenData {
     }
 }
 
-#[async_trait::async_trait]
 impl TwitchToken for DbToken {
     fn token_type() -> BearerTokenType {
         BearerTokenType::UserToken
@@ -89,23 +88,24 @@ impl TwitchToken for DbToken {
         None
     }
 
-    async fn refresh_token<'a, C>(
-        &mut self,
-        _: &'a C,
-    ) -> Result<(), RefreshTokenError<<C as Client>::Error>>
-    where
-        Self: Sized,
-        C: Client,
-    {
-        Ok(())
-    }
-
     fn expires_in(&self) -> Duration {
         Duration::from_secs(u64::MAX)
     }
 
     fn scopes(&self) -> &[Scope] {
         &[]
+    }
+
+    fn refresh_token<'a, C>(
+        &mut self,
+        _http_client: &'a C,
+    ) -> impl Future<Output = Result<(), RefreshTokenError<<C as Client>::Error>>>
+           + Send
+    where
+        Self: Sized,
+        C: Client,
+    {
+        std::future::ready(Ok(()))
     }
 }
 
