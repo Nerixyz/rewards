@@ -14,9 +14,9 @@ use twitch_api::{
         },
         moderation::{BanUserBody, BanUserRequest, GetBannedUsersRequest},
         points::{
-            update_custom_reward::UpdateCustomReward, CreateCustomRewardBody,
-            CreateCustomRewardRequest, CreateCustomRewardResponse,
-            CustomReward, DeleteCustomRewardRequest, GetCustomRewardRequest,
+            CreateCustomRewardBody, CreateCustomRewardRequest,
+            CreateCustomRewardResponse, CustomReward,
+            DeleteCustomRewardRequest, GetCustomRewardRequest,
             UpdateCustomRewardBody, UpdateCustomRewardRequest,
         },
         streams::{GetStreamsRequest, Stream},
@@ -52,15 +52,10 @@ pub async fn update_reward<'a>(
     req: UpdateCustomRewardBody<'a>,
     token: &UserToken,
 ) -> HelixResult<CustomReward> {
-    let response: Response<UpdateCustomRewardRequest, UpdateCustomReward> =
-        RHelixClient::default()
-            .req_patch(UpdateCustomRewardRequest::new(user_id, id), req, token)
-            .await?;
-
-    match response.data {
-        UpdateCustomReward::Success(r) => Ok(r),
-        _ => Err(TwitchApiError::Other("Expected Success".to_string())),
-    }
+    Ok(RHelixClient::default()
+        .req_patch(UpdateCustomRewardRequest::new(user_id, id), req, token)
+        .await?
+        .data)
 }
 
 pub async fn delete_reward<'a>(

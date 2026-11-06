@@ -160,9 +160,6 @@ async fn read_verify_payload(
         channel::ChannelGoalBeginV1;
         channel::ChannelGoalEndV1;
         channel::ChannelGoalProgressV1;
-        channel::ChannelHypeTrainBeginV1;
-        channel::ChannelHypeTrainEndV1;
-        channel::ChannelHypeTrainProgressV1;
         channel::ChannelModerateV1;
         channel::ChannelModerateV2;
         channel::ChannelModeratorAddV1;

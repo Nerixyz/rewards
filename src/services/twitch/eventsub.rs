@@ -1,5 +1,5 @@
 use crate::{
-    services::twitch::{errors::TwitchApiError, HelixResult, RHelixClient},
+    services::twitch::{HelixResult, RHelixClient},
     util::result::ResultCExt,
 };
 use config::CONFIG;
@@ -11,10 +11,8 @@ use twitch_api::{
         },
         points::{
             CustomRewardRedemption, CustomRewardRedemptionStatus,
-            UpdateRedemptionStatusBody, UpdateRedemptionStatusInformation,
-            UpdateRedemptionStatusRequest,
+            UpdateRedemptionStatusBody, UpdateRedemptionStatusRequest,
         },
-        Response,
     },
     twitch_oauth2::{AppAccessToken, UserToken},
     types::{EventSubIdRef, IntoCow, RedemptionIdRef, RewardIdRef, UserIdRef},
@@ -58,10 +56,7 @@ pub async fn update_reward_redemption<'a>(
     status: CustomRewardRedemptionStatus,
     token: &UserToken,
 ) -> HelixResult<CustomRewardRedemption> {
-    let response: Response<
-        UpdateRedemptionStatusRequest,
-        UpdateRedemptionStatusInformation,
-    > = RHelixClient::default()
+    Ok(RHelixClient::default()
         .req_patch(
             UpdateRedemptionStatusRequest::new(
                 broadcaster_id,
@@ -71,10 +66,6 @@ pub async fn update_reward_redemption<'a>(
             UpdateRedemptionStatusBody::builder().status(status).build(),
             token,
         )
-        .await?;
-
-    match response.data {
-        UpdateRedemptionStatusInformation::Success(r) => Ok(r),
-        _ => Err(TwitchApiError::Custom),
-    }
+        .await?
+        .data)
 }
